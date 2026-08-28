@@ -185,6 +185,24 @@
   .epts .pn{flex:0 0 5.6em}
   .epts .ps{flex:1 1 auto}
   .epts .pw{flex:0 0 auto;font-family:var(--data);font-size:9.5px;color:var(--ink-soft)}
+  /* ---------- share menu ---------- */
+  .apphead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .apphead .eyebrow{flex:1 1 auto}
+  .shmenu{position:relative;flex:0 0 auto}
+  button.shtog{background:transparent;border:1px solid var(--rule);border-radius:1px;padding:8px;
+    cursor:pointer;color:var(--ink-soft);line-height:0;transition:color .18s,border-color .18s}
+  button.shtog:hover{color:var(--verdigris);border-color:var(--verdigris)}
+  button.shtog svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;
+    stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  ul.shlist{position:absolute;z-index:30;top:calc(100% + 5px);right:0;margin:0;padding:0;list-style:none;
+    min-width:210px;background:var(--vellum);border:1px solid var(--ink);
+    box-shadow:0 8px 22px rgba(27,42,68,.16)}
+  ul.shlist li{border-bottom:1px solid var(--rule)}
+  ul.shlist li:last-child{border-bottom:0}
+  ul.shlist button{display:block;width:100%;text-align:left;background:transparent;border:0;cursor:pointer;
+    font-family:var(--data);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink);padding:11px 14px}
+  ul.shlist button:hover{background:rgba(62,124,110,.13);color:var(--verdigris)}
   .comparebar{margin-top:24px;border-top:1px solid var(--rule);padding-top:18px}
   .comparebar .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;max-width:82ch}
   .comparebar .err{margin-top:12px}
@@ -449,7 +467,7 @@
           <input id="setupcode" placeholder="Colle ton code ici — il commence souvent par TW, Qm, WW…" aria-label="Code de carte">
           <button class="cta" id="gocode">Charger</button>
         </div>
-        <p class="hint">Le code s'obtient avec « Copier mon code », sous la section Vie amoureuse. Un lien terminé par <code>#c=…</code> fonctionne aussi.</p>
+        <p class="hint">Le code s'obtient avec « Copier mon code », sous la section Vie amoureuse. Un lien contenant <code>?c=…</code> fonctionne aussi.</p>
         <p id="setup-err2" class="err hidden"></p>
       </div>
     </div>
@@ -460,7 +478,23 @@
 
   <!-- ============ CHART ============ -->
   <section id="app" class="hidden">
-    <p class="eyebrow" id="birthline"></p>
+    <div class="apphead">
+      <p class="eyebrow" id="birthline"></p>
+      <div class="shmenu" id="shmenu">
+        <button class="shtog" id="shtog" type="button" aria-label="Partager cette carte"
+                aria-haspopup="true" aria-expanded="false" aria-controls="shlist">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="18" cy="5" r="2.7"/><circle cx="6" cy="12" r="2.7"/><circle cx="18" cy="19" r="2.7"/>
+            <path d="M8.4 10.7 15.6 6.5M8.4 13.3l7.2 4.2"/>
+          </svg>
+        </button>
+        <ul class="shlist hidden" id="shlist" role="menu" aria-label="Partager">
+          <li role="none"><button role="menuitem" type="button" id="mcode">Copier mon code</button></li>
+          <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" id="mlink">Copier le lien</button></li>
+          <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" id="mshare">Partager le lien…</button></li>
+        </ul>
+      </div>
+    </div>
     <h1 class="title" id="whoami"></h1>
     <p class="intro" id="intro"></p>
 
@@ -496,7 +530,6 @@
         </div>
         <button class="ghost" id="docomp">Comparer</button>
         <button class="ghost" id="cpcode">Copier mon code</button>
-        <button class="ghost hidden" id="cplink">Copier le lien</button>
       </div>
       <p class="note" id="sharenote"></p>
       <p id="share-err" class="err hidden"></p>
@@ -2609,14 +2642,37 @@ function copyText(t,btn){
     navigator.clipboard.writeText(t).then(()=>done(true),fallback);
   else fallback();
 }
+const SITE='https://blackoutzz.github.io/horoscope/';
+function wireShareMenu(){
+  const tog=$('shtog'), list=$('shlist'), menu=$('shmenu');
+  const open=on=>{list.classList.toggle('hidden',!on);tog.setAttribute('aria-expanded',on?'true':'false');};
+  tog.onclick=e=>{e.stopPropagation();open(list.classList.contains('hidden'));};
+  document.addEventListener('click',e=>{if(!menu.contains(e.target))open(false);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){open(false);}});
+  $('mcode').onclick=()=>{copyText(menu.dataset.tok||'',$('mcode'));setTimeout(()=>open(false),1800);};
+  $('mlink').onclick=()=>{copyText(menu.dataset.url||'',$('mlink'));setTimeout(()=>open(false),1800);};
+  $('mshare').onclick=()=>{
+    const url=menu.dataset.url; if(!url)return;
+    open(false);
+    const nom=(CHART&&CHART.profile&&CHART.profile.nom)||'';
+    navigator.share({
+      title:'Horoscope',
+      text:nom?'La carte du ciel de '+nom:'Ma carte du ciel',
+      url
+    }).catch(()=>{});
+  };
+}
 function renderShare(){
   const tok=encodeProfile(CHART.profile);
   $('cpcode').dataset.tok=tok;
   let base='';
-  try{base=location.href.split('#')[0];}catch(e){}
-  const web=/^https?:/.test(base);
-  $('cplink').dataset.url=web?base+'#c='+tok:'';
-  $('cplink').classList.toggle('hidden',!web);
+  try{base=location.href.split('#')[0].split('?')[0];}catch(e){}
+  if(!/^https?:/.test(base))base=SITE;
+  const url=base+'?c='+tok;
+  $('shmenu').dataset.url=url;
+  $('shmenu').dataset.tok=tok;
+  $('mlinkli').classList.remove('hidden');
+  $('mshareli').classList.toggle('hidden',!navigator.share);
   renderPicker();
   $('sharenote').textContent=
     "« Copier mon code » met dans ton presse-papier une chaîne qui contient seulement ta date, ton heure et ton lieu de naissance — de quoi recalculer ta carte à l'identique. Donne-la à quelqu'un pour qu'il te compare, ou garde-la pour retrouver ta carte depuis l'écran d'accueil.";
@@ -2783,11 +2839,11 @@ function wireShare(){
   $('cpcode').onclick=()=>copyText($('cpcode').dataset.tok||'',$('cpcode'));
   $('gocode').onclick=()=>chargerCode($('setupcode').value,'setup-err2');
   $('setupcode').addEventListener('keydown',e=>{if(e.key==='Enter')$('gocode').click();});
-  $('cplink').onclick=()=>copyText($('cplink').dataset.url,$('cplink'));
+  wireShareMenu();
   const lire=()=>{
     try{return decodeProfile($('othercode').value);}
     catch(e){
-      $('syn').innerHTML='<p class="err">Ce code n\'est pas lisible. Colle le code complet copié depuis une autre carte, ou un lien qui se termine par #c=…</p>';
+      $('syn').innerHTML='<p class="err">Ce code n\'est pas lisible. Colle le code complet copié depuis une autre carte, ou un lien qui contient ?c=…</p>';
       return null;
     }
   };
