@@ -465,7 +465,7 @@
           <input id="setupcode" placeholder="Colle ton code ici — il commence souvent par TW, Qm, WW…" aria-label="Code de carte">
           <button class="cta" id="gocode">Charger</button>
         </div>
-        <p class="hint">Le code s'obtient avec « Copier mon code », sous la section Vie amoureuse. Un lien contenant <code>?c=…</code> fonctionne aussi.</p>
+        <p class="hint">Le code s'obtient avec « Copier mon code », sous la section Vie amoureuse. Un lien contenant <code>#c=…</code> fonctionne aussi.</p>
         <p id="setup-err2" class="err hidden"></p>
       </div>
     </div>
@@ -2710,7 +2710,10 @@ function renderShare(){
   let base='';
   try{base=location.href.split('#')[0].split('?')[0];}catch(e){}
   if(!/^https?:/.test(base))base=SITE;
-  const url=base+'?c='+tok;
+  /* Fragment et pas query : un #c= ne quitte jamais le navigateur. Un ?c=
+     partirait dans les logs du serveur et dans les aperçus de lien que
+     Slack, iMessage et compagnie génèrent en allant chercher l'URL. */
+  const url=base+'#c='+tok;
   $('shmenu').dataset.url=url;
   $('shmenu').dataset.tok=tok;
   $('mlinkli').classList.remove('hidden');
@@ -2885,7 +2888,7 @@ function wireShare(){
   const lire=()=>{
     try{return decodeProfile($('othercode').value);}
     catch(e){
-      $('syn').innerHTML='<p class="err">Ce code n\'est pas lisible. Colle le code complet copié depuis une autre carte, ou un lien qui contient ?c=…</p>';
+      $('syn').innerHTML='<p class="err">Ce code n\'est pas lisible. Colle le code complet copié depuis une autre carte, ou un lien qui contient #c=…</p>';
       return null;
     }
   };
