@@ -123,16 +123,14 @@
   .reprise{margin-top:34px;border-top:1px solid var(--rule);padding-top:20px}
   .reprise code{font-family:var(--data);font-size:.9em}
   .reprise .cta{flex:0 0 auto}
-  .setupcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,290px);gap:clamp(24px,4vw,54px);align-items:start}
-  .setuptabs{display:none}
-  @media (max-width:820px){
-    .setupcols{grid-template-columns:1fr}
-    .setuptabs{display:flex;margin-bottom:20px}
-    .setupcols[data-tab="recents"] .registre{display:none}
-    .setupcols[data-tab="new"] #recents{display:none}
-    .recents .sk{display:none}
-  }
-  .recents .sk{margin:0 0 10px}
+  /* Un seul panneau à la fois, quelle que soit la largeur — les onglets
+     pilotent l'affichage de la même façon sur mobile et sur grand écran. */
+  .setupcols{display:grid;grid-template-columns:1fr;gap:clamp(24px,4vw,54px);align-items:start}
+  .setuptabs{margin-bottom:20px}
+  .setupcols[data-tab="recents"] .registre{display:none}
+  .setupcols[data-tab="new"] #recents{display:none}
+  .recents{max-width:420px}
+  .recents .sk{display:none}
   .recbox{border:1px solid var(--rule);border-left:2px solid var(--verdigris);
     background:rgba(62,124,110,.045);padding:4px 14px}
   ul.reclist{list-style:none;margin:0;padding:0}
