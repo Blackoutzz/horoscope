@@ -924,17 +924,29 @@ function localToUTC(y,mo,d,h,mi,tz){
    4. Stockage
    ======================================================================== */
 const mem={};
+/* localStorage quand il existe (site web), window.storage dans un bac à sable,
+   mem en dernier recours — navigation privée, quota plein, cookies bloqués. */
+const LS=(()=>{
+  try{const k='astro:test';localStorage.setItem(k,'1');localStorage.removeItem(k);return localStorage;}
+  catch(e){return null;}
+})();
 const store={
   async get(k){
-    try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null;}
-    catch(e){return mem[k]!==undefined?mem[k]:null;}
+    if(LS){
+      try{const v=LS.getItem(k);if(v!==null)return JSON.parse(v);}catch(e){}
+    }
+    try{const r=await window.storage.get(k);if(r)return JSON.parse(r.value);}catch(e){}
+    return mem[k]!==undefined?mem[k]:null;
   },
   async set(k,v){
     mem[k]=v;
-    try{await window.storage.set(k,JSON.stringify(v));}catch(e){}
+    const s=JSON.stringify(v);
+    if(LS){try{LS.setItem(k,s);}catch(e){}}
+    try{await window.storage.set(k,s);}catch(e){}
   },
   async del(k){
     delete mem[k];
+    if(LS){try{LS.removeItem(k);}catch(e){}}
     try{await window.storage.delete(k);}catch(e){}
   }
 };
@@ -2867,6 +2879,7 @@ wireShare(); wireRecents(); wireElements();
   const p=profileFromURL()||await store.get('astro:profil');
   if(p){
     CHART=buildChart(p);
+    await store.set('astro:profil',p);
     await pushRecent(p);
     renderChart();renderShare();loadReading(false);
     renderRecents();
