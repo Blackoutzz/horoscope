@@ -1,0 +1,2806 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --vellum:#EFE9DA;
+    --vellum-deep:#E1D8C3;
+    --ink:#1B2A44;
+    --ink-soft:#5D6B82;
+    --verdigris:#3E7C6E;
+    --minium:#A6432F;
+    --rule:rgba(27,42,68,.18);
+    --display:"Hoefler Text",Didot,"Bodoni MT","Iowan Old Style",Georgia,serif;
+    --body:"Avenir Next",Avenir,"Segoe UI",system-ui,-apple-system,sans-serif;
+    --data:ui-monospace,"SF Mono","Roboto Mono","Courier New",monospace;
+    --glyph:"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols 2",serif;
+  }
+  *{box-sizing:border-box}
+  .wrap{
+    font-family:var(--body);
+    color:var(--ink);
+    background:
+      radial-gradient(ellipse at 20% 0%,rgba(62,124,110,.07),transparent 60%),
+      radial-gradient(ellipse at 100% 100%,rgba(27,42,68,.08),transparent 55%),
+      var(--vellum);
+    padding:clamp(20px,4vw,48px);
+    border-radius:2px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .eyebrow{
+    font-family:var(--data);
+    font-size:10px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 10px;
+  }
+  h1.title{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:clamp(34px,7vw,58px);
+    line-height:1.02;
+    margin:0 0 6px;
+    letter-spacing:-.01em;
+  }
+  h1.title em{font-style:italic;color:var(--verdigris)}
+  .lede{max-width:54ch;color:var(--ink-soft);margin:0 0 26px;font-size:15px}
+  .intro{max-width:66ch;font-size:15.5px;margin:12px 0 0;border-left:2px solid var(--verdigris);padding-left:15px}
+  .intro .lead{font-family:var(--display);font-size:18.5px;line-height:1.45;display:block;margin-bottom:8px}
+  .intro .src{display:block;margin-top:10px;font-size:11.5px;color:var(--ink-soft)}
+
+  .hr{border:0;border-top:1px solid var(--rule);margin:30px 0}
+  .hr-thick{border:0;border-top:2px solid var(--ink);opacity:.75;margin:30px 0 8px}
+
+  /* ---------- form ---------- */
+  .registre{max-width:640px}
+  .field{margin:0 0 20px}
+  .field > label{
+    display:block;font-family:var(--data);font-size:10px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;
+  }
+  .field input, .field select{
+    width:100%;background:transparent;border:0;border-bottom:1px solid var(--ink);
+    padding:7px 2px;font-family:var(--body);font-size:16px;color:var(--ink);
+    border-radius:0;appearance:none;
+  }
+  .field select{background-image:none}
+  .field input:focus,.field select:focus{outline:2px solid var(--verdigris);outline-offset:3px}
+  .row{display:flex;gap:18px;flex-wrap:wrap}
+  .row > .field{flex:1 1 180px}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:6px}
+  .check{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);margin:-6px 0 22px}
+  .check input{width:16px;height:16px;accent-color:var(--verdigris)}
+
+  button.cta{
+    font-family:var(--data);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    background:var(--ink);color:var(--vellum);border:0;padding:14px 26px;cursor:pointer;
+    border-radius:1px;transition:background .18s ease;
+  }
+  button.cta:hover{background:var(--verdigris)}
+  button.ghost{
+    font-family:var(--data);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    background:transparent;color:var(--ink-soft);border:1px solid var(--rule);
+    padding:9px 15px;cursor:pointer;border-radius:1px;transition:color .18s,border-color .18s;
+  }
+  button.ghost:hover{color:var(--verdigris);border-color:var(--verdigris)}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--verdigris);outline-offset:3px}
+
+  /* ---------- big three ---------- */
+  .triad{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);margin:26px 0 0}
+  .triad > div{background:var(--vellum);padding:18px 16px}
+  .triad .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+  .triad .g{font-family:var(--glyph);font-size:26px;line-height:1;margin:10px 0 6px;color:var(--verdigris)}
+  .triad .v{font-family:var(--display);font-size:22px;line-height:1.1}
+  .triad .d{font-family:var(--data);font-size:11px;color:var(--ink-soft);margin-top:3px}
+
+  /* ---------- layout ---------- */
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:clamp(24px,4vw,52px);align-items:start;margin-top:34px}
+  @media (max-width:820px){
+    .cols{grid-template-columns:1fr}
+    .triad{grid-template-columns:1fr}
+    #wheelblock{order:1}
+    #numblock{order:2}
+  }
+  .reveal{margin-top:34px;border:1px solid var(--rule);border-left:2px solid var(--verdigris);
+    background:rgba(62,124,110,.045);padding:18px clamp(16px,2.5vw,26px) 4px}
+  .reveal .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 14px}
+  .reveal b{font-weight:600}
+  .reveal .sub{color:var(--ink-soft);font-size:13px}
+  .reveal .dette{font-family:var(--data);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--minium)}
+  .reprise{margin-top:34px;border-top:1px solid var(--rule);padding-top:20px}
+  .reprise code{font-family:var(--data);font-size:.9em}
+  .reprise .cta{flex:0 0 auto}
+  .setupcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,290px);gap:clamp(24px,4vw,54px);align-items:start}
+  .setuptabs{display:none}
+  @media (max-width:820px){
+    .setupcols{grid-template-columns:1fr}
+    .setuptabs{display:flex;margin-bottom:20px}
+    .setupcols[data-tab="recents"] .registre{display:none}
+    .setupcols[data-tab="new"] #recents{display:none}
+    .recents .sk{display:none}
+  }
+  .recents .sk{margin:0 0 10px}
+  .recbox{border:1px solid var(--rule);border-left:2px solid var(--verdigris);
+    background:rgba(62,124,110,.045);padding:4px 14px}
+  ul.reclist{list-style:none;margin:0;padding:0}
+  ul.reclist li{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule)}
+  ul.reclist li:last-child{border-bottom:0}
+  button.recbtn{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;
+    background:transparent;border:0;padding:11px 4px 11px 0;cursor:pointer;color:var(--ink);
+    font-family:var(--body);border-radius:0}
+  .recbtn .rc{flex:0 0 40px;height:40px;border:1px solid var(--ink);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;
+    font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);
+    transition:border-color .15s}
+  .recbtn .rtx{flex:1 1 auto;min-width:0}
+  button.recbtn:hover .rn{color:var(--verdigris)}
+  button.recbtn:hover .rc{border-color:var(--verdigris)}
+  .recbtn .rn{display:block;font-family:var(--display);font-size:17px;line-height:1.2}
+  .recbtn .rd{display:block;font-family:var(--data);font-size:9.5px;letter-spacing:.08em;color:var(--ink-soft);margin-top:3px}
+  .recbtn .rp{display:block;font-size:12px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  button.recdel{flex:0 0 auto;background:transparent;border:0;color:var(--ink-soft);cursor:pointer;
+    font-size:16px;line-height:1;padding:0 2px;border-radius:0}
+  button.recdel:hover{color:var(--minium)}
+  .elements{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .elements .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 8px}
+  ul.elems{list-style:none;margin:0 0 14px;padding:0}
+  ul.elems.modes{margin-top:-2px;opacity:.85}
+  ul.elems li{padding:0}
+  ul.elems .en{flex:0 0 7.4em;font-size:13.5px}
+  ul.elems .eb{flex:1 1 auto;height:9px;border:1px solid var(--rule);position:relative}
+  ul.elems .eb i{position:absolute;inset:0 auto 0 0;background:var(--ink);opacity:.28}
+  ul.elems .eb i.hi{background:var(--verdigris);opacity:1}
+  ul.elems .eb i.lo{background:var(--minium);opacity:.45}
+  ul.elems .ev{flex:0 0 3em;text-align:right;font-family:var(--data);font-size:11px;color:var(--ink-soft)}
+  .elements .etxt{font-size:14px;margin:0 0 14px;max-width:88ch}
+  .elements .esub{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.55;max-width:88ch}
+  button.erow{width:100%;display:flex;align-items:center;gap:14px;background:transparent;border:0;
+    padding:7px 0;cursor:pointer;color:var(--ink);font-family:var(--body);border-radius:0;text-align:left}
+  button.erow:hover .en{color:var(--verdigris)}
+  .erow .ech{flex:0 0 auto;font-size:10px;color:var(--ink-soft);transition:transform .15s}
+  button.erow.on .ech{transform:rotate(90deg);color:var(--verdigris)}
+  .edraw{margin:2px 0 14px;padding:14px 18px;border-left:2px solid var(--verdigris);
+    background:rgba(62,124,110,.05)}
+  .edraw .ed1{font-size:12.5px;color:var(--ink-soft);margin:0 0 7px;max-width:88ch}
+  .edraw .ed1 b{color:var(--ink)}
+  .edraw .ed2{font-size:14px;margin:0 0 12px;max-width:80ch}
+  .edraw .ed2.vide{color:var(--ink-soft);font-size:13px;margin:0}
+  ul.epts{list-style:none;margin:0;padding:0;column-width:300px;column-gap:clamp(24px,4vw,52px)}
+  ul.epts li{display:flex;align-items:baseline;gap:9px;padding:6px 0;
+    border-bottom:1px solid var(--rule);font-size:12.5px;break-inside:avoid}
+  .epts .pg{flex:0 0 1.3em;font-family:var(--glyph);font-size:13px}
+  .epts .pn{flex:0 0 5.6em}
+  .epts .ps{flex:1 1 auto}
+  .epts .pw{flex:0 0 auto;font-family:var(--data);font-size:9.5px;color:var(--ink-soft)}
+  .comparebar{margin-top:24px;border-top:1px solid var(--rule);padding-top:18px}
+  .comparebar .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;max-width:82ch}
+  .comparebar .err{margin-top:12px}
+  .share{padding:6px 0 4px;max-width:960px}
+  .sk{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px}
+  .sharerow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .sharerow input,.sharerow select{flex:1 1 260px;min-width:0;background:transparent;border:0;
+    border-bottom:1px solid var(--ink);padding:7px 2px;font-family:var(--data);font-size:12px;
+    color:var(--ink);border-radius:0;appearance:none}
+  .sharerow select{font-family:var(--body);font-size:13px;cursor:pointer}
+  .sharerow input:focus,.sharerow select:focus{outline:2px solid var(--verdigris);outline-offset:3px}
+  .combo{position:relative;flex:1 1 300px;min-width:0;display:flex;align-items:center;border-bottom:1px solid var(--ink)}
+  .combo input{flex:1 1 auto;border-bottom:0}
+  .combo input:focus{outline-offset:1px}
+  button.combotog{flex:0 0 auto;background:transparent;border:0;color:var(--ink-soft);cursor:pointer;
+    padding:2px 7px;font-size:11px;border-radius:0;line-height:1}
+  button.combotog:hover{color:var(--verdigris)}
+  ul.combolist{position:absolute;z-index:20;top:100%;left:0;right:0;margin:2px 0 0;padding:0;list-style:none;
+    background:var(--vellum);border:1px solid var(--ink);max-height:264px;overflow:auto;
+    box-shadow:0 8px 22px rgba(27,42,68,.16)}
+  ul.combolist li{display:flex;align-items:baseline;gap:10px;padding:9px 12px;cursor:pointer;
+    border-bottom:1px solid var(--rule)}
+  ul.combolist li:last-child{border-bottom:0}
+  ul.combolist li:hover,ul.combolist li.hi{background:rgba(62,124,110,.13)}
+  .combolist .ce{flex:0 0 auto;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:14px}
+  .combolist .cn{flex:0 1 auto;font-family:var(--display);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .combolist .cd{flex:0 0 auto;margin-left:auto;font-family:var(--data);font-size:9.5px;
+    letter-spacing:.06em;color:var(--ink-soft);white-space:nowrap}
+  .combolist .vide{color:var(--ink-soft);font-size:12.5px;cursor:default}
+  .combolist .vide:hover{background:transparent}
+  .share .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;max-width:80ch}
+  .share .err{margin-top:12px}
+  #syn{margin-top:22px}
+  #syn .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);margin:26px 0 8px;padding-top:16px;border-top:1px solid var(--rule)}
+  #syn .esub{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;line-height:1.55;max-width:88ch}
+  #syn .ed2{font-size:14px;margin:0 0 8px;max-width:88ch}
+  #syn .ed2.vide{color:var(--ink-soft);font-size:13px}
+  .cb2{display:inline-block;width:100%;max-width:170px;height:7px;border:1px solid var(--rule);position:relative;vertical-align:middle}
+  .cb2 i{position:absolute;inset:0 auto 0 0;background:var(--verdigris);opacity:.75}
+  ul.tcl{list-style:none;margin:0 0 10px;padding:0}
+  li.tcx{display:flex;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid var(--rule)}
+  li.tcx:last-child{border-bottom:0}
+  .tcn{flex:0 0 7.4em;font-size:13.5px}
+  .tcb{flex:1 1 auto;min-width:80px;display:flex;flex-direction:column;gap:3px}
+  .tcb .b1,.tcb .b2{height:8px;border:1px solid var(--rule);position:relative}
+  .tcb i{position:absolute;inset:0 auto 0 0}
+  .tcb .b1 i{background:var(--ink);opacity:.8}
+  .tcb .b2 i{background:var(--verdigris);opacity:.85}
+  .tcv{flex:0 0 3.4em;text-align:right;font-family:var(--data);font-size:10px;color:var(--ink-soft);line-height:1.45}
+  .tg{flex:0 0 auto;font-family:var(--data);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
+    padding:4px 8px;border:1px solid var(--rule);border-radius:2px;white-space:nowrap}
+  .tg.cp{border-color:rgba(62,124,110,.5);background:rgba(62,124,110,.09);color:var(--verdigris)}
+  .tg.am{border-color:rgba(166,67,47,.4);background:rgba(166,67,47,.06);color:var(--minium)}
+  .tg.ph{color:var(--ink-soft)}
+  .lg1,.lg2{font-family:var(--data);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+    padding-left:15px;position:relative;margin-left:10px}
+  .lg1::before,.lg2::before{content:"";position:absolute;left:0;top:.35em;width:10px;height:8px;border:1px solid var(--rule)}
+  .lg1::before{background:var(--ink);opacity:.8}
+  .lg2::before{background:var(--verdigris)}
+  .synhead{display:flex;gap:clamp(16px,3vw,40px);align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .synhead .verdict{font-family:var(--display);font-size:clamp(21px,3vw,28px);line-height:1.1}
+  .synhead .sub{font-size:11.5px;color:var(--ink-soft);flex:1 1 200px}
+  ul.synl{list-style:none;margin:0;padding:0}
+  ul.synl li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
+  ul.synl .lg{flex:0 0 3.6em;font-family:var(--glyph);font-size:13px;letter-spacing:.08em}
+  ul.synl .lt{flex:1 1 auto}
+  ul.synl .sub{color:var(--ink-soft);font-family:var(--data);font-size:10px}
+  .amour{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .amour .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px}
+  .amour .lead{font-size:15px;max-width:78ch;margin:6px 0 20px}
+  .amour .note{font-size:11.5px;color:var(--ink-soft);margin:16px 0 0;max-width:80ch}
+  ul.compat{list-style:none;margin:0;padding:0;column-width:290px;column-gap:clamp(24px,4vw,50px)}
+  ul.compat li{display:flex;align-items:center;gap:10px;padding:5px 0;break-inside:avoid}
+  ul.compat .cs{flex:0 0 auto;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:13px}
+  ul.compat .cn{flex:0 0 6.2em;font-size:13px}
+  ul.compat .cb{flex:1 1 auto;height:7px;border:1px solid var(--rule);position:relative}
+  ul.compat .cb i{position:absolute;inset:0 auto 0 0;background:var(--verdigris);opacity:.65}
+  ul.compat li:nth-child(-n+3) .cb i{opacity:1}
+  ul.compat .cv{flex:0 0 2.2em;text-align:right;font-family:var(--data);font-size:10.5px;color:var(--ink-soft)}
+  .synth{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .synth .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+  .synth .top{display:flex;gap:clamp(18px,4vw,46px);align-items:center;flex-wrap:wrap;margin:10px 0 22px}
+  .synth .verdict{font-family:var(--display);font-size:clamp(24px,3.4vw,32px);line-height:1.1}
+  .gaugewrap{flex:1 1 240px;max-width:300px}
+  .gauge{width:100%;height:auto;display:block}
+  .gaugelab{display:flex;justify-content:space-between;font-family:var(--data);font-size:8.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-top:2px}
+  .gaugelab span:nth-child(2){color:var(--verdigris)}
+  .synth-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 clamp(22px,3vw,46px)}
+  @media (max-width:820px){.synth-grid{grid-template-columns:1fr}}
+  .readfull{margin-top:34px;border-top:2px solid var(--ink);padding-top:20px}
+  .readfull .sky{max-width:72ch}
+  .sect-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(26px,4vw,52px)}
+  @media (max-width:820px){.sect-grid{grid-template-columns:1fr}}
+
+  /* ---------- wheel ---------- */
+  .wheel{width:100%;height:auto;display:block}
+  .wheel .ring{fill:none;stroke:var(--ink);stroke-width:1;opacity:.85}
+  .wheel .hair{stroke:var(--ink);stroke-width:.5;opacity:.35}
+  .wheel .spoke{stroke:var(--ink);stroke-width:.6;opacity:.3;stroke-dasharray:2 3}
+  .wheel .axis{stroke:var(--ink);stroke-width:1.2;opacity:.8}
+  .wheel .asp{stroke-width:.7;fill:none;opacity:.5}
+  .wheel .signglyph{font-family:var(--glyph);font-size:15px;fill:var(--ink);opacity:.55;text-anchor:middle;dominant-baseline:central}
+  .wheel .plglyph{font-family:var(--glyph);font-size:17px;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+  .wheel .pldeg{font-family:var(--data);font-size:7px;fill:var(--ink-soft);text-anchor:middle;dominant-baseline:central}
+  .wheel .axlabel{font-family:var(--data);font-size:8.5px;letter-spacing:.12em;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+  .draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.1s ease-out forwards}
+  .fade{opacity:0;animation:fade .6s ease-out .75s forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes fade{to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){
+    .draw{animation:none;stroke-dashoffset:0}
+    .fade{animation:none;opacity:1}
+  }
+  .caption{font-family:var(--data);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);text-align:center;margin-top:10px}
+
+  /* ---------- daily reading ---------- */
+  .datestamp{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--verdigris)}
+  h2.read-title{font-family:var(--display);font-weight:400;font-style:italic;font-size:clamp(26px,4vw,36px);line-height:1.15;margin:8px 0 14px}
+  .sky{font-size:14px;color:var(--ink-soft);border-left:2px solid var(--verdigris);padding-left:14px;margin:0 0 26px}
+  .sect{margin:0 0 22px}
+  .sect h3{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 7px;font-weight:400}
+  .sect p{margin:0;font-size:15.5px}
+  .advice{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:18px 0;margin:22px 0 0;max-width:72ch}
+  .advice .k{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--verdigris);margin-bottom:7px}
+  .advice p{margin:0;font-family:var(--display);font-size:19px;line-height:1.45}
+  .keyword{font-family:var(--data);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-soft);margin-top:16px}
+
+  .periods{display:flex;gap:0;border-bottom:1px solid var(--rule);margin:0 0 16px}
+  .periods button{
+    flex:0 0 auto;background:transparent;border:0;border-bottom:2px solid transparent;
+    font-family:var(--data);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);padding:8px 14px 9px;margin-bottom:-1px;cursor:pointer;
+    transition:color .15s,border-color .15s;
+  }
+  .periods button:first-child{padding-left:0}
+  .periods button:hover{color:var(--ink)}
+  .periods button.on{color:var(--ink);border-bottom-color:var(--verdigris)}
+
+  ol.agenda{list-style:none;margin:0 0 30px;padding:0;border-top:1px solid var(--ink);
+    column-width:330px;column-gap:clamp(26px,4vw,52px)}
+  ol.agenda li{display:flex;gap:12px;align-items:baseline;padding:8px 0;
+    border-bottom:1px solid var(--rule);break-inside:avoid}
+  ol.agenda .ag-d{font-family:var(--data);font-size:10.5px;letter-spacing:.06em;color:var(--verdigris);flex:0 0 4.6em;text-transform:uppercase}
+  ol.agenda .ag-g{font-family:var(--glyph);font-size:13px;flex:0 0 3.4em;letter-spacing:.1em}
+  ol.agenda .ag-t{font-size:13.5px;flex:1 1 auto}
+  .agenda-h{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 8px}
+  .numero{margin-top:0}
+  .numero .head{display:flex;gap:18px;align-items:center}
+  .numero .seal{
+    flex:0 0 76px;height:76px;border:1px solid var(--ink);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-size:34px;line-height:1;
+    box-shadow:0 0 0 3px var(--vellum),0 0 0 4px rgba(27,42,68,.22);
+  }
+  .numero .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+  .numero .nm{font-family:var(--display);font-size:23px;line-height:1.15;margin:5px 0 4px}
+  .numero .kw{font-family:var(--data);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--verdigris)}
+  .numero p.txt{font-size:14.5px;margin:15px 0 18px}
+  .numero .tk{font-family:var(--data);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 8px}
+  ul.tags{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px;padding:0}
+  ul.tags li{font-size:12.5px;line-height:1;padding:6px 10px;border:1px solid var(--rule);border-radius:2px}
+  ul.tags li.tf{border-color:rgba(62,124,110,.45);background:rgba(62,124,110,.07);color:var(--ink)}
+  ul.tags li.tl{border-color:rgba(166,67,47,.35);background:rgba(166,67,47,.05);color:var(--ink)}
+  .numero .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0}
+  .emo{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:.95em;line-height:1}
+  .loading{font-family:var(--data);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+  .loading::after{content:"";animation:dots 1.4s steps(4,end) infinite}
+  @keyframes dots{0%{content:""}25%{content:"·"}50%{content:"· ·"}75%{content:"· · ·"}}
+  .err{border:1px solid var(--minium);padding:14px 16px;font-size:14px;color:var(--minium)}
+  .err button{margin-top:10px}
+
+  /* ---------- tables ---------- */
+  table.eph{width:100%;border-collapse:collapse;font-family:var(--data);font-size:12px}
+  table.eph th{
+    text-align:left;font-weight:400;font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);padding:0 8px 7px 0;border-bottom:1px solid var(--ink);
+  }
+  table.eph td{padding:7px 8px 7px 0;border-bottom:1px solid var(--rule);vertical-align:baseline}
+  table.eph td.gl{font-family:var(--glyph);font-size:15px;width:1.6em}
+  table.eph td.sg{font-family:var(--body);font-size:13px}
+  table.eph .rx{color:var(--minium)}
+  .tablegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(24px,4vw,46px)}
+  details{margin-top:8px}
+  details > summary{
+    font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);cursor:pointer;padding:10px 0;list-style:none;
+  }
+  details > summary::-webkit-details-marker{display:none}
+  details > summary::before{content:"+ ";color:var(--verdigris)}
+  details[open] > summary::before{content:"– "}
+  .foot{font-size:11.5px;color:var(--ink-soft);margin-top:34px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .hidden{display:none !important}
+</style>
+
+<div class="wrap">
+  <!-- ============ SETUP ============ -->
+  <section id="setup">
+    <p class="eyebrow">Registre de naissance</p>
+    <h1 class="title">Ta carte du ciel,<br><em>jour après jour</em></h1>
+    <p class="lede">Entre ton moment de naissance une seule fois. L'app calcule les positions réelles des planètes, ton ascendant et tes maisons, puis rédige chaque matin une lecture bâtie sur les transits du jour appliqués à <em>ta</em> carte — pas au signe solaire de tout le monde.</p>
+
+    <nav class="periods setuptabs hidden" id="setuptabs" aria-label="Mode d'entrée">
+      <button data-t="recents" class="on">Cartes récentes</button>
+      <button data-t="new">Nouvelle carte</button>
+    </nav>
+
+    <div class="setupcols" id="setupcols">
+    <div class="registre">
+      <div class="field">
+        <label for="f-nom">Prénom (facultatif)</label>
+        <input id="f-nom" type="text" autocomplete="off" placeholder="Comment veux-tu être nommé·e">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="f-date">Date de naissance</label>
+          <input id="f-date" type="date">
+        </div>
+        <div class="field">
+          <label for="f-heure">Heure de naissance</label>
+          <input id="f-heure" type="time">
+          <p class="hint">Celle inscrite sur le certificat de naissance, heure locale.</p>
+        </div>
+      </div>
+
+      <div class="check">
+        <input id="f-nohour" type="checkbox">
+        <label for="f-nohour" style="margin:0;font-family:var(--body);font-size:14px;letter-spacing:0;text-transform:none;color:var(--ink-soft)">Je ne connais pas l'heure — calcule sans ascendant ni maisons</label>
+      </div>
+
+      <div class="field">
+        <label for="f-ville">Lieu de naissance</label>
+        <select id="f-ville"></select>
+      </div>
+
+      <div id="manual" class="row hidden">
+        <div class="field">
+          <label for="f-lat">Latitude</label>
+          <input id="f-lat" type="number" step="0.0001" placeholder="45.8833">
+        </div>
+        <div class="field">
+          <label for="f-lon">Longitude</label>
+          <input id="f-lon" type="number" step="0.0001" placeholder="-72.4833">
+        </div>
+        <div class="field">
+          <label for="f-tz">Fuseau horaire (IANA)</label>
+          <input id="f-tz" type="text" placeholder="America/Toronto">
+        </div>
+      </div>
+
+      <p id="setup-err" class="err hidden"></p>
+      <button class="cta" id="go">Dresser la carte</button>
+
+      <div class="reprise">
+        <p class="sk">Tu as déjà un code de carte ?</p>
+        <div class="sharerow">
+          <input id="setupcode" placeholder="Colle ton code ici — il commence souvent par TW, Qm, WW…" aria-label="Code de carte">
+          <button class="cta" id="gocode">Charger</button>
+        </div>
+        <p class="hint">Le code s'obtient avec « Copier mon code », sous la section Vie amoureuse. Un lien terminé par <code>#c=…</code> fonctionne aussi.</p>
+        <p id="setup-err2" class="err hidden"></p>
+      </div>
+    </div>
+
+    <aside class="recents hidden" id="recents"></aside>
+    </div>
+  </section>
+
+  <!-- ============ CHART ============ -->
+  <section id="app" class="hidden">
+    <p class="eyebrow" id="birthline"></p>
+    <h1 class="title" id="whoami"></h1>
+    <p class="intro" id="intro"></p>
+
+    <div class="triad" id="triad"></div>
+
+    <div class="cols">
+      <div id="numblock">
+        <section class="numero" id="numero"></section>
+      </div>
+
+      <div id="wheelblock">
+        <div id="wheelbox"></div>
+        <p class="caption" id="wheelcap"></p>
+      </div>
+    </div>
+
+    <section class="elements" id="elements"></section>
+
+    <section class="reveal" id="reveal"></section>
+
+    <section class="synth" id="synth"></section>
+
+    <section class="amour" id="amour"></section>
+
+    <div class="comparebar">
+      <div class="sharerow">
+        <div class="combo" id="combo">
+          <input id="othercode" role="combobox" aria-expanded="false" aria-controls="combolist"
+                 aria-autocomplete="list" autocomplete="off" aria-label="Carte à comparer"
+                 placeholder="Choisis une carte enregistrée ou colle un code">
+          <button class="combotog hidden" id="combotog" type="button" aria-label="Voir les cartes enregistrées">▾</button>
+          <ul class="combolist hidden" id="combolist" role="listbox" aria-label="Cartes enregistrées"></ul>
+        </div>
+        <button class="ghost" id="docomp">Comparer</button>
+        <button class="ghost" id="cpcode">Copier mon code</button>
+        <button class="ghost hidden" id="cplink">Copier le lien</button>
+      </div>
+      <p class="note" id="sharenote"></p>
+      <p id="share-err" class="err hidden"></p>
+      <div id="syn"></div>
+    </div>
+
+    <section class="readfull">
+      <nav class="periods" id="periods" aria-label="Portée de la lecture">
+        <button data-p="jour" class="on">Jour</button>
+        <button data-p="semaine">Semaine</button>
+        <button data-p="mois">Mois</button>
+        <button data-p="annee">Année</button>
+      </nav>
+      <p class="datestamp" id="today"></p>
+      <div id="reading"></div>
+    </section>
+
+    <hr class="hr-thick">
+    <details open>
+      <summary>Éphéméride</summary>
+      <div class="tablegrid" style="margin-top:14px">
+        <div>
+          <table class="eph" id="natal-tbl"></table>
+        </div>
+        <div>
+          <table class="eph" id="transit-tbl"></table>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Aspects natals</summary>
+      <table class="eph" id="aspect-tbl" style="margin-top:14px"></table>
+    </details>
+
+    <details id="houses-block">
+      <summary>Maisons</summary>
+      <table class="eph" id="house-tbl" style="margin-top:14px"></table>
+    </details>
+
+    <div class="foot">
+      <span id="footnote"></span>
+      <span style="display:flex;gap:10px">
+        <button class="ghost" id="regen">Relire le jour</button>
+        <button class="ghost" id="reset">Changer les données</button>
+      </span>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ========================================================================
+   1. Astronomie — positions écliptiques géocentriques apparentes
+   ======================================================================== */
+const D2R=Math.PI/180, R2D=180/Math.PI;
+const n360=x=>((x%360)+360)%360;
+const sin=d=>Math.sin(d*D2R), cos=d=>Math.cos(d*D2R), tan=d=>Math.tan(d*D2R);
+const asin=x=>Math.asin(Math.max(-1,Math.min(1,x)))*R2D;
+const atan2=(y,x)=>Math.atan2(y,x)*R2D;
+
+function jdFromUTC(dt){
+  let y=dt.getUTCFullYear(), m=dt.getUTCMonth()+1;
+  const d=dt.getUTCDate();
+  const frac=(dt.getUTCHours()+dt.getUTCMinutes()/60+dt.getUTCSeconds()/3600)/24;
+  if(m<=2){y-=1;m+=12;}
+  const A=Math.floor(y/100), B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5+frac;
+}
+const centuries=jd=>(jd-2451545.0)/36525;
+const obliquity=T=>23.439291-0.0130042*T-1.64e-7*T*T+5.04e-7*T*T*T;
+
+function gmst(jd){
+  const T=centuries(jd);
+  return n360(280.46061837+360.98564736629*(jd-2451545.0)+0.000387933*T*T-T*T*T/38710000);
+}
+
+/* --- Soleil (Meeus 25) --- */
+function sunLon(jd){
+  const T=centuries(jd);
+  const L0=280.46646+36000.76983*T+0.0003032*T*T;
+  const M=357.52911+35999.05029*T-0.0001537*T*T;
+  const C=(1.914602-0.004817*T-0.000014*T*T)*sin(M)+(0.019993-0.000101*T)*sin(2*M)+0.000289*sin(3*M);
+  const om=125.04-1934.136*T;
+  return n360(L0+C-0.00569-0.00478*sin(om));
+}
+
+/* --- Lune (Meeus 47, tronquée) --- */
+const MOON_T=[
+ [0,0,1,0,6288774],[2,0,-1,0,1274027],[2,0,0,0,658314],[0,0,2,0,213618],
+ [0,1,0,0,-185116],[0,0,0,2,-114332],[2,0,-2,0,58793],[2,-1,-1,0,57066],
+ [2,0,1,0,53322],[2,-1,0,0,45758],[0,1,-1,0,-40923],[1,0,0,0,-34720],
+ [0,1,1,0,-30383],[2,0,0,-2,15327],[0,0,1,2,-12528],[0,0,1,-2,10980],
+ [4,0,-1,0,10675],[0,0,3,0,10034],[4,0,-2,0,8548],[2,1,-1,0,-7888],
+ [2,1,0,0,-6766],[1,0,-1,0,-5163],[1,1,0,0,4987],[2,-1,1,0,4036],
+ [2,0,2,0,3994],[4,0,0,0,3861],[2,0,-3,0,3665],[0,1,-2,0,-2689],
+ [2,0,-1,2,-2602],[2,-1,-2,0,2390],[1,0,1,0,-2348],[2,-2,0,0,2236],
+ [0,1,2,0,-2120],[0,2,0,0,-2069],[2,-2,-1,0,2048],[2,0,1,-2,-1773],
+ [2,0,0,2,-1595],[4,-1,-1,0,1215],[0,0,2,2,-1110],[3,0,-1,0,-892],
+ [2,1,1,0,-810],[4,-1,-2,0,759],[0,2,-1,0,-713],[2,2,-1,0,-700]
+];
+function moonLon(jd){
+  const T=centuries(jd);
+  const Lp=218.3164477+481267.88123421*T-0.0015786*T*T+T*T*T/538841-T*T*T*T/65194000;
+  const D=297.8501921+445267.1114034*T-0.0018819*T*T+T*T*T/545868-T*T*T*T/113065000;
+  const M=357.5291092+35999.0502909*T-0.0001536*T*T+T*T*T/24490000;
+  const Mp=134.9633964+477198.8675055*T+0.0087414*T*T+T*T*T/69699-T*T*T*T/14712000;
+  const F=93.2720950+483202.0175233*T-0.0036539*T*T-T*T*T/3526000+T*T*T*T/863310000;
+  const E=1-0.002516*T-0.0000074*T*T;
+  let s=0;
+  for(const [d,m,mp,f,c] of MOON_T){
+    let e=1; if(Math.abs(m)===1)e=E; else if(Math.abs(m)===2)e=E*E;
+    s+=c*e*sin(d*D+m*M+mp*Mp+f*F);
+  }
+  const A1=119.75+131.849*T, A2=53.09+479264.290*T;
+  s+=3958*sin(A1)+1962*sin(Lp-F)+318*sin(A2);
+  return n360(Lp+s/1e6);
+}
+function moonNode(jd){
+  const T=centuries(jd);
+  return n360(125.0445479-1934.1362891*T+0.0020754*T*T+T*T*T/467441);
+}
+
+/* --- Planètes : éléments képlériens JPL (Standish, 1800–2050) --- */
+const PL={
+ mercure:[0.38709927,0.20563593,7.00497902,252.25032350,77.45779628,48.33076593,
+          0.00000037,0.00001906,-0.00594749,149472.67411175,0.16047689,-0.12534081],
+ venus:  [0.72333566,0.00677672,3.39467605,181.97909950,131.60246718,76.67984255,
+          0.00000390,-0.00004107,-0.00078890,58517.81538729,0.00268329,-0.27769418],
+ terre:  [1.00000261,0.01671123,-0.00001531,100.46457166,102.93768193,0.0,
+          0.00000562,-0.00004392,-0.01294668,35999.37244981,0.32327364,0.0],
+ mars:   [1.52371034,0.09339410,1.84969142,-4.55343205,-23.94362959,49.55953891,
+          0.00001847,0.00007882,-0.00813131,19140.30268499,0.44441088,-0.29257343],
+ jupiter:[5.20288700,0.04838624,1.30439695,34.39644051,14.72847983,100.47390909,
+          -0.00011607,-0.00013253,-0.00183714,3034.74612775,0.21252668,0.20469106],
+ saturne:[9.53667594,0.05386179,2.48599187,49.95424423,92.59887831,113.66242448,
+          -0.00125060,-0.00050991,0.00193609,1222.49362201,-0.41897216,-0.28867794],
+ uranus: [19.18916464,0.04725744,0.77263783,313.23810451,170.95427630,74.01692503,
+          -0.00196176,-0.00004397,-0.00242939,428.48202785,0.40805281,0.04240589],
+ neptune:[30.06992276,0.00859048,1.77004347,-55.12002969,44.96476227,131.78422574,
+          0.00026291,0.00005105,0.00035372,218.45945325,-0.32241464,-0.00508664],
+ pluton: [39.48211675,0.24882730,17.14001206,238.92903833,224.06891629,110.30393684,
+          -0.00031596,0.00005170,0.00004818,145.20780515,-0.04062942,-0.01183482]
+};
+function helio(name,T){
+  const e0=PL[name];
+  const a=e0[0]+e0[6]*T, ec=e0[1]+e0[7]*T, I=e0[2]+e0[8]*T,
+        L=e0[3]+e0[9]*T, wb=e0[4]+e0[10]*T, om=e0[5]+e0[11]*T;
+  const w=wb-om;
+  let M=n360(L-wb); if(M>180)M-=360;
+  const es=ec*R2D;
+  let E=M+es*sin(M);
+  for(let i=0;i<8;i++){
+    const dM=M-(E-es*sin(E));
+    E+=dM/(1-ec*cos(E));
+  }
+  const xp=a*(cos(E)-ec), yp=a*Math.sqrt(1-ec*ec)*sin(E);
+  const cw=cos(w),sw=sin(w),co=cos(om),so=sin(om),ci=cos(I),si=sin(I);
+  return {
+    x:(cw*co-sw*so*ci)*xp+(-sw*co-cw*so*ci)*yp,
+    y:(cw*so+sw*co*ci)*xp+(-sw*so+cw*co*ci)*yp,
+    z:(sw*si)*xp+(cw*si)*yp
+  };
+}
+function planetLon(name,jd){
+  const T=centuries(jd);
+  const p=helio(name,T), e=helio('terre',T);
+  return n360(atan2(p.y-e.y,p.x-e.x));
+}
+
+const BODIES=['soleil','lune','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton','noeud'];
+function bodyLon(b,jd){
+  if(b==='soleil')return sunLon(jd);
+  if(b==='lune')return moonLon(jd);
+  if(b==='noeud')return moonNode(jd);
+  return planetLon(b,jd);
+}
+function positions(jd){
+  const out={};
+  for(const b of BODIES){
+    const l=bodyLon(b,jd), l2=bodyLon(b,jd+1);
+    let d=l2-l; if(d>180)d-=360; if(d<-180)d+=360;
+    out[b]={lon:l,retro:d<0,speed:d};
+  }
+  return out;
+}
+
+/* --- Ascendant, MC, maisons --- */
+function raToEcl(ra,eps){ return n360(atan2(sin(ra),cos(ra)*cos(eps))); }
+function angles(jd,lat,lon){
+  const eps=obliquity(centuries(jd));
+  const ramc=n360(gmst(jd)+lon);
+  const mc=raToEcl(ramc,eps);
+  const asc=n360(atan2(cos(ramc),-(sin(ramc)*cos(eps)+tan(lat)*sin(eps))));
+  return {ramc,mc,asc,eps};
+}
+function placidus(ramc,lat,eps){
+  // 11e et 12e : arc diurne (90+AD) découpé en tiers depuis le MC
+  const above=(frac)=>{
+    let l=raToEcl(n360(ramc+frac*90),eps);
+    for(let i=0;i<12;i++){
+      const dec=asin(sin(eps)*sin(l));
+      const t=tan(lat)*tan(dec);
+      if(Math.abs(t)>=1)return null;
+      const ad=asin(t);
+      l=raToEcl(n360(ramc+frac*(90+ad)),eps);
+    }
+    return l;
+  };
+  // 2e et 3e : arc nocturne (90-AD) découpé en tiers depuis le FC
+  const below=(frac)=>{
+    let l=raToEcl(n360(ramc+180-frac*90),eps);
+    for(let i=0;i<12;i++){
+      const dec=asin(sin(eps)*sin(l));
+      const t=tan(lat)*tan(dec);
+      if(Math.abs(t)>=1)return null;
+      const ad=asin(t);
+      l=raToEcl(n360(ramc+180-frac*(90-ad)),eps);
+    }
+    return l;
+  };
+  const c11=above(1/3), c12=above(2/3), c3=below(1/3), c2=below(2/3);
+  if([c11,c12,c2,c3].some(v=>v===null))return null;
+  return {c11,c12,c2,c3};
+}
+function houses(jd,lat,lon,system){
+  const A=angles(jd,lat,lon);
+  const c=new Array(12);
+  if(system==='signes'){
+    const start=Math.floor(A.asc/30)*30;
+    for(let i=0;i<12;i++)c[i]=n360(start+i*30);
+  }else{
+    const p=placidus(A.ramc,lat,A.eps);
+    if(p){
+      c[0]=A.asc;c[1]=p.c2;c[2]=p.c3;c[3]=n360(A.mc+180);
+      c[4]=n360(p.c11+180);c[5]=n360(p.c12+180);
+      c[6]=n360(A.asc+180);c[7]=n360(p.c2+180);c[8]=n360(p.c3+180);
+      c[9]=A.mc;c[10]=p.c11;c[11]=p.c12;
+    }else{
+      for(let i=0;i<12;i++)c[i]=n360(A.asc+i*30);
+    }
+  }
+  return {cusps:c,asc:A.asc,mc:A.mc};
+}
+function houseOf(lon,cusps){
+  for(let i=0;i<12;i++){
+    const a=cusps[i], b=cusps[(i+1)%12];
+    const span=n360(b-a), off=n360(lon-a);
+    if(off<span||span===0)return i+1;
+  }
+  return 1;
+}
+
+/* ========================================================================
+   2. Vocabulaire
+   ======================================================================== */
+const SIGNS=['Bélier','Taureau','Gémeaux','Cancer','Lion','Vierge','Balance','Scorpion','Sagittaire','Capricorne','Verseau','Poissons'];
+const SIGN_GL=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+const SIGN_EMO=['♈️','♉️','♊️','♋️','♌️','♍️','♎️','♏️','♐️','♑️','♒️','♓️'];
+const NAMES={soleil:'Soleil',lune:'Lune',mercure:'Mercure',venus:'Vénus',mars:'Mars',jupiter:'Jupiter',saturne:'Saturne',uranus:'Uranus',neptune:'Neptune',pluton:'Pluton',noeud:'Nœud lunaire'};
+const GLYPH={soleil:'☉',lune:'☽',mercure:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturne:'♄',uranus:'♅',neptune:'♆',pluton:'♇',noeud:'☊'};
+const ASPECTS=[{n:'Conjonction',a:0,g:'☌',c:'#3E7C6E'},{n:'Sextile',a:60,g:'⚹',c:'#3E7C6E'},
+               {n:'Carré',a:90,g:'□',c:'#A6432F'},{n:'Trigone',a:120,g:'△',c:'#3E7C6E'},
+               {n:'Opposition',a:180,g:'☍',c:'#A6432F'}];
+const signIdx=l=>Math.floor(n360(l)/30);
+const signOf=l=>SIGNS[signIdx(l)];
+const signEmo=l=>SIGN_EMO[signIdx(l)];
+const emoTag=l=>`<span class="emo">${SIGN_EMO[signIdx(l)]}</span>`;
+const signLab=l=>emoTag(l)+' '+SIGNS[signIdx(l)];
+function degStr(l){
+  const d=n360(l)%30, deg=Math.floor(d), min=Math.round((d-deg)*60);
+  return (min===60?deg+1:deg)+'°'+String(min===60?0:min).padStart(2,'0')+'′';
+}
+const posStr=l=>degStr(l)+' '+signOf(l);
+
+function findAspects(A,B,orbLum,orb,sameSet){
+  const res=[];
+  const ka=Object.keys(A), kb=Object.keys(B);
+  for(let i=0;i<ka.length;i++){
+    for(let j=sameSet?i+1:0;j<kb.length;j++){
+      const p=ka[i], q=kb[j];
+      if(sameSet&&p===q)continue;
+      let d=Math.abs(n360(A[p].lon-B[q].lon)); if(d>180)d=360-d;
+      for(const asp of ASPECTS){
+        const lum=['soleil','lune'].includes(p)||['soleil','lune'].includes(q);
+        const o=lum?orbLum:orb;
+        const diff=Math.abs(d-asp.a);
+        if(diff<=o){res.push({p,q,asp,orb:diff,exact:diff<1});break;}
+      }
+    }
+  }
+  return res.sort((x,y)=>x.orb-y.orb);
+}
+function moonPhase(sl,ml){
+  const d=n360(ml-sl);
+  if(d<22.5)return'nouvelle lune';
+  if(d<67.5)return'premier croissant';
+  if(d<112.5)return'premier quartier';
+  if(d<157.5)return'lune gibbeuse croissante';
+  if(d<202.5)return'pleine lune';
+  if(d<247.5)return'lune gibbeuse décroissante';
+  if(d<292.5)return'dernier quartier';
+  if(d<337.5)return'dernier croissant';
+  return'nouvelle lune';
+}
+
+/* ========================================================================
+   3. Lieux et fuseaux
+   ======================================================================== */
+const CITIES=[
+ ['Drummondville, QC',45.8833,-72.4833,'America/Toronto'],
+ ['Montréal, QC',45.5089,-73.5617,'America/Toronto'],
+ ['Québec, QC',46.8139,-71.2080,'America/Toronto'],
+ ['Laval, QC',45.6066,-73.7124,'America/Toronto'],
+ ['Longueuil, QC',45.5312,-73.5183,'America/Toronto'],
+ ['Gatineau, QC',45.4765,-75.7013,'America/Toronto'],
+ ['Sherbrooke, QC',45.4000,-71.8991,'America/Toronto'],
+ ['Trois-Rivières, QC',46.3432,-72.5432,'America/Toronto'],
+ ['Saguenay, QC',48.4280,-71.0685,'America/Toronto'],
+ ['Lévis, QC',46.8033,-71.1779,'America/Toronto'],
+ ['Granby, QC',45.4001,-72.7333,'America/Toronto'],
+ ['Saint-Jean-sur-Richelieu, QC',45.3073,-73.2622,'America/Toronto'],
+ ['Saint-Hyacinthe, QC',45.6300,-72.9500,'America/Toronto'],
+ ['Victoriaville, QC',46.0500,-71.9667,'America/Toronto'],
+ ['Shawinigan, QC',46.5667,-72.7500,'America/Toronto'],
+ ['Joliette, QC',46.0167,-73.4500,'America/Toronto'],
+ ['Sorel-Tracy, QC',46.0333,-73.1167,'America/Toronto'],
+ ['Salaberry-de-Valleyfield, QC',45.2500,-74.1333,'America/Toronto'],
+ ['Thetford Mines, QC',46.1000,-71.3000,'America/Toronto'],
+ ['Rimouski, QC',48.4489,-68.5236,'America/Toronto'],
+ ['Rivière-du-Loup, QC',47.8333,-69.5333,'America/Toronto'],
+ ['Matane, QC',48.8500,-67.5333,'America/Toronto'],
+ ['Gaspé, QC',48.8333,-64.4833,'America/Toronto'],
+ ['Baie-Comeau, QC',49.2167,-68.1500,'America/Toronto'],
+ ['Sept-Îles, QC',50.2000,-66.3833,'America/Toronto'],
+ ['Alma, QC',48.5500,-71.6500,'America/Toronto'],
+ ['Val-d\'Or, QC',48.0972,-77.7972,'America/Toronto'],
+ ['Rouyn-Noranda, QC',48.2333,-79.0167,'America/Toronto'],
+ ['Toronto, ON',43.6532,-79.3832,'America/Toronto'],
+ ['Ottawa, ON',45.4215,-75.6972,'America/Toronto'],
+ ['Moncton, NB',46.0878,-64.7782,'America/Moncton'],
+ ['Halifax, NS',44.6488,-63.5752,'America/Halifax'],
+ ['Winnipeg, MB',49.8951,-97.1384,'America/Winnipeg'],
+ ['Calgary, AB',51.0447,-114.0719,'America/Edmonton'],
+ ['Edmonton, AB',53.5461,-113.4938,'America/Edmonton'],
+ ['Vancouver, BC',49.2827,-123.1207,'America/Vancouver'],
+ ['New York, USA',40.7128,-74.0060,'America/New_York'],
+ ['Boston, USA',42.3601,-71.0589,'America/New_York'],
+ ['Miami, USA',25.7617,-80.1918,'America/New_York'],
+ ['Paris, France',48.8566,2.3522,'Europe/Paris'],
+ ['Lyon, France',45.7640,4.8357,'Europe/Paris'],
+ ['Marseille, France',43.2965,5.3698,'Europe/Paris'],
+ ['Toulouse, France',43.6047,1.4442,'Europe/Paris'],
+ ['Bordeaux, France',44.8378,-0.5792,'Europe/Paris'],
+ ['Nantes, France',47.2184,-1.5536,'Europe/Paris'],
+ ['Lille, France',50.6292,3.0573,'Europe/Paris'],
+ ['Nice, France',43.7102,7.2620,'Europe/Paris'],
+ ['Strasbourg, France',48.5734,7.7521,'Europe/Paris'],
+ ['Rennes, France',48.1173,-1.6778,'Europe/Paris'],
+ ['Bruxelles, Belgique',50.8503,4.3517,'Europe/Brussels'],
+ ['Genève, Suisse',46.2044,6.1432,'Europe/Zurich'],
+ ['Port-au-Prince, Haïti',18.5944,-72.3074,'America/Port-au-Prince'],
+ ['Casablanca, Maroc',33.5731,-7.5898,'Africa/Casablanca'],
+ ['Rabat, Maroc',34.0209,-6.8416,'Africa/Casablanca'],
+ ['Alger, Algérie',36.7538,3.0588,'Africa/Algiers'],
+ ['Tunis, Tunisie',36.8065,10.1815,'Africa/Tunis'],
+ ['Dakar, Sénégal',14.7167,-17.4677,'Africa/Dakar'],
+ ['Abidjan, Côte d\'Ivoire',5.3600,-4.0083,'Africa/Abidjan'],
+ ['Beyrouth, Liban',33.8938,35.5018,'Asia/Beirut'],
+ ['Londres, Royaume-Uni',51.5074,-0.1278,'Europe/London'],
+ ['Madrid, Espagne',40.4168,-3.7038,'Europe/Madrid'],
+ ['Rome, Italie',41.9028,12.4964,'Europe/Rome'],
+ ['Lisbonne, Portugal',38.7223,-9.1393,'Europe/Lisbon'],
+ ['Berlin, Allemagne',52.5200,13.4050,'Europe/Berlin']
+];
+function tzOffsetMin(date,tz){
+  const dtf=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,
+    year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const p={};
+  for(const x of dtf.formatToParts(date))p[x.type]=x.value;
+  let h=parseInt(p.hour,10); if(h===24)h=0;
+  const asUTC=Date.UTC(+p.year,p.month-1,+p.day,h,+p.minute,+p.second);
+  return (asUTC-date.getTime())/60000;
+}
+function localToUTC(y,mo,d,h,mi,tz){
+  const naive=Date.UTC(y,mo-1,d,h,mi,0);
+  let g=naive;
+  for(let i=0;i<3;i++) g=naive-tzOffsetMin(new Date(g),tz)*60000;
+  return new Date(g);
+}
+
+/* ========================================================================
+   4. Stockage
+   ======================================================================== */
+const mem={};
+const store={
+  async get(k){
+    try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null;}
+    catch(e){return mem[k]!==undefined?mem[k]:null;}
+  },
+  async set(k,v){
+    mem[k]=v;
+    try{await window.storage.set(k,JSON.stringify(v));}catch(e){}
+  },
+  async del(k){
+    delete mem[k];
+    try{await window.storage.delete(k);}catch(e){}
+  }
+};
+
+/* ========================================================================
+   5. Roue gravée
+   ======================================================================== */
+function drawWheel(natal,hs,knownTime,aspects){
+  const S=440,c=S/2;
+  const R1=c-6, R2=c-34, R3=c-46, R4=c-118, R5=c-132;
+  const rot = knownTime? hs.asc : 0;
+  const pt=(lon,r)=>{
+    const a=(180+(n360(lon)-rot))*D2R;
+    return [c+r*Math.cos(a), c-r*Math.sin(a)];
+  };
+  let s=`<svg class="wheel" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Roue de la carte du ciel">`;
+  const circ=r=>2*Math.PI*r;
+  s+=`<circle class="ring draw" style="--len:${circ(R1)}" cx="${c}" cy="${c}" r="${R1}"/>`;
+  s+=`<circle class="ring draw" style="--len:${circ(R2)}" cx="${c}" cy="${c}" r="${R2}"/>`;
+  s+=`<circle class="hair draw" style="--len:${circ(R3)}" cx="${c}" cy="${c}" r="${R3}"/>`;
+  s+=`<circle class="hair draw" style="--len:${circ(R4)}" cx="${c}" cy="${c}" r="${R4}"/>`;
+
+  // graduations 1° / 5° / 30°
+  for(let d=0;d<360;d++){
+    const len = d%30===0? (R1-R2) : (d%5===0? 8 : 4);
+    const [x1,y1]=pt(d,R2), [x2,y2]=pt(d,R2+len);
+    s+=`<line class="hair" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }
+  s+=`<g class="fade">`;
+  for(let i=0;i<12;i++){
+    const [gx,gy]=pt(i*30+15,(R1+R2)/2);
+    s+=`<text class="signglyph" x="${gx.toFixed(1)}" y="${gy.toFixed(1)}">${SIGN_GL[i]}</text>`;
+  }
+  // maisons
+  if(knownTime){
+    for(let i=0;i<12;i++){
+      const cu=hs.cusps[i];
+      const isAxis=(i===0||i===3||i===6||i===9);
+      const [x1,y1]=pt(cu,R4), [x2,y2]=pt(cu,R2);
+      s+=`<line class="${isAxis?'axis':'spoke'}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+      const [nx,ny]=pt(cu+ (n360(hs.cusps[(i+1)%12]-cu)||30)/2, R4+11);
+      s+=`<text class="pldeg" x="${nx.toFixed(1)}" y="${ny.toFixed(1)}">${i+1}</text>`;
+    }
+    const marks=[[hs.asc,'AC'],[n360(hs.asc+180),'DC'],[hs.mc,'MC'],[n360(hs.mc+180),'FC']];
+    for(const [lon,lab] of marks){
+      const [x,y]=pt(lon,R1-16);
+      s+=`<text class="axlabel" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${lab}</text>`;
+    }
+  }
+  // aspects au centre
+  for(const a of aspects.slice(0,22)){
+    const [x1,y1]=pt(natal[a.p].lon,R5), [x2,y2]=pt(natal[a.q].lon,R5);
+    s+=`<line class="asp" stroke="${a.asp.c}" ${a.asp.a===0?'stroke-dasharray="2 2"':''} x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }
+  // planètes, avec anti-collision simple
+  const placed=[];
+  for(const b of BODIES){
+    let lon=natal[b].lon, r=R3-16;
+    for(let k=0;k<40;k++){
+      const clash=placed.some(p=>{let d=Math.abs(n360(p.lon-lon));if(d>180)d=360-d;return d<7.5&&Math.abs(p.r-r)<12;});
+      if(!clash)break;
+      r-=13;
+      if(r<R4+14)r=R3-16;
+    }
+    placed.push({lon,r});
+    const [x,y]=pt(lon,r);
+    const [tx,ty]=pt(lon,r-14);
+    const [lx,ly]=pt(natal[b].lon,R3), [mx,my]=pt(natal[b].lon,R3-4);
+    s+=`<line class="hair" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}"/>`;
+    s+=`<text class="plglyph" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${GLYPH[b]}</text>`;
+    s+=`<text class="pldeg" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}">${Math.floor(n360(natal[b].lon)%30)}°${natal[b].retro?' ℞':''}</text>`;
+  }
+  s+=`</g></svg>`;
+  return s;
+}
+
+/* ========================================================================
+   5bis. Numérologie — chemin de vie et cycles personnels
+   ======================================================================== */
+const MASTERS=[11,22,33];
+function reduceNum(n){
+  while(n>9&&!MASTERS.includes(n))n=String(n).split('').reduce((a,c)=>a+ +c,0);
+  return n;
+}
+function lifePath(y,m,d){
+  return reduceNum(reduceNum(m)+reduceNum(d)+reduceNum(y));
+}
+function reduceFull(n){while(n>9)n=String(n).split('').reduce((a,c)=>a+ +c,0);return n;}
+const personalYear=(m,d,Y)=>reduceFull(reduceFull(m)+reduceFull(d)+reduceFull(Y));
+const personalMonth=(py,M)=>reduceFull(py+reduceFull(M));
+const personalDay=(pm,D)=>reduceFull(pm+reduceFull(D));
+
+const LIFEPATH={
+ 1:{nm:'L\'initiateur',kw:'Autonomie, décision',
+    tx:'Tu fonctionnes mieux quand tu décides toi-même de la direction, et mal quand on te l\'impose. Ta force est de démarrer ce que personne n\'ose commencer. L\'envers : la difficulté à déléguer, et l\'impatience envers ceux qui avancent moins vite.'},
+ 2:{nm:'Le lien',kw:'Coopération, mesure',
+    tx:'Tu perçois les rapports de force et les non-dits avant les autres, ce qui te rend précieux en médiation. Tu construis mieux à deux que seul. L\'envers : tu t\'effaces pour préserver la paix, jusqu\'à ne plus savoir ce que tu veux.'},
+ 3:{nm:'L\'expression',kw:'Parole, création',
+    tx:'Tu penses en parlant et en créant ; ce qui reste à l\'intérieur ne prend jamais forme. Ton aisance sociale ouvre des portes que le mérite seul n\'ouvrirait pas. L\'envers : la dispersion, et la tentation de séduire plutôt que d\'approfondir.'},
+ 4:{nm:'La construction',kw:'Méthode, durée',
+    tx:'Tu bâtis lentement des choses qui tiennent, là où d\'autres accumulent des débuts. La contrainte ne te freine pas, elle te structure. L\'envers : la rigidité, et la difficulté à changer de plan quand le plan est mauvais.'},
+ 5:{nm:'Le mouvement',kw:'Liberté, adaptation',
+    tx:'Tu apprends vite, tu t\'ennuies vite, et l\'enfermement te coûte plus cher qu\'à quiconque. Le changement est ton terrain naturel, pas ton accident. L\'envers : commencer beaucoup, terminer peu, et confondre fuite et liberté.'},
+ 6:{nm:'La responsabilité',kw:'Soin, équilibre',
+    tx:'On vient te chercher pour arbitrer, réparer, tenir le cadre — et tu réponds presque toujours présent. Tu as un sens juste de ce qui est équitable. L\'envers : porter ce qui ne t\'appartient pas, et t\'épuiser à vouloir arranger les autres.'},
+ 7:{nm:'La recherche',kw:'Analyse, retrait',
+    tx:'Tu as besoin de comprendre avant d\'adhérer, et le retrait n\'est pas chez toi une fuite mais une méthode. Ta lucidité voit les failles que l\'enthousiasme collectif ignore. L\'envers : l\'isolement, et le doute qui repousse indéfiniment le passage à l\'acte.'},
+ 8:{nm:'La puissance',kw:'Ambition, matière',
+    tx:'Les questions d\'argent, de pouvoir et de structure te reviennent toute la vie — inutile de faire semblant qu\'elles t\'indiffèrent. Tu sais transformer une idée en organisation. L\'envers : mesurer ta valeur à des résultats, et écraser sans t\'en rendre compte.'},
+ 9:{nm:'Le dépassement',kw:'Ouverture, lâcher-prise',
+    tx:'Tu vois large, tu t\'attaches aux causes plus qu\'aux possessions, et tu traverses des fins de cycle plus souvent que la moyenne. Tu donnes facilement. L\'envers : le sacrifice qui devient une identité, et la difficulté à réclamer ta part.'},
+ 11:{nm:'L\'inspiration',kw:'Intuition, tension',
+    tx:'Tu captes des choses avant de pouvoir les justifier, ce qui te rend juste souvent et crédible rarement. Nombre maître : forte exigence intérieure, forte tension nerveuse. L\'envers : l\'idéal si haut qu\'il paralyse, et l\'hypersensibilité au climat ambiant.'},
+ 22:{nm:'Le bâtisseur',kw:'Vision, échelle',
+    tx:'Tu vois grand et tu sais exécuter — la combinaison est rare et lourde à porter. Nombre maître : la capacité de construire du concret à partir d\'une vision abstraite. L\'envers : la pression de l\'ampleur, qui fait remettre le démarrage à plus tard.'},
+ 33:{nm:'Le passeur',kw:'Transmission, charge',
+    tx:'Tu transmets, tu formes, tu prends soin à une échelle qui dépasse le cercle proche. Nombre maître : le plus exigeant, rarement vécu en plein. L\'envers : la charge des autres portée jusqu\'à l\'oubli complet de toi.'}};
+const TRAITS={
+ 1:{f:['Indépendance','Initiative','Volonté','Originalité','Cran'],
+    l:['Impatience','Orgueil','Autoritarisme','Mal à déléguer']},
+ 2:{f:['Diplomatie','Écoute','Loyauté','Sens des rapports','Patience'],
+    l:['Hésitation','Dépendance affective','Susceptibilité','Fuite du conflit']},
+ 3:{f:['Expression','Créativité','Optimisme','Charme','Sociabilité'],
+    l:['Dispersion','Superficialité','Exagération','Peur du jugement']},
+ 4:{f:['Méthode','Fiabilité','Endurance','Sens pratique','Franchise'],
+    l:['Rigidité','Entêtement','Peur du changement','Sécheresse']},
+ 5:{f:['Adaptabilité','Curiosité','Vivacité','Audace','Débrouillardise'],
+    l:['Instabilité','Impulsivité','Excès','Engagement difficile']},
+ 6:{f:['Responsabilité','Loyauté','Générosité','Sens du beau','Protection'],
+    l:['Ingérence','Sacrifice de soi','Perfectionnisme moral','Culpabilité']},
+ 7:{f:['Analyse','Lucidité','Concentration','Esprit libre','Profondeur'],
+    l:['Isolement','Méfiance','Froideur apparente','Doute paralysant']},
+ 8:{f:['Ambition','Organisation','Autorité','Résilience','Réalisme'],
+    l:['Autoritarisme','Matérialisme','Dureté','Besoin de contrôle']},
+ 9:{f:['Empathie','Largeur de vues','Générosité','Idéalisme','Sens des fins'],
+    l:['Sacrifice mal placé','Nostalgie','Fuite dans l\'abstrait','Mal à recevoir']},
+ 11:{f:['Intuition','Inspiration','Finesse','Charisme discret','Idéal élevé'],
+     l:['Tension nerveuse','Hypersensibilité','Doute de soi','Idéal paralysant']},
+ 22:{f:['Vision','Exécution','Ténacité','Sang-froid','Ampleur'],
+     l:['Pression intérieure','Démarrage retardé','Rigidité','Surmenage']},
+ 33:{f:['Compassion','Transmission','Dévouement','Chaleur','Sens du collectif'],
+     l:['Oubli de soi','Charge excessive','Idéalisme','Limites floues']}};
+const CYCLE={
+ 1:'Départ. On sème, on décide, on prend l\'initiative — mauvais moment pour attendre.',
+ 2:'Patience et association. Les choses mûrissent sans qu\'on les voie bouger.',
+ 3:'Expression et contacts. Ce qui se dit et se montre avance plus que ce qui se calcule.',
+ 4:'Travail et structure. Peu de spectacle, beaucoup de fondations.',
+ 5:'Mouvement et imprévu. Le plan change ; l\'ouverture rapporte plus que le contrôle.',
+ 6:'Responsabilités et liens. La famille, le foyer, les engagements reprennent le devant.',
+ 7:'Recul et analyse. Période intérieure — on comprend plus qu\'on ne produit.',
+ 8:'Concrétisation. Argent, pouvoir, résultats : ce qui a été bâti se monnaie.',
+ 9:'Achèvement. On termine, on solde, on fait de la place pour le cycle suivant.'};
+
+function renderNumero(){
+  const p=CHART.profile;
+  const [Y,M,D]=p.date.split('-').map(Number);
+  const lp=lifePath(Y,M,D);
+  const info=LIFEPATH[lp];
+  const now=new Date();
+  const py=personalYear(M,D,now.getFullYear());
+  const pm=personalMonth(py,now.getMonth()+1);
+  const pd=personalDay(pm,now.getDate());
+  const rows=[['Année personnelle',py],['Mois personnel',pm],['Jour personnel',pd]];
+  $('numero').innerHTML=
+    `<p class="k">Chemin de vie</p>
+     <div class="head">
+       <div class="seal">${lp}</div>
+       <div><div class="nm">${info.nm}</div><div class="kw">${info.kw}</div></div>
+     </div>
+     <p class="txt">${info.tx}</p>
+     <p class="tk">Traits dominants</p>
+     <ul class="tags">${TRAITS[lp].f.map(t=>`<li class="tf">${t}</li>`).join('')}</ul>
+     <p class="tk">Points de tension</p>
+     <ul class="tags">${TRAITS[lp].l.map(t=>`<li class="tl">${t}</li>`).join('')}</ul>
+     <table class="eph"><tr><th>Cycle</th><th>N°</th><th>Tonalité</th></tr>`+
+     rows.map(([k,v])=>`<tr><td class="sg">${k}</td><td>${v}</td><td class="sg">${CYCLE[v]}</td></tr>`).join('')+
+     `</table>
+     <p class="note">Réduction théosophique du ${D}/${M}/${Y}, nombres maîtres 11, 22 et 33 conservés.
+      Les cycles personnels suivent l'année civile.</p>`;
+  return lp;
+}
+
+/* --- introduction : âge et raison d'être selon la date --- */
+function ageDe(d){
+  const b=new Date(d+'T12:00:00'), n=new Date();
+  let a=n.getFullYear()-b.getFullYear();
+  const m=n.getMonth()-b.getMonth();
+  if(m<0||(m===0&&n.getDate()<b.getDate()))a--;
+  return a;
+}
+const SIGNE_POUR=[
+ 'attaquer avant de calculer, et ouvrir des routes que d\'autres emprunteront ensuite',
+ 'avancer lentement et ne rien lâcher de ce que tu as construit',
+ 'relier des idées et des gens que rien ne destinait à se croiser',
+ 'protéger, garder la mémoire, et fabriquer du foyer là où tu passes',
+ 'créer au grand jour et assumer d\'être regardé',
+ 'réparer, ajuster, rendre utilisable ce qui ne l\'était pas',
+ 'chercher l\'équilibre entre des forces qui ne veulent pas s\'entendre',
+ 'aller au fond, là où les autres s\'arrêtent au vernis',
+ 'élargir le cadre chaque fois qu\'il se referme',
+ 'bâtir lentement quelque chose qui te survive',
+ 'penser à côté de la norme, et rendre ça vivable pour les autres',
+ 'percevoir avant de comprendre, et servir de passage entre deux mondes'];
+const JOUR_POUR={
+ 1:'te fait démarrer les choses toi-même, avec assez d\'endurance pour traverser les creux',
+ 2:'te donne le talent de dénouer : tu vois tous les côtés avant de trancher',
+ 3:'te rend expressif d\'instinct — tes idées passent, et les gens embarquent',
+ 4:'fait de toi le point stable : travail régulier, parole tenue, fiabilité',
+ 5:'te rend souple — tu t\'adaptes vite et tu saisis des occasions que d\'autres laissent filer',
+ 6:'met le cœur au centre : tu soignes et tu protèges, quitte à t\'oublier',
+ 7:'te donne l\'esprit fin et le besoin de percer ce qui se cache sous la surface',
+ 8:'te donne le sens de l\'objectif : tu vises, tu atteins, et tu te suffis à toi-même',
+ 9:'te rend utile aux autres : tu portes leur voix, et donner te met en vie',
+ 10:'te donne l\'esprit de direction — concevoir, organiser, puis répartir le travail',
+ 11:'te donne une conscience aiguë de ce qui se joue autour de toi, jusqu\'aux non-dits',
+ 12:'fait de la création ton moteur : ton imagination trouve des formes dont les autres profitent',
+ 13:'te fait transformer des idées en choses réelles, avec une constance méthodique',
+ 14:'te rend ouvert à l\'inédit, mais assez avisé pour réfléchir avant de sauter',
+ 15:'élargit ton affection : tu croises beaucoup de monde, et chacun repart avec quelque chose',
+ 16:'te donne l\'esprit fouilleur — tu débusques les vérités et tu lis les motivations',
+ 17:'te rend redoutable en solitaire : indépendant, ambitieux, efficace du début à la fin',
+ 18:'te fait viser un monde meilleur que celui trouvé — indépendant, mais accompli par le service',
+ 19:'fait de l\'autonomie une nécessité : très capable, et prêt à prendre de gros risques',
+ 20:'te relie aux autres presque d\'instinct — tu sens leurs besoins avant qu\'on les formule',
+ 21:'te fait vivre par le contact : charme, invention, et de l\'élan pour ceux qui t\'entourent',
+ 22:'te donne le pouvoir de bâtir grand — ténacité, travail, et vraie capacité à faire équipe',
+ 23:'te donne l\'appétit de tout essayer, et une décontraction qui rassure autour de toi',
+ 24:'te fait tenir des liens équilibrés : loyal, protecteur et pourvoyeur à la fois',
+ 25:'te fait absorber l\'information sur deux plans, conscient et souterrain, sans jamais rassasier ta curiosité',
+ 26:'lie ta réussite à celle des autres : tu devines leurs besoins et tu y réponds',
+ 27:'t\'ouvre à toutes les façons de vivre, et met ce que tu sais au service du plus grand nombre',
+ 28:'te fait diriger en t\'appuyant sur les autres — rassembler plutôt qu\'imposer',
+ 29:'te donne le don de relier : des intuitions de fond te montrent comment tout se tient',
+ 30:'te rend original et communicant — la créativité au service de ce que tu as à dire',
+ 31:'mêle sens pratique et imagination : des idées neuves, et l\'organisation pour les concrétiser'};
+const ASC_POUR=[
+ 'te fait entrer dans une pièce comme on entre dans une mêlée',
+ 't\'installe avec une lenteur qui rassure',
+ 'te fait arriver par la parole',
+ 'te rend prudent bien avant d\'être proche',
+ 'fait qu\'on te remarque avant que tu aies parlé',
+ 'te fait observer d\'abord et t\'engager ensuite',
+ 't\'ouvre les portes par la courtoisie',
+ 'te fait garder le silence jusqu\'à savoir à qui tu parles',
+ 'te fait aborder les gens franchement, quitte à bousculer',
+ 'te donne un abord sérieux qu\'on prend souvent pour de la distance',
+ 'te place d\'emblée un peu à côté du groupe',
+ 'brouille ton contour : on te devine avant de te cerner'];
+
+
+const JOURS_SEM=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const SEM_PL=['soleil','lune','mars','mercure','jupiter','venus','saturne'];
+const SEM_POUR=[
+ 'éclat et présence magnétique — créatif, fier, parfois trop tourné vers toi',
+ 'sensibilité et intuition, humeurs mobiles, fort besoin de foyer et de sécurité',
+ 'combativité et goût de gagner, énergique et courageux, mais pressé',
+ 'curiosité et parole — logique, versatile, excellent improvisateur, parfois inconstant',
+ 'générosité et optimisme, avec un penchant à te raconter des histoires',
+ 'sociable et artiste, sensible à la beauté, un peu dépendant du regard des autres',
+ 'sérieux, patient, solitaire assumé — une tâche à résoudre plutôt qu\'une vie facile'];
+
+function renderIntro(){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const si=signIdx(natal.soleil.lon);
+  const D=+profile.date.split('-')[2];
+  $('intro').innerHTML=
+    `<span class="lead">Le Soleil en ${SIGNS[si]} te fait ${SIGNE_POUR[si]}. `+
+    `Naître un ${D===1?'1<sup>er</sup>':D} ${JOUR_POUR[D]}.</span>`+
+    (kt?` Ton ascendant ${signOf(hs.asc)} ${ASC_POUR[signIdx(hs.asc)]}.`:'')+
+    (()=>{
+      const w=new Date(profile.date+'T12:00:00').getDay(), pl=SEM_PL[w], l=natal[pl].lon;
+      return ` Un ${JOURS_SEM[w]} — jour ${DE[pl]} : ${SEM_POUR[w]}. Chez toi, ${low(SUJ[pl])} siège `+
+             `en ${signEmo(l)} ${signOf(l)}${kt?`, maison ${houseOf(l,hs.cusps)}`:''}.`;
+    })()+
+    `<span class="src">Quatre systèmes distincts : le signe donne le registre, le jour du mois le tempérament de départ, le jour de la semaine sa planète tutélaire. Le chemin de vie, lui, dit où tout ça doit mener — il est détaillé plus bas.</span>`;
+}
+
+
+function defis(Y,M,D){
+  const m=reduceFull(M), d=reduceFull(D), y=reduceFull(Y);
+  const d1=Math.abs(m-d), d2=Math.abs(d-y);
+  return {d1,d2,dp:Math.abs(d1-d2)};
+}
+function dettes(Y,M,D){
+  const KD=[13,14,16,19], out=[];
+  if(KD.includes(D))out.push({n:D,src:'ton jour de naissance'});
+  const tot=reduceNum(M)+reduceNum(D)+reduceNum(Y);
+  if(KD.includes(tot))out.push({n:tot,src:'la somme de ton chemin de vie'});
+  return out;
+}
+function absents(Y,M,D){
+  const vus=new Set((''+Y+String(M).padStart(2,'0')+String(D).padStart(2,'0')).split(''));
+  return [1,2,3,4,5,6,7,8,9].filter(n=>!vus.has(''+n));
+}
+const MISSION={
+ 1:'Apprendre à décider seul et à porter les conséquences de tes décisions. Ce qui t\'est demandé n\'est pas de réussir, c\'est de cesser d\'attendre la permission.',
+ 2:'Trouver la juste distance dans le lien : assez proche pour compter, assez distinct pour exister. Ta mission passe par les autres, jamais malgré eux.',
+ 3:'Donner une forme extérieure à ce que tu portes à l\'intérieur. Tant que ça ne sort pas — en mots, en images, en création — ça ne compte pas comme accompli.',
+ 4:'Construire quelque chose qui te survive. Travail de longue haleine, mal payé en reconnaissance immédiate, mais qui laisse une trace vérifiable.',
+ 5:'Faire l\'expérience du monde plutôt que d\'en lire la description. Ta mission exige du mouvement réel : des lieux, des métiers, des gens, des changements assumés.',
+ 6:'Prendre une responsabilité qui dépasse ton confort, sans t\'y dissoudre. Tu es là pour tenir un cadre — un foyer, une équipe, une communauté.',
+ 7:'Chercher jusqu\'à comprendre, puis transmettre ce que tu as compris. Ta mission tolère mal l\'à-peu-près et la vie purement sociale.',
+ 8:'Te mesurer au monde matériel : diriger, gérer, produire. L\'enjeu n\'est pas d\'accumuler mais d\'apprendre à user du pouvoir sans en devenir l\'instrument.',
+ 9:'Élargir le cercle. Ta mission consiste à te détacher de ce que tu possèdes pour servir plus large — les fins de cycle en font partie intégrante.',
+ 11:'Porter et rendre utilisable une perception que la plupart n\'ont pas. Mission exigeante : elle demande de rester ancré alors que tout te tire vers le haut.',
+ 22:'Transformer une vision en construction concrète, à une échelle qui dépasse ta personne. La mission la plus lourde du système, et la plus rare.',
+ 33:'Transmettre, enseigner, réparer — à l\'échelle d\'un groupe et non d\'un foyer seulement. Donner sans te perdre : ça s\'apprend tard et jamais complètement.'};
+const DEFI={
+ 0:'Aucun défi dominant. Rien ne te bloque structurellement, mais rien ne te pousse non plus — la contrainte, c\'est à toi de la créer.',
+ 1:'L\'affirmation. Exister face à des personnalités plus fortes sans t\'écraser ni surjouer l\'assurance.',
+ 2:'La sensibilité. Tu prends personnellement ce qui ne t\'était pas destiné ; l\'enjeu est de filtrer, pas de durcir.',
+ 3:'L\'expression. Tu retiens ce que tu as à dire — peur du jugement ou perfectionnisme — et ça finit par sortir de travers.',
+ 4:'La constance. Le désordre et la remise à demain te coûtent plus cher qu\'à d\'autres ; ton défi est la régularité, pas l\'effort ponctuel.',
+ 5:'La liberté. Tu confonds parfois indépendance et fuite, ou tu t\'enfermes par crainte de l\'excès inverse.',
+ 6:'La responsabilité. Tu prends trop en charge ou pas assez, rarement le juste milieu ; l\'idéal familial peut devenir une cage.',
+ 7:'La confiance. Le doute et l\'analyse répétée retardent l\'engagement ; il faut apprendre à agir sur information incomplète.',
+ 8:'L\'argent et le pouvoir. Excès ou évitement — les deux coûtent cher, et le choix doit être conscient.'};
+const TALENT={
+ 1:'Initiative, et capacité à démarrer sans qu\'on te pousse.',
+ 2:'Diplomatie et lecture fine des rapports entre les gens.',
+ 3:'Aisance d\'expression, créativité qui se communique.',
+ 4:'Rigueur, sens de l\'organisation, fiabilité sur la durée.',
+ 5:'Adaptabilité et vitesse d\'apprentissage.',
+ 6:'Sens du service et capacité à harmoniser un groupe.',
+ 7:'Analyse, discernement, concentration longue.',
+ 8:'Sens des affaires, autorité naturelle, vision des structures.',
+ 9:'Empathie large, capacité de fédérer et d\'inspirer.',
+ 11:'Intuition marquée et rayonnement — nombre maître au jour de naissance.',
+ 22:'Aptitude rare à organiser du concret à grande échelle — nombre maître au jour.'};
+const DETTE={
+ 13:'le travail. Rien ne vient sans effort soutenu, et les raccourcis se retournent contre toi avec régularité.',
+ 14:'la mesure. Excès, dispersion, dépendances — retrouver la modération sans basculer dans la rigidité.',
+ 16:'l\'orgueil. Des effondrements de ce que tu as bâti, qui forcent à reconstruire sur autre chose que l\'ego.',
+ 19:'l\'autonomie mal comprise. Apprendre à demander de l\'aide, et à ne pas se servir des autres pour arriver seul.'};
+const ABSENT={1:'l\'affirmation de soi',2:'la patience et la coopération',3:'l\'expression spontanée',
+ 4:'la méthode et la structure',5:'la souplesse et la prise de risque',6:'l\'engagement affectif',
+ 7:'l\'introspection',8:'le rapport concret à la matière',9:'l\'ouverture au collectif'};
+
+function renderReveal(lp){
+  const [Y,M,D]=CHART.profile.date.split('-').map(Number);
+  const df=defis(Y,M,D), dt=dettes(Y,M,D), ab=absents(Y,M,D);
+  const tal=[11,22].includes(D)?D:reduceFull(D);
+
+  let dTxt=`<b>Défi principal — ${df.dp}.</b> ${DEFI[df.dp]} `+
+    `<span class="sub">Première moitié de vie : ${df.d1} · seconde : ${df.d2}.</span>`;
+  if(dt.length)dTxt+=`<br><span class="dette">Dette karmique ${dt[0].n}</span>, portée par ${dt[0].src} — ${DETTE[dt[0].n]}`;
+  if(ab.length)dTxt+=`<br><span class="sub">Chiffres absents de ta date : ${ab.join(', ')} — soit ${ab.map(n=>ABSENT[n]).join(', ')}. Terrains à travailler consciemment, pas des manques définitifs.</span>`;
+
+  $('reveal').innerHTML=
+   `<p class="k">Ce que révèle le chemin de vie</p>
+    <div class="synth-grid">
+      <div class="sect"><h3>Mission de vie</h3><p>${MISSION[lp]}</p></div>
+      <div class="sect"><h3>Défis karmiques</h3><p>${dTxt}</p></div>
+      <div class="sect"><h3>Talents profonds</h3>
+        <p><b>Nombre du jour ${D}${D>9?`, racine ${tal}`:''}.</b> ${TALENT[tal]} `+
+        `Le nombre du jour ne se réduit pas — sa lecture complète est en tête de page ; la racine n'en donne que la vibration de fond.</p></div>
+    </div>`;
+}
+
+
+/* ========================================================================
+   5quinquies. Encodage de carte et synastrie
+   ======================================================================== */
+function encodeProfile(p){
+  const raw=[p.nom||'',p.date,p.knownTime?p.time:'',p.knownTime?1:0,
+             (+p.lat).toFixed(4),(+p.lon).toFixed(4),p.tz,p.place||''].join('|');
+  let b=''; for(const x of new TextEncoder().encode(raw))b+=String.fromCharCode(x);
+  return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeProfile(tok){
+  let s=String(tok||'').trim().replace(/^.*[#?&]c=/,'').replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4)s+='=';
+  const bin=atob(s);
+  const txt=new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)));
+  const [nom,date,time,kt,lat,lon,tz,place]=txt.split('|');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))throw new Error('format');
+  if(isNaN(+lat)||isNaN(+lon)||!tz)throw new Error('format');
+  tzOffsetMin(new Date(),tz);
+  return {nom:nom||'',date,time:time||'12:00',knownTime:kt==='1',
+          lat:+lat,lon:+lon,tz,place:place||(+lat).toFixed(2)+', '+(+lon).toFixed(2)};
+}
+
+const SYN_W={soleil:5,lune:5,venus:4,mars:3.5,mercure:2,jupiter:2,saturne:2.5,
+             uranus:1.2,neptune:1.2,pluton:1.5,asc:4,dc:3};
+const LOURDS=['saturne','uranus','neptune','pluton'];
+const QUAL={'Conjonction':1,'Trigone':1,'Sextile':0.6,'Opposition':-0.15,'Carré':-0.75};
+const PAIRTXT={
+ 'lune-soleil':'identité et émotion se rencontrent — le contact le plus classique des couples qui tiennent',
+ 'mars-venus':'chimie d\'attraction directe, physique avant d\'être raisonnée',
+ 'soleil-venus':'affection et admiration mutuelles',
+ 'lune-venus':'tendresse et confort affectif au quotidien',
+ 'soleil-soleil':'même tempérament de fond, mêmes angles morts aussi',
+ 'lune-lune':'besoins affectifs accordés sans avoir à les expliquer',
+ 'venus-venus':'mêmes goûts et même façon d\'aimer',
+ 'mars-mars':'mêmes rythmes d\'action — ou rivalité, selon l\'aspect',
+ 'lune-mars':'réactivité vive entre vous : passion ou irritation, rarement tiède',
+ 'mars-soleil':'stimulation mutuelle, avec une part de compétition',
+ 'mercure-mercure':'vous vous comprenez en parlant, sans traduction',
+ 'saturne-soleil':'structure et exigence : ça dure, mais ça pèse',
+ 'lune-saturne':'sécurité solide ou froideur, selon l\'aspect',
+ 'saturne-venus':'engagement durable, au risque de la tiédeur',
+ 'uranus-venus':'électricité et imprévisibilité dans le lien',
+ 'neptune-venus':'idéalisation — beau, et flou sur la personne réelle',
+ 'pluton-venus':'intensité et enjeu de pouvoir dans l\'attachement',
+ 'mars-pluton':'puissance brute, magnétique et épuisante',
+ 'jupiter-soleil':'confiance et générosité, l\'autre t\'agrandit',
+ 'jupiter-lune':'chaleur et optimisme partagés',
+ 'asc-soleil':'reconnaissance immédiate — tu le remarques, il te remarque',
+ 'asc-lune':'un confort instinctif, comme si vous vous connaissiez déjà',
+ 'asc-venus':'attirance visible, l\'allure de l\'un plaît à l\'autre',
+ 'asc-mars':'tension physique dès la première rencontre',
+ 'asc-asc':'même façon d\'aborder les gens et les situations',
+ 'dc-soleil':'il occupe littéralement la case du partenaire dans ta carte',
+ 'dc-lune':'ce qu\'il ressent correspond à ce que tu attends d\'un couple',
+ 'dc-venus':'la définition même de ton type, au sens astrologique',
+ 'mars-saturne':'l\'élan de l\'un bute sur le cadre de l\'autre : discipline ou frein sec',
+ 'mercure-venus':'les mots et l\'affection passent par le même canal — on se plaît en parlant',
+ 'lune-mercure':'l\'un ressent, l\'autre met en mots ; très utile en cas de conflit',
+ 'mercure-soleil':'la pensée de l\'un rejoint la direction de l\'autre',
+ 'mars-mercure':'débats vifs, stimulants ou piquants selon l\'aspect',
+ 'mercure-saturne':'échanges sérieux et concrets, parfois secs',
+ 'jupiter-venus':'générosité et plaisir partagé, avec un risque d\'excès',
+ 'jupiter-saturne':'expansion contre prudence — l\'équilibre se négocie',
+ 'lune-uranus':'imprévisibilité affective : excitant au début, instable ensuite',
+ 'lune-neptune':'compassion et porosité, jusqu\'à ne plus distinguer les émotions',
+ 'lune-pluton':'attachement profond avec un enjeu de contrôle',
+ 'soleil-uranus':'l\'un bouscule l\'identité de l\'autre, pour le meilleur ou pour le vertige',
+ 'neptune-soleil':'admiration teintée d\'illusion',
+ 'pluton-soleil':'transformation mutuelle, rarement confortable',
+ 'mars-uranus':'action imprévisible, étincelles garanties',
+ 'jupiter-mars':'énergie et audace décuplées'};
+const ROLE={soleil:'l\'identité et la direction',lune:'les besoins affectifs',
+ mercure:'la façon de communiquer',venus:'l\'attachement et le goût',
+ mars:'le désir et la manière de se battre',jupiter:'la confiance et l\'appétit de croissance',
+ saturne:'le cadre et la durée',uranus:'le besoin de liberté',
+ neptune:'l\'imaginaire et les zones floues',pluton:'le pouvoir et l\'intensité',
+ asc:'la manière de se présenter',dc:'l\'attente vis-à-vis d\'un partenaire'};
+const TON={'Conjonction':'les deux se superposent, sans distance possible',
+ 'Trigone':'l\'échange se fait sans effort',
+ 'Sextile':'l\'accord est disponible, à condition de le solliciter',
+ 'Opposition':'chacun tient un bout de l\'axe — complémentaire ou épuisant',
+ 'Carré':'ça accroche, et il faudra en parler plutôt que d\'attendre que ça passe'};
+const capF=t=>t.charAt(0).toUpperCase()+t.slice(1);
+const pairDesc=(a,b,asp,nom)=>{
+  const t=PAIRTXT[pairKey(a,b)], dur=['Carré','Opposition'].includes(asp);
+  if(t)return dur?`${capF(t)} — mais en ${asp.toLowerCase()} : ${TON[asp].toLowerCase()}.`:capF(t)+'.';
+  const ton=capF(TON[asp]);
+  return a===b
+    ? `Le même registre des deux côtés — ${ROLE[a]}. ${ton}.`
+    : `Ce qui se touche ici : ${ROLE[a]} chez toi, ${ROLE[b]} chez ${nom}. ${ton}.`;
+};
+const pairKey=(a,b)=>[a,b].sort().join('-');
+
+function synastrie(A,B){
+  const pts=c=>{
+    const o={};
+    for(const k of ['soleil','lune','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton'])o[k]=c.natal[k].lon;
+    if(c.profile.knownTime)o.asc=c.hs.asc;
+    return o;
+  };
+  const PA=pts(A), PB=pts(B), liens=[];
+  let total=0, poidsMax=0;
+  for(const a in PA)for(const b in PB){
+    const w=Math.sqrt(SYN_W[a]*SYN_W[b]);
+    const lum=['soleil','lune'].includes(a)||['soleil','lune'].includes(b);
+    const asp=aspectBetween(PA[a],PB[b],lum?6:5);
+    poidsMax+=w*0.12;
+    if(!asp)continue;
+    let q=QUAL[asp.asp.n];
+    if(LOURDS.includes(a)||LOURDS.includes(b))q=q>0?q*0.45:q*1.35;
+    const serre=1-asp.orb/8;
+    const val=w*q*serre;
+    total+=val;
+    liens.push({a,b,asp:asp.asp,orb:asp.orb,val});
+  }
+  liens.sort((x,y)=>Math.abs(y.val)-Math.abs(x.val));
+  const score=Math.max(3,Math.min(97,Math.round(50+total/Math.max(1,poidsMax)*22)));
+  return {score,liens};
+}
+
+/* --- 1. superposition : les planètes de B dans les maisons de A --- */
+const HOUSE_SYN=['ton image et tes débuts — il te renvoie à qui tu es',
+ 'tes ressources et ton estime — l\'argent et la valeur entrent en jeu',
+ 'les échanges quotidiens — on se parle beaucoup',
+ 'ton intimité et tes racines — il entre dans ton foyer',
+ 'le plaisir, le jeu, la séduction — c\'est là que ça s\'amuse',
+ 'le quotidien et le service — la vie pratique partagée',
+ 'l\'axe du partenaire — la case du couple, littéralement occupée',
+ 'ce qui se partage en profondeur — argent commun, sexualité, transformation',
+ 'le sens et l\'ailleurs — il élargit ton horizon',
+ 'ta trajectoire publique — il pèse sur ta carrière et ta réputation',
+ 'les amis et les projets — la relation vit aussi en groupe',
+ 'le retrait et l\'inconscient — quelque chose se joue hors du regard'];
+const PERSO=['soleil','lune','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton'];
+function superposition(A,B){
+  if(!A.profile.knownTime)return null;
+  const par={};
+  for(const p of PERSO){
+    const h=houseOf(B.natal[p].lon,A.hs.cusps);
+    (par[h]=par[h]||[]).push(p);
+  }
+  const poids={soleil:3,lune:3,venus:2,mars:2,mercure:1.5,jupiter:1,saturne:1,uranus:.5,neptune:.5,pluton:.5};
+  const rangs=Object.keys(par).map(h=>({h:+h,pl:par[h],
+    w:par[h].reduce((a,p)=>a+poids[p],0)})).sort((a,b)=>b.w-a.w);
+  return rangs;
+}
+
+/* --- 2. tempéraments croisés --- */
+function temperaments(A,B,nom){
+  const da=dominance(A.natal,A.hs,A.profile.knownTime);
+  const db=dominance(B.natal,B.hs,B.profile.knownTime);
+  const compat=COMPAT[da.elem].includes(db.elem);
+  let txt;
+  if(da.elem===db.elem)
+    txt=`Vous partagez la dominante ${da.elem} : même tempo, peu de friction — et peu de complémentarité. Ce que l'un ne voit pas, l'autre ne le verra pas non plus.`;
+  else if(db.elem===da.faible&&da.e[da.faible]<18)
+    txt=`Ton point bas est ${EN_ELEM[da.faible].replace(/^de |^d'/,'')} (${da.e[da.faible]} %), et c'est justement la dominante de ${nom} (${db.e[db.elem]} %). Tu reçois là exactement ce qui te manque — à condition d'accepter de le recevoir.`;
+  else if(da.elem===db.faible&&db.e[db.faible]<18)
+    txt=`La zone faible de ${nom} est ${EN_ELEM[db.faible].replace(/^de |^d'/,'')} (${db.e[db.faible]} %), et c'est ta dominante. C'est toi qui apportes cette pièce-là dans la relation.`;
+  else
+    txt=`Toi ${da.elem} (${da.e[da.elem]} %), ${nom} ${db.elem} (${db.e[db.elem]} %) : `+
+        (compat?`deux registres qui se nourrissent. Le rythme suit à peu près.`
+               :`deux registres qui ne se nourrissent pas. C'est le décalage de fond à surveiller — moins spectaculaire qu'un carré, mais permanent.`);
+  const mtxt=da.mode===db.mode
+    ? `Même mode dominant, ${da.mode} : vous abordez le changement pareil. Bonne entente sur le rythme, personne pour corriger l'angle mort.`
+    : `Modes différents — ${da.mode} chez toi, ${db.mode} chez ${nom} : l'un lance ou tient là où l'autre ajuste. Source d'agacement quotidien, et de vraie complémentarité.`;
+  return {da,db,txt,mtxt};
+}
+
+/* --- 3. carte composite (points milieux) --- */
+const midLon=(a,b)=>n360(a+n180(b-a)/2);
+const COMP_SOL=['aller de l\'avant ensemble, quitte à se heurter','construire du stable et du sensuel',
+ 's\'échanger des idées sans fin','faire foyer et se protéger','rayonner ensemble et être vus',
+ 's\'améliorer mutuellement par le concret','chercher l\'équilibre et la beauté du lien',
+ 'se transformer l\'un par l\'autre, sans demi-mesure','explorer et grandir ensemble',
+ 'bâtir quelque chose qui dure, à la force du poignet','faire un lien libre, hors des cases',
+ 'se relier par l\'imaginaire et la compassion'];
+const COMP_LUN=['vif et direct : les tensions éclatent et passent','calme et sensoriel, lent à bouger',
+ 'léger et bavard, peu de gravité','protecteur, avec beaucoup de mémoire','chaleureux et démonstratif',
+ 'attentif au détail, parfois critique','conciliant, allergique au conflit',
+ 'intense, avec des zones de silence','optimiste et large, peu porté au ressassement',
+ 'sobre et pudique — l\'affection se prouve plus qu\'elle ne se dit','amical et un peu distancié',
+ 'poreux et empathique, les limites se brouillent'];
+function composite(A,B){
+  const c={};
+  for(const p of PERSO)c[p]=midLon(A.natal[p].lon,B.natal[p].lon);
+  const kt=A.profile.knownTime&&B.profile.knownTime;
+  if(kt)c.asc=midLon(A.hs.asc,B.hs.asc);
+  return {c,kt};
+}
+
+/* --- 4. numérologie du couple --- */
+const COUPLE={
+ 1:'un couple d\'initiative : vous démarrez des choses, et vous vous disputez la direction',
+ 2:'un couple d\'association : le lien lui-même est le sujet, avant les projets',
+ 3:'un couple expressif : ça parle, ça crée, ça sort — le silence vous pèse',
+ 4:'un couple de construction : lent, solide, exigeant, peu spectaculaire',
+ 5:'un couple de mouvement : changements, voyages, très peu de routine tolérée',
+ 6:'un couple de foyer : responsabilités, famille, soin — et le risque de l\'obligation',
+ 7:'un couple de recherche : intériorité et besoin d\'espace mental des deux côtés',
+ 8:'un couple de réalisation : argent, pouvoir, projets concrets, rapports de force à surveiller',
+ 9:'un couple tourné vers l\'extérieur : causes, autres, transmission plus que nid',
+ 11:'un couple d\'intensité intuitive — nombre maître : très fort, très exigeant',
+ 22:'un couple bâtisseur à grande échelle — nombre maître, rarement reposant',
+ 33:'un couple de transmission — nombre maître, le plus lourd à porter'};
+function numeroCouple(A,B){
+  const [ya,ma,da]=A.profile.date.split('-').map(Number);
+  const [yb,mb,db]=B.profile.date.split('-').map(Number);
+  const lpa=lifePath(ya,ma,da), lpb=lifePath(yb,mb,db);
+  const n=reduceNum(reduceFull(lpa)+reduceFull(lpb));
+  const an=new Date().getFullYear();
+  return {lpa,lpb,n,pya:personalYear(ma,da,an),pyb:personalYear(mb,db,an)};
+}
+
+function renderSyn(A,B){
+  const S=synastrie(A,B);
+  const nom=B.profile.nom||'l\'autre carte';
+  const NM={asc:'Ascendant'};
+  const label=k=>NM[k]||NAMES[k];
+  const mien=k=>(k==='asc'?'Ton ':POSS[k]?'Ta ':'Ton ')+label(k);
+  const deNom=/^[aeiouyàâéèêîôûAEIOUYÀÂÉÈÊÎÔÛHh]/.test(nom)?'d\''+nom:'de '+nom;
+  const ligne=l=>`<li><span class="lg">${l.a==='asc'?'⌖':GLYPH[l.a]} ${l.asp.g} ${l.b==='asc'?'⌖':GLYPH[l.b]}</span>`+
+    `<span class="lt"><b>${mien(l.a)} / ${label(l.b)} ${esc(deNom)} — ${l.asp.n.toLowerCase()}</b>`+
+    `<span class="sub"> · orbe ${l.orb.toFixed(1).replace('.',',')}°</span>`+
+    `<br>${pairDesc(l.a,l.b,l.asp.n,nom)}</span></li>`;
+  const pos=S.liens.filter(l=>l.val>0).slice(0,6);
+  const neg=S.liens.filter(l=>l.val<0).slice(0,4);
+  const x=(6+S.score/100*248).toFixed(1);
+  const verd=S.score>=70?'Forte affinité':S.score>=58?'Bonne entente':S.score>=45?'Contrastée':'Exigeante';
+  $('syn').innerHTML=
+   `<div class="synhead">
+      <div class="verdict">${verd}</div>
+      <div class="gaugewrap">
+        <svg viewBox="0 0 260 30" class="gauge" role="img" aria-label="Indice de synastrie ${S.score} sur 100">
+          <line x1="6" y1="23" x2="254" y2="23" stroke="var(--ink)" stroke-width="1"/>
+          <polygon points="${x},17 ${(+x-5.5).toFixed(1)},7 ${(+x+5.5).toFixed(1)},7" fill="var(--verdigris)"/>
+        </svg>
+        <div class="gaugelab"><span>Exigeante</span><span>Synastrie ${S.score}/100</span><span>Fluide</span></div>
+      </div>
+      <div class="sub">${esc(B.profile.nom||'Carte B')} — ${new Date(B.profile.date+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'})}${B.profile.knownTime?', '+B.profile.time:' (heure inconnue)'} · ${esc(B.profile.place)}</div>
+    </div>
+    <div class="synth-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <div class="sect"><h3>Ce qui vous lie</h3><ul class="synl">${pos.length?pos.map(ligne).join(''):'<li><span class="lg">—</span><span class="lt"><b>Aucun contact harmonique serré</b><br>Vos planètes ne se rencontrent pas dans les orbes retenues : le lien se jouera ailleurs que dans l\'évidence immédiate.</span></li>'}</ul></div>
+      <div class="sect"><h3>Ce qui frotte</h3><ul class="synl">${neg.length?neg.map(ligne).join(''):'<li><span class="lg">—</span><span class="lt"><b>Aucun aspect dur notable</b><br>C\'est rare, et pas forcément une bonne nouvelle : sans friction, un lien manque souvent de moteur.</span></li>'}</ul></div>
+    </div>
+    <p class="note">Croisement de tous les corps des deux cartes, pondéré par l'importance relationnelle de chaque planète et par la précision de l'orbe. Les contacts à l'Ascendant valent aussi pour le Descendant : c'est un seul axe, compté une fois. Les aspects durs comptent négativement dans l'indice mais font souvent la longévité d'un couple : lis la colonne de droite comme un mode d'emploi, pas comme un verdict.</p>`
+    + blocSuperposition(A,B,nom,deNom) + blocTemperaments(A,B,nom) + blocComposite(A,B) + blocNumero(A,B,nom);
+}
+
+function blocSuperposition(A,B,nom,deNom){
+  const r=superposition(A,B);
+  if(!r)return `<p class="k" style="margin-top:26px">Superposition des maisons</p>`+
+    `<p class="ed2">Impossible sans ton heure de naissance : les maisons en dépendent entièrement.</p>`;
+  const top=r.slice(0,3);
+  return `<p class="k" style="margin-top:26px">Où ${esc(nom)} tombe dans ta carte</p>
+    <p class="esub">Les planètes de l'autre projetées dans tes maisons : pas un aspect, une localisation. C'est ce qui dit dans quel secteur de ta vie la personne agit, indépendamment de l'entente.</p>
+    <ul class="epts">`+r.map(x=>
+      `<li><span class="pg">${x.pl.map(p=>GLYPH[p]).join(' ')}</span>`+
+      `<span class="pn">Maison ${x.h}</span><span class="ps">${HOUSE_SYN[x.h-1]}</span></li>`).join('')+
+    `</ul><p class="ed2" style="margin-top:12px">Le secteur le plus chargé est ta <b>maison ${top[0].h}</b> — ${HOUSE_SYN[top[0].h-1]} — avec ${top[0].pl.map(p=>NAMES[p]).join(', ')}${
+      top[1]?`. Ensuite ta maison ${top[1].h}`:''}.</p>`;
+}
+function blocTemperaments(A,B,nom){
+  const t=temperaments(A,B,nom);
+  const moi=A.profile.nom||'Toi';
+  const ligne=(k,va,vb,moy)=>{
+    const ecart=Math.abs(va-vb);
+    let tag='';
+    if(va>=moy*1.3&&vb>=moy*1.3)tag='<span class="tg ph">en phase</span>';
+    else if(va<=moy*0.45&&vb<=moy*0.45)tag='<span class="tg am">angle mort commun</span>';
+    else if(ecart>=moy*0.8)tag='<span class="tg cp">complémentaire</span>';
+    return `<li class="tcx"><span class="tcn">${ELEM_EMO[k]||''} ${k.charAt(0).toUpperCase()+k.slice(1)}</span>`+
+      `<span class="tcb"><span class="b1"><i style="width:${va}%"></i></span>`+
+      `<span class="b2"><i style="width:${vb}%"></i></span></span>`+
+      `<span class="tcv">${va} %<br>${vb} %</span>${tag}</li>`;
+  };
+  return `<p class="k" style="margin-top:26px">Tempéraments croisés</p>
+    <p class="esub">Vos deux profils d'éléments et de modes, superposés.
+      <span class="lg1">${esc(moi)}</span> <span class="lg2">${esc(nom)}</span></p>
+    <ul class="tcl">`+
+      ['feu','terre','air','eau'].map(k=>ligne(k,t.da.e[k],t.db.e[k],25)).join('')+
+    `</ul><ul class="tcl">`+
+      ['cardinal','fixe','mutable'].map(k=>ligne(k,t.da.m[k],t.db.m[k],33)).join('')+
+    `</ul>
+    <p class="ed2" style="margin-top:14px">${t.txt}</p>
+    <p class="ed2">${t.mtxt}</p>`;
+}
+function blocComposite(A,B){
+  const {c,kt}=composite(A,B);
+  const si=signIdx(c.soleil), li=signIdx(c.lune);
+  return `<p class="k" style="margin-top:26px">Carte composite</p>
+    <p class="esub">Les points milieux entre vos deux thèmes : une troisième carte, celle de la relation elle-même plutôt que des personnes.</p>
+    <ul class="epts">`+
+      ['soleil','lune','venus','mars','mercure','saturne'].map(p=>
+        `<li><span class="pg">${GLYPH[p]}</span><span class="pn">${NAMES[p]}</span>`+
+        `<span class="ps">${signEmo(c[p])} ${signOf(c[p])}</span><span class="pw">${degStr(c[p])}</span></li>`).join('')+
+      (kt?`<li><span class="pg">⌖</span><span class="pn">Ascendant</span>`+
+          `<span class="ps">${signEmo(c.asc)} ${signOf(c.asc)}</span><span class="pw">${degStr(c.asc)}</span></li>`:'')+
+    `</ul>
+    <p class="ed2" style="margin-top:12px">Soleil composite en ${SIGNS[si]} : la raison d'être de cette relation est ${COMP_SOL[si]}.
+     Lune composite en ${SIGNS[li]} : le climat émotionnel du couple est ${COMP_LUN[li]}.</p>`+
+    (kt?'':`<p class="ed2 vide">Ascendant composite indisponible — il faudrait les deux heures de naissance.</p>`);
+}
+function blocNumero(A,B,nom){
+  const N=numeroCouple(A,B);
+  const meme=N.pya===N.pyb;
+  return `<p class="k" style="margin-top:26px">Numérologie du couple</p>
+    <p class="esub">Vos deux chemins de vie et le nombre qu'ils forment ensemble.</p>
+    <ul class="epts">
+      <li><span class="pn">Toi</span><span class="ps">chemin de vie ${N.lpa} — ${LIFEPATH[N.lpa].nm}</span><span class="pw">année perso ${N.pya}</span></li>
+      <li><span class="pn">${esc(nom)}</span><span class="ps">chemin de vie ${N.lpb} — ${LIFEPATH[N.lpb].nm}</span><span class="pw">année perso ${N.pyb}</span></li>
+      <li><span class="pn">Le couple</span><span class="ps">nombre ${N.n}</span><span class="pw"></span></li>
+    </ul>
+    <p class="ed2" style="margin-top:12px">Ensemble, ${COUPLE[N.n]}. `+
+    (meme?`Vous traversez la même année personnelle (${N.pya}) : mêmes envies au même moment, ce qui aide — et prive le couple d'un contrepoids.`
+         :`Vous n'êtes pas dans la même année personnelle : ${N.pya} pour toi, ${N.pyb} pour ${esc(nom)}. Les périodes d'élan et de repli ne coïncident pas, et c'est souvent là que naissent les malentendus de rythme.`)+`</p>`;
+}
+
+
+/* ========================================================================
+   5quater. Vie amoureuse — profil et compatibilité par signe
+   ======================================================================== */
+const MAITRE=['mars','venus','mercure','lune','soleil','mercure','venus','pluton','jupiter','saturne','uranus','neptune'];
+const VENUS_S=['tu aimes vite et franchement : la conquête t\'intéresse plus que l\'attente',
+ 'tu aimes dans la durée et le concret — gestes, présence, sensualité tranquille',
+ 'tu aimes par la conversation ; l\'ennui te refroidit plus vite que le conflit',
+ 'tu aimes en protégeant, et tu attends d\'être protégé en retour',
+ 'tu aimes avec générosité, et tu as besoin que ça se voie',
+ 'tu aimes par les petits soins et le service rendu, rarement par les déclarations',
+ 'tu aimes l\'accord et l\'élégance du rapport ; l\'affrontement direct te fait fuir',
+ 'tu aimes sans demi-mesure : exclusivité et intensité, ou rien',
+ 'tu aimes en mouvement — partager une aventure plutôt qu\'un salon',
+ 'tu aimes lentement et sérieusement : tu te lies peu, mais solidement',
+ 'tu aimes en gardant ta liberté ; l\'amitié fait partie du contrat',
+ 'tu aimes en te fondant, avec un idéal qui dépasse parfois la personne réelle'];
+const MARS_S=['l\'énergie franche et l\'initiative directe','la présence physique et le rythme lent',
+ 'l\'esprit vif et la parole — l\'attirance passe par la tête','la douceur et la sécurité affective avant tout',
+ 'le panache et la chaleur, quelqu\'un qu\'on remarque','la compétence et la justesse du geste plutôt que l\'esbroufe',
+ 'l\'élégance et la réciprocité ; le rapport de force te coupe l\'élan','l\'intensité, et ce qui ne se donne pas d\'emblée',
+ 'l\'indépendance et l\'appétit de découvrir','la maîtrise et l\'ambition assumée',
+ 'l\'originalité et le refus des scripts convenus','la sensibilité et une part de mystère'];
+const LUNE_S=['de l\'action et du franc-parler, les non-dits t\'étouffent','de la stabilité matérielle et des habitudes tenues',
+ 'de parler de tout, souvent, sans que ce soit grave','d\'un foyer et de savoir que la porte reste ouverte',
+ 'de reconnaissance explicite, pas seulement supposée','d\'ordre et de sentir que tu es utile',
+ 'd\'harmonie et d\'un partenaire qui ne te laisse pas décider seul','de vérité, quitte à ce qu\'elle secoue',
+ 'd\'espace et de perspectives ouvertes','de fiabilité et d\'engagements qui se tiennent',
+ 'de liberté de mouvement sans avoir à te justifier','de calme, de beauté et de temps non productif'];
+const DC_S=['quelqu\'un de direct, qui décide et t\'entraîne','quelqu\'un de stable, sensuel, dont la parole vaut',
+ 'quelqu\'un de vif et curieux, qui te sort de tes ornières','quelqu\'un de protecteur, qui construit un chez-soi',
+ 'quelqu\'un de solaire et généreux, qui assume la lumière','quelqu\'un de fiable et lucide, qui améliore le quotidien',
+ 'quelqu\'un d\'équilibré et conciliant, qui adoucit tes angles','quelqu\'un d\'intense, qui ne se contente pas de la surface',
+ 'quelqu\'un d\'indépendant et d\'ouvert, qui élargit ton horizon','quelqu\'un de sérieux et structurant, qui tient la barre',
+ 'quelqu\'un de libre et atypique, qui ne t\'enferme pas','quelqu\'un de sensible et poreux, qui te relie à autre chose'];
+const REL=[
+ {n:'conjonction',v:2.5,t:'te ressemble'},{n:'semi-sextile',v:-0.5,t:'te décale légèrement'},
+ {n:'sextile',v:2,t:'te stimule'},{n:'carré',v:-2,t:'te frotte'},{n:'trigone',v:3,t:'coule avec toi'},
+ {n:'quinconce',v:-1,t:'te désajuste'},{n:'opposition',v:1.5,t:'t\'attire par contraste'}];
+const relOf=(a,b)=>{const d=(b-a+12)%12;return REL[d>6?12-d:d];};
+
+function amour(){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const dc=kt?n360(hs.asc+180):null;
+  const pts=[{k:'Vénus',i:signIdx(natal.venus.lon),w:3},
+             {k:'Lune',i:signIdx(natal.lune.lon),w:2.5},
+             {k:'Soleil',i:signIdx(natal.soleil.lon),w:2},
+             {k:'Mars',i:signIdx(natal.mars.lon),w:2}];
+  if(kt){pts.push({k:'Descendant',i:signIdx(dc),w:3},{k:'Ascendant',i:signIdx(hs.asc),w:1.5});}
+  const W=pts.reduce((a,p)=>a+p.w,0);
+  const rangs=[];
+  for(let s=0;s<12;s++){
+    let brut=0; const det=[];
+    for(const p of pts){
+      const r=relOf(p.i,s);
+      brut+=r.v*p.w;
+      det.push({p:p.k,r,poids:r.v*p.w});
+    }
+    rangs.push({s,score:Math.round((brut+2*W)/(5*W)*100),
+      det:det.sort((a,b)=>b.poids-a.poids)});
+  }
+  rangs.sort((a,b)=>b.score-a.score);
+  return {rangs,dc,kt};
+}
+
+function renderAmour(){
+  const {natal,hs}=CHART;
+  const A=amour();
+  const top=A.rangs.slice(0,3), bas=A.rangs[11];
+  const ecart=top[0].score-bas.score;
+  const raison=r=>r.det.slice(0,2).map(d=>`${d.r.n} à ton ${d.p}`).join(', ');
+  const barre=r=>`<li><span class="cs">${SIGN_EMO[r.s]}</span><span class="cn">${SIGNS[r.s]}</span>`+
+    `<span class="cb"><i style="width:${r.score}%"></i></span><span class="cv">${r.score}</span></li>`;
+  $('amour').innerHTML=
+   `<p class="k">Vie amoureuse</p>
+    <div class="synth-grid">
+      <div class="sect"><h3>Comment tu aimes</h3><p>Vénus en ${signLab(natal.venus.lon)}`+
+        (A.kt?`, maison ${houseOf(natal.venus.lon,hs.cusps)}`:'')+` — ${VENUS_S[signIdx(natal.venus.lon)]}.</p></div>
+      <div class="sect"><h3>Ce qui t'attire</h3><p>Mars en ${signLab(natal.mars.lon)} — ce qui t'attire : ${MARS_S[signIdx(natal.mars.lon)]}. `+
+        `Lune en ${signLab(natal.lune.lon)} : pour te sentir en sécurité, tu as besoin ${LUNE_S[signIdx(natal.lune.lon)]}.</p></div>
+      <div class="sect"><h3>Ce que tu cherches chez l'autre</h3><p>`+
+        (A.kt?`Descendant en ${signLab(A.dc)}, régi par ${low(SUJ[MAITRE[signIdx(A.dc)]])} — tu cherches ${DC_S[signIdx(A.dc)]}.`
+             :`Sans heure de naissance, pas de Descendant. À défaut, ta Vénus indique ${DC_S[signIdx(natal.venus.lon)]}.`)+
+        `</p></div>
+    </div>
+    <p class="lead">Les plus fluides pour toi : <b>${top.map(r=>SIGN_EMO[r.s]+' '+SIGNS[r.s]).join(', ')}</b>. `+
+      `${SIGNS[top[0].s]} arrive en tête parce qu'il fait ${raison(top[0])}. `+
+      `À l'autre bout, ${SIGN_EMO[bas.s]} ${SIGNS[bas.s]} demande le plus de travail — ${raison(bas)} — `+
+      `ce qui n'exclut rien : les couples durables se font souvent sur ces écarts-là. `+
+      (ecart<22
+        ? `Cela dit, l'écart entre ton premier et ton dernier n'est que de ${ecart} points : tes placements sont dispersés dans les quatre éléments, donc tu n'as pas de vraie préférence de signe. Le classement ci-dessous ne veut pas dire grand-chose dans ton cas — regarde plutôt les trois colonnes du haut.`
+        : `L'écart va de ${bas.score} à ${top[0].score} : tes placements sont assez concentrés pour que la préférence soit réelle.`)+`</p>
+    <ul class="compat">${A.rangs.map(barre).join('')}</ul>
+    <p class="note">Classement calculé sur six points de ta carte (Vénus 3, Descendant 3, Lune 2,5, Soleil 2, Mars 2, Ascendant 1,5),
+     pas sur ton seul signe solaire. Ça reste une approximation : la vraie compatibilité se lit entre deux cartes complètes.</p>`;
+}
+
+
+/* ========================================================================
+   5ter. Croisement chemin de vie × carte du ciel
+   ======================================================================== */
+const ELEM=['feu','terre','air','eau'];
+const elemOf=l=>ELEM[signIdx(l)%4];
+const MODE=['cardinal','fixe','mutable'];
+const modeOf=l=>MODE[signIdx(l)%3];
+const COMPAT={feu:['feu','air'],air:['air','feu'],terre:['terre','eau'],eau:['eau','terre']};
+
+const REGENT={
+ 1:{pl:'soleil',demande:'prendre la tête et assumer seul tes décisions'},
+ 2:{pl:'lune',demande:'construire à deux et traiter ta sensibilité comme un outil'},
+ 3:{pl:'jupiter',demande:'exprimer, diffuser, occuper l\'espace par la parole'},
+ 4:{pl:'uranus',demande:'bâtir du solide en encaissant les ruptures qui l\'imposent'},
+ 5:{pl:'mercure',demande:'bouger, apprendre, refuser l\'enfermement'},
+ 6:{pl:'venus',demande:'prendre soin et tenir un cadre pour d\'autres'},
+ 7:{pl:'neptune',demande:'comprendre en profondeur et accepter le retrait que ça coûte'},
+ 8:{pl:'saturne',demande:'affronter la matière, l\'argent et le pouvoir sans t\'y perdre'},
+ 9:{pl:'mars',demande:'servir plus grand que toi et savoir terminer'},
+ 11:{pl:'neptune',second:'lune',demande:'porter une intuition que tu ne peux pas toujours prouver'},
+ 22:{pl:'uranus',second:'saturne',demande:'réaliser concrètement une vision hors échelle'},
+ 33:{pl:'venus',second:'jupiter',demande:'transmettre et porter les autres sans t\'effacer'}};
+
+const DIGNITE={
+ soleil:{dom:[4],ex:[0],exil:[10],chute:[6]}, lune:{dom:[3],ex:[1],exil:[9],chute:[7]},
+ mercure:{dom:[2,5],ex:[5],exil:[8,11],chute:[11]}, venus:{dom:[1,6],ex:[11],exil:[0,7],chute:[5]},
+ mars:{dom:[0,7],ex:[9],exil:[6,1],chute:[3]}, jupiter:{dom:[8,11],ex:[3],exil:[2,5],chute:[9]},
+ saturne:{dom:[9,10],ex:[6],exil:[3,4],chute:[0]}, uranus:{dom:[10],ex:[7],exil:[4],chute:[1]},
+ neptune:{dom:[11],ex:[3],exil:[5],chute:[9]}, pluton:{dom:[7],ex:[4],exil:[1],chute:[10]}};
+function dignite(pl,lon){
+  const i=signIdx(lon), d=DIGNITE[pl];
+  if(!d)return 'neutre';
+  if(d.dom.includes(i))return 'domicile';
+  if(d.ex.includes(i))return 'exaltation';
+  if(d.exil.includes(i))return 'exil';
+  if(d.chute.includes(i))return 'chute';
+  return 'neutre';
+}
+const DIGN_PH={
+ domicile:{v:12,t:'y est chez lui : ce que le nombre réclame, tu sais déjà le faire'},
+ exaltation:{v:10,t:'y est exalté : le trait s\'exprime fort, parfois trop fort'},
+ exil:{v:-10,t:'y est en exil : tu dois apprendre par l\'effort ce que d\'autres font d\'instinct'},
+ chute:{v:-12,t:'y est en chute : terrain ingrat, et c\'est précisément là que se joue le travail'},
+ neutre:{v:0,t:'y travaille sans appui ni handicap particulier'}};
+const ACC_PH={
+ 'Trigone':{v:12,t:'les deux tirent dans le même sens, presque sans effort'},
+ 'Sextile':{v:10,t:'l\'accord existe, mais il demande d\'être saisi pour opérer'},
+ 'Conjonction':{v:8,t:'les deux se confondent, difficile de distinguer le tempérament de la vocation'},
+ 'Carré':{v:-12,t:'friction directe, ton réflexe contrarie ce que le nombre demande'},
+ 'Opposition':{v:-11,t:'tension d\'axe, tu bascules d\'un pôle à l\'autre au lieu de tenir les deux'}};
+const DE={soleil:'du Soleil',lune:'de la Lune',mercure:'de Mercure',venus:'de Vénus',mars:'de Mars',
+ jupiter:'de Jupiter',saturne:'de Saturne',uranus:'d\'Uranus',neptune:'de Neptune',pluton:'de Pluton'};
+const NOYAU={soleil:'ton Soleil (ce que tu vises)',lune:'ta Lune (ce que tu ressens)',asc:'ton Ascendant (ta manière d\'entrer en scène)'};
+const CLE={
+ soleil:'Tu confonds réussir et te conformer. La bascule se fait quand tu cesses de chercher la validation là où ton nombre ne la donnera jamais — l\'accomplissement que tu vises n\'est pas celui que ton chemin récompense.',
+ lune:'Ton réflexe émotif tire dans le sens opposé à ton nombre. La clé n\'est pas de le mater mais de le prévenir : reconnaître le mouvement quand il monte, et décider ensuite plutôt que pendant.',
+ asc:'Ta façon d\'aborder les situations te dessert sur ce terrain-là. Ce que tu montres d\'emblée n\'est pas ce que ton chemin demande — il te faut un temps de latence entre la première réaction et l\'engagement.',
+ exil:'Ton astre régent travaille en terrain hostile : rien ne te viendra par facilité ici. La compensation passe par la méthode et la répétition, pas par l\'inspiration — et ce que tu construis ainsi tient mieux que le talent naturel.',
+ chute:'Ton astre régent est au plus bas de sa force. C\'est le point sensible de ta carte, et aussi le seul endroit où le progrès est réellement mesurable : traite-le comme un chantier de fond, pas comme un défaut.',
+ element:'Le tempérament dominant de ta carte et l\'astre de ton nombre n\'ont pas le même tempo. Le déséquilibre se corrige par le rythme plutôt que par la volonté : ralentir ou accélérer selon les moments, plutôt que de forcer dans un seul registre.',
+ aucun:'Rien ne s\'oppose frontalement — ce qui est un risque en soi. La facilité te dispense de trancher, et un chemin qu\'on n\'a jamais eu à défendre reste théorique. Cherche la contrainte plutôt que de l\'éviter.'};
+const VERDICT=[
+ [72,'Accord franc','La numérologie et la carte disent la même chose : tu es outillé pour ce que ton nombre demande.'],
+ [58,'Accord réservé','Les deux systèmes convergent, mais pas sans conditions — l\'appui existe, il n\'est pas gratuit.'],
+ [46,'Équilibre tendu','Ni accord ni rupture : ton chemin et ton tempérament négocient en permanence.'],
+ [0,'Friction structurelle','Ton nombre demande une chose, ta carte en fait spontanément une autre. C\'est le moteur de ta vie, pas son défaut.']];
+
+function dominance(natal,hs,kt){
+  const W={soleil:3,lune:3,mercure:2,venus:2,mars:2,jupiter:1.5,saturne:1.5,uranus:1,neptune:1,pluton:1};
+  const e={feu:0,terre:0,air:0,eau:0}, m={cardinal:0,fixe:0,mutable:0};
+  const detE={feu:[],terre:[],air:[],eau:[]}, detM={cardinal:[],fixe:[],mutable:[]};
+  const pose=(nom,lon,w)=>{
+    e[elemOf(lon)]+=w; m[modeOf(lon)]+=w;
+    detE[elemOf(lon)].push({nom,lon,w}); detM[modeOf(lon)].push({nom,lon,w});
+  };
+  for(const k in W)pose(k,natal[k].lon,W[k]);
+  if(kt)pose('asc',hs.asc,3);
+  const top=o=>Object.keys(o).reduce((a,b)=>o[a]>=o[b]?a:b);
+  const bas=o=>Object.keys(o).reduce((a,b)=>o[a]<=o[b]?a:b);
+  const pct=o=>{
+    const t=Object.values(o).reduce((x,y)=>x+y,0)||1, ks=Object.keys(o), r={}, rest=[];
+    let som=0;
+    for(const k of ks){const v=o[k]/t*100, f=Math.floor(v); r[k]=f; som+=f; rest.push([k,v-f]);}
+    rest.sort((a,b)=>b[1]-a[1]);
+    for(let i=0;som<100;i++,som++)r[rest[i%rest.length][0]]++;
+    return r;};
+  return {elem:top(e),mode:top(m),faible:bas(e),e:pct(e),m:pct(m),detE,detM};
+}
+const ELEM_EMO={feu:'🔥',terre:'🌎',air:'💨',eau:'💧'};
+const ELEM_TRAITS={
+ feu:{f:['Élan','Initiative','Enthousiasme','Franchise'],l:['Impatience','Brusquerie','Feu de paille']},
+ terre:{f:['Sens du concret','Patience','Fiabilité','Ténacité'],l:['Lourdeur','Méfiance du neuf','Matérialisme']},
+ air:{f:['Idées','Échange','Recul','Sociabilité'],l:['Dispersion','Froideur','Théorie sans suite']},
+ eau:{f:['Sensibilité','Intuition','Mémoire','Empathie'],l:['Susceptibilité','Fuite','Confusion des émotions']}};
+const ELEM_FORT={
+ feu:'Le feu domine ta carte : tu fonctionnes à l\'envie et à l\'élan, et tu perds pied quand il faut attendre.',
+ terre:'La terre domine ta carte : tu juges au résultat concret, et l\'abstraction pure t\'ennuie vite.',
+ air:'L\'air domine ta carte : tu passes par l\'idée et par la parole avant d\'entrer dans le réel.',
+ eau:'L\'eau domine ta carte : tu perçois l\'ambiance avant les faits, et tu décides souvent au ressenti.'};
+const EN_ELEM={feu:'de feu',terre:'de terre',air:"d'air",eau:"d'eau"};
+const ELEM_FAIBLE={
+ feu:'Le feu est ton point bas : l\'élan ne vient pas tout seul, tu démarres sur décision plutôt que sur envie.',
+ terre:'La terre est ton point bas : ancrer tes idées dans le concret demande un effort conscient.',
+ air:'L\'air est ton point bas : prendre du recul et mettre des mots sur ce que tu vis ne va pas de soi.',
+ eau:'L\'eau est ton point bas : l\'émotion t\'arrive souvent après coup, une fois la situation passée.'};
+const MODE_TXT={
+ cardinal:'Mode cardinal dominant : tu ouvres les cycles. Tu démarres bien, tu termines moins.',
+ fixe:'Mode fixe dominant : tu tiens la position. Solidité réelle, souplesse coûteuse.',
+ mutable:'Mode mutable dominant : tu t\'ajustes en continu. Agilité, au prix de la constance.'};
+const AXE_DEF={
+ feu:'Bélier, Lion, Sagittaire. L\'énergie qui part vers l\'avant : envie, action, affirmation.',
+ terre:'Taureau, Vierge, Capricorne. Le rapport au réel : corps, matière, durée, résultat.',
+ air:'Gémeaux, Balance, Verseau. La mise à distance : idée, langage, relation, concept.',
+ eau:'Cancer, Scorpion, Poissons. Le monde intérieur : émotion, mémoire, intuition, lien.',
+ cardinal:'Bélier, Cancer, Balance, Capricorne. Ouvrir : lancer un cycle, prendre l\'initiative.',
+ fixe:'Taureau, Lion, Scorpion, Verseau. Tenir : consolider, résister, aller au bout.',
+ mutable:'Gémeaux, Vierge, Sagittaire, Poissons. Ajuster : s\'adapter, transformer, conclure.'};
+const AXE_NIV={
+ feu:{fort:'Tu fonctionnes à l\'envie : tu démarres facilement et tu supportes mal l\'attente.',
+      moyen:'Tu sais te mettre en mouvement quand il le faut, sans que ce soit ton réflexe premier.',
+      faible:'L\'élan ne vient pas tout seul : tu démarres sur décision plutôt que sur envie.',
+      absent:'Rien dans ta carte ne pousse spontanément à l\'action. L\'initiative restera toujours un choix conscient.'},
+ terre:{fort:'Tu juges au résultat concret, et l\'abstraction pure t\'ennuie vite.',
+        moyen:'Tu redescends dans le réel quand c\'est nécessaire, sans y vivre en permanence.',
+        faible:'Ancrer tes idées dans le concret demande un effort conscient.',
+        absent:'Aucun appui matériel dans ta carte : le concret ne viendra que par discipline apprise.'},
+ air:{fort:'Tu passes par l\'idée et par la parole avant d\'entrer dans le réel.',
+      moyen:'Tu prends du recul quand on te le demande, sans que ce soit ton mode par défaut.',
+      faible:'Prendre de la distance et mettre des mots sur ce que tu vis ne va pas de soi.',
+      absent:'Rien ne te pousse à conceptualiser : tu vis les choses sans les nommer.'},
+ eau:{fort:'Tu perçois l\'ambiance avant les faits, et tu décides souvent au ressenti.',
+      moyen:'L\'émotion compte chez toi sans dicter tes choix.',
+      faible:'L\'émotion t\'arrive souvent après coup, une fois la situation passée.',
+      absent:'Aucun canal émotionnel direct : ce que tu ressens te parvient traduit, tard, ou pas du tout.'},
+ cardinal:{fort:'Tu ouvres les cycles : tu démarres bien et tu termines moins.',
+           moyen:'Tu sais lancer quand il le faut.',
+           faible:'Prendre l\'initiative te coûte : tu attends souvent que ça vienne d\'ailleurs.',
+           absent:'Rien ne t\'incite à démarrer : tu réagis plus que tu n\'inities.'},
+ fixe:{fort:'Tu tiens la position : solidité réelle, souplesse coûteuse.',
+       moyen:'Tu tiens quand ça compte, sans t\'arc-bouter.',
+       faible:'Tenir dans la durée est ton point faible : l\'intérêt retombe avant la fin.',
+       absent:'Aucune inertie dans ta carte : rien ne te retient nulle part, pour le meilleur et pour le pire.'},
+ mutable:{fort:'Tu t\'ajustes en continu : agilité, au prix de la constance.',
+          moyen:'Tu t\'adaptes sans perdre ton axe.',
+          faible:'T\'adapter demande un effort : tu préfères que le cadre ne bouge pas.',
+          absent:'Rien chez toi ne fonctionne par adaptation : le changement imposé sera toujours une épreuve.'}};
+const niveau=(v,moy)=>v===0?'absent':v<moy*0.6?'faible':v<=moy*1.25?'moyen':'fort';
+const NIV_LAB={absent:'Absent',faible:'Faible',moyen:'Moyen',fort:'Dominant'};
+
+function renderElements(){
+  const d=dominance(CHART.natal,CHART.hs,CHART.profile.knownTime);
+  const NOMPT=k=>k==='asc'?'Ascendant':NAMES[k];
+  const GLPT=k=>k==='asc'?'⌖':GLYPH[k];
+
+  const bloc=(t,cles,vals,det,moy,dom,faible)=>
+    `<ul class="elems${t==='m'?' modes':''}">`+cles.map(k=>{
+      const v=vals[k], niv=niveau(v,moy);
+      const cls=k===dom?'hi':(k===faible&&v<moy*0.6?'lo':'');
+      const pts=(det[k]||[]).sort((a,b)=>b.w-a.w);
+      return `<li>`+
+        `<button class="erow" type="button" data-d="${t}-${k}" aria-expanded="false" aria-controls="dr-${t}-${k}">`+
+          `<span class="en">${ELEM_EMO[k]||''} ${k.charAt(0).toUpperCase()+k.slice(1)}</span>`+
+          `<span class="eb"><i class="${cls}" style="width:${v}%"></i></span>`+
+          `<span class="ev">${v}%</span><span class="ech">▸</span>`+
+        `</button>`+
+        `<div class="edraw hidden" id="dr-${t}-${k}">`+
+          `<p class="ed1"><b>${NIV_LAB[niv]}</b> · ${AXE_DEF[k]}</p>`+
+          `<p class="ed2">${AXE_NIV[k][niv]}</p>`+
+          (pts.length
+            ? `<ul class="epts">`+pts.map(x=>`<li><span class="pg">${GLPT(x.nom)}</span>`+
+                `<span class="pn">${NOMPT(x.nom)}</span><span class="ps">${signEmo(x.lon)} ${signOf(x.lon)}</span>`+
+                `<span class="pw">poids ${String(x.w).replace('.',',')}</span></li>`).join('')+`</ul>`
+            : `<p class="ed2 vide">Aucun point de ta carte dans ce groupe.</p>`)+
+        `</div></li>`;
+    }).join('')+`</ul>`;
+
+  const T=ELEM_TRAITS[d.elem];
+  $('elements').innerHTML=
+   `<p class="k">Éléments</p>
+    <p class="esub">Le tempérament de fond : par quoi tu fonctionnes en premier. Pondéré sur les dix corps plus l'Ascendant — Soleil, Lune et Ascendant comptent triple. Clique une ligne pour voir ce qui la compose.</p>
+    ${bloc('e',['feu','terre','air','eau'],d.e,d.detE,25,d.elem,d.faible)}
+    <p class="etxt">${ELEM_FORT[d.elem]} ${d.elem===d.faible?''
+      :(d.e[d.faible]===0?`Aucun point de ta carte n'est en signe ${EN_ELEM[d.faible]} — c'est un manque franc, pas une simple faiblesse. `:'')+ELEM_FAIBLE[d.faible]}</p>
+    <ul class="tags">${T.f.map(t=>`<li class="tf">${t}</li>`).join('')}${T.l.map(t=>`<li class="tl">${t}</li>`).join('')}</ul>
+
+    <p class="k" style="margin-top:26px">Modes</p>
+    <p class="esub">Le rythme : ta façon d'aborder le changement — le lancer, le tenir, ou t'y ajuster. Même pondération.</p>
+    ${bloc('m',['cardinal','fixe','mutable'],d.m,d.detM,33,d.mode,null)}
+    <p class="etxt">${MODE_TXT[d.mode]}${
+      Object.keys(d.m).filter(k=>d.m[k]===0).map(k=>` Le mode ${k} est absent : rien chez toi ne fonctionne sur ce registre.`).join('')}</p>`;
+}
+function wireElements(){
+  $('elements').addEventListener('click',e=>{
+    const b=e.target.closest('button.erow');
+    if(!b)return;
+    const dr=$('dr-'+b.dataset.d);
+    const ouvre=dr.classList.contains('hidden');
+    dr.classList.toggle('hidden',!ouvre);
+    b.setAttribute('aria-expanded',ouvre?'true':'false');
+    b.classList.toggle('on',ouvre);
+  });
+}
+function aspectBetween(a,b,orb){
+  let d=Math.abs(n360(a-b)); if(d>180)d=360-d;
+  for(const A of ASPECTS)if(Math.abs(d-A.a)<=orb)return {asp:A,orb:Math.abs(d-A.a)};
+  return null;
+}
+const HOUSE_KIND=h=>[1,4,7,10].includes(h)?'angulaire':[2,5,8,11].includes(h)?'succédente':'cadente';
+
+function synthese(lp){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const R=REGENT[lp], pl=R.pl, lon=natal[pl].lon;
+  const dom=dominance(natal,hs,kt);
+  const dg=dignite(pl,lon);
+  const facteurs=[];
+  let score=50;
+
+  const cibles=[['soleil',natal.soleil.lon],['lune',natal.lune.lon]];
+  if(kt)cibles.push(['asc',hs.asc]);
+  const liens=[];
+  for(const [k,l] of cibles){
+    if(k===pl)continue;
+    const a=aspectBetween(lon,l,6);
+    if(a){liens.push({k,...a});score+=ACC_PH[a.asp.n].v;
+      if(ACC_PH[a.asp.n].v<0)facteurs.push({k,v:ACC_PH[a.asp.n].v});}
+  }
+  score+=DIGN_PH[dg].v;
+  if(DIGN_PH[dg].v<0)facteurs.push({k:dg,v:DIGN_PH[dg].v});
+
+  const hk=kt?HOUSE_KIND(houseOf(lon,hs.cusps)):null;
+  if(kt)score+=hk==='angulaire'?10:hk==='succédente'?4:-2;
+
+  const eReg=elemOf(lon);
+  const compat=COMPAT[dom.elem].includes(eReg);
+  score+=compat?(eReg===dom.elem?8:4):-6;
+  if(!compat)facteurs.push({k:'element',v:-6});
+
+  score=Math.max(4,Math.min(96,Math.round(score)));
+  const verdict=VERDICT.find(v=>score>=v[0]);
+
+  // 1. Harmonie ou friction
+  let h=`Le chemin de vie ${lp} relève ${DE[pl]}${R.second?`, secondé par ${low(SUJ[R.second])}`:''}. `+
+        `Dans ta carte, ${low(SUJ[pl])} est en ${signEmo(lon)} ${signOf(lon)}`+
+        (kt?`, en maison ${houseOf(lon,hs.cusps)} (${hk})`:'')+` et ${DIGN_PH[dg].t}. `;
+  if(liens.length)h+=liens.map(x=>`Il ${x.asp.n==='Conjonction'?'rejoint':'forme un '+x.asp.n.toLowerCase()+' à'} `+
+     `${NOYAU[x.k]} à ${x.orb.toFixed(1).replace('.',',')}° — ${ACC_PH[x.asp.n].t}.`).join(' ');
+  else h+=`Aucun aspect majeur ne le relie à ton Soleil${kt?', ta Lune ou ton Ascendant':' ou ta Lune'} : ton nombre et ton tempérament fonctionnent en parallèle, sans se parler beaucoup.`;
+
+  // 2. Clé d'équilibre
+  const pire=facteurs.sort((a,b)=>a.v-b.v)[0];
+  const cle=`L'astrologie décrit comment tu t'y prends ; le ${lp} dit pourquoi tu dois évoluer — ici, ${R.demande}. `+
+            (pire?CLE[pire.k]:CLE.aucun);
+
+  // 3. Vision globale
+  const vg=`Ton Soleil en ${signOf(natal.soleil.lon)} et ton `+(kt?`Ascendant ${signOf(hs.asc)}`:`Lune en ${signOf(natal.lune.lon)}`)+
+    ` donnent le comportement quotidien : dominante ${dom.elem}, mode ${dom.mode}. Le chemin de vie ${lp} donne le cap. `+
+    `${verdict[2]} `+
+    (compat?`Le tempérament ${dom.elem} de ta carte alimente ${low(SUJ[pl])} plutôt que de le contrarier — c'est ton point d'appui.`
+           :`Ta dominante ${dom.elem} et un régent en ${eReg} ne se nourrissent pas : c'est le décalage à surveiller sur la durée.`);
+
+  return {score,verdict:verdict[1],h,cle,vg,pl,dom};
+}
+
+function renderSynthese(lp){
+  const s=synthese(lp);
+  const x=(6+s.score/100*248).toFixed(1);
+  const ticks=[0,25,50,75,100].map(t=>{const px=6+t/100*248;
+    return `<line x1="${px}" y1="20" x2="${px}" y2="26" stroke="var(--ink)" stroke-width=".6" opacity=".5"/>`;}).join('');
+  $('synth').innerHTML=
+   `<p class="k">Croisement — nombre et ciel</p>
+    <div class="top">
+      <div class="verdict">${s.verdict}</div>
+      <div class="gaugewrap">
+        <svg viewBox="0 0 260 30" class="gauge" role="img" aria-label="Indice d'accord ${s.score} sur 100">
+          <line x1="6" y1="23" x2="254" y2="23" stroke="var(--ink)" stroke-width="1"/>${ticks}
+          <polygon points="${x},17 ${(+x-5.5).toFixed(1)},7 ${(+x+5.5).toFixed(1)},7" fill="var(--verdigris)"/>
+        </svg>
+        <div class="gaugelab"><span>Friction</span><span>Indice d'accord ${s.score}/100</span><span>Harmonie</span></div>
+      </div>
+    </div>
+    <div class="synth-grid">
+      <div class="sect"><h3>Harmonie ou friction</h3><p>${s.h}</p></div>
+      <div class="sect"><h3>Clé d'équilibre</h3><p>${s.cle}</p></div>
+      <div class="sect"><h3>Vision globale</h3><p>${s.vg}</p></div>
+    </div>`;
+}
+
+/* ========================================================================
+   6. Rendu
+   ======================================================================== */
+const $=id=>document.getElementById(id);
+let CHART=null;
+
+function buildChart(profile){
+  const [y,mo,d]=profile.date.split('-').map(Number);
+  const [h,mi]=profile.knownTime?profile.time.split(':').map(Number):[12,0];
+  const utc=localToUTC(y,mo,d,h,mi,profile.tz);
+  const jd=jdFromUTC(utc);
+  const natal=positions(jd);
+  const hs=houses(jd,profile.lat,profile.lon,'placidus');
+  const asp=findAspects(natal,natal,8,6,true).filter(a=>a.p!=='noeud'&&a.q!=='noeud');
+  return {jd,utc,natal,hs,asp,profile};
+}
+
+function renderChart(){
+  const {natal,hs,asp,profile}=CHART;
+  const kt=profile.knownTime;
+  $('setup').classList.add('hidden');
+  $('app').classList.remove('hidden');
+
+  const dl=new Date(profile.date+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
+  $('birthline').textContent=`${dl}${kt?' · '+profile.time:''} · ${profile.place} · ${ageDe(profile.date)} ans`;
+  $('whoami').innerHTML = profile.nom
+    ? `${profile.nom}, <em>${signOf(natal.soleil.lon).toLowerCase()}</em> <span class="emo">${signEmo(natal.soleil.lon)}</span>`
+    : `Ta carte du ciel`;
+
+  const triad=[
+    ['Soleil','☉',natal.soleil.lon,'ce que tu es'],
+    ['Lune','☽',natal.lune.lon,'ce que tu ressens'],
+    kt?['Ascendant','⌖',hs.asc,'ce qu\'on voit']:['Nœud lunaire','☊',natal.noeud.lon,'ce vers quoi tu vas']
+  ];
+  $('triad').innerHTML=triad.map(([k,g,lon,d])=>
+    `<div><div class="k">${k}</div><div class="g">${g} <span class="emo">${signEmo(lon)}</span></div>`+
+    `<div class="v">${signOf(lon)}</div><div class="d">${degStr(lon)} · ${d}</div></div>`).join('');
+
+  $('wheelbox').innerHTML=drawWheel(natal,hs,kt,asp);
+  $('wheelcap').textContent=kt?'Maisons Placidus · ascendant à gauche':'Heure inconnue · roue alignée sur 0° Bélier';
+  if(!kt)$('houses-block').classList.add('hidden');
+
+  // éphéméride natale
+  let t=`<tr><th colspan="2">Natal</th><th>Position</th>${kt?'<th>M.</th>':''}</tr>`;
+  for(const b of BODIES){
+    const p=natal[b];
+    t+=`<tr><td class="gl">${GLYPH[b]}</td><td class="sg">${NAMES[b]}</td>`+
+       `<td>${degStr(p.lon)} ${signLab(p.lon)}${p.retro&&b!=='noeud'?' <span class="rx">℞</span>':''}</td>`+
+       (kt?`<td>${houseOf(p.lon,hs.cusps)}</td>`:'')+`</tr>`;
+  }
+  $('natal-tbl').innerHTML=t;
+
+  let a=`<tr><th colspan="3">Aspect</th><th>Orbe</th></tr>`;
+  for(const x of asp.slice(0,18)){
+    a+=`<tr><td class="gl">${GLYPH[x.p]}</td><td class="gl" style="color:${x.asp.c}">${x.asp.g}</td>`+
+       `<td class="sg">${GLYPH[x.q]} &nbsp;${x.asp.n} ${NAMES[x.p]}–${NAMES[x.q]}</td><td>${x.orb.toFixed(1)}°</td></tr>`;
+  }
+  $('aspect-tbl').innerHTML=a;
+
+  if(kt){
+    let h='<tr><th>Maison</th><th>Cuspide</th></tr>';
+    for(let i=0;i<12;i++)h+=`<tr><td>${i+1}</td><td>${degStr(hs.cusps[i])} ${signLab(hs.cusps[i])}</td></tr>`;
+    $('house-tbl').innerHTML=h;
+  }
+  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderAmour();
+}
+
+function renderTransits(tr,hits){
+  const kt=CHART.profile.knownTime;
+  let t=`<tr><th colspan="2">Aujourd'hui</th><th>Position</th>${kt?'<th>M.</th>':''}</tr>`;
+  for(const b of BODIES){
+    const p=tr[b];
+    t+=`<tr><td class="gl">${GLYPH[b]}</td><td class="sg">${NAMES[b]}</td>`+
+       `<td>${degStr(p.lon)} ${signLab(p.lon)}${p.retro&&b!=='noeud'?' <span class="rx">℞</span>':''}</td>`+
+       (kt?`<td>${houseOf(p.lon,CHART.hs.cusps)}</td>`:'')+`</tr>`;
+  }
+  if(hits.length){
+    t+=`<tr><th colspan="${kt?4:3}" style="padding-top:16px">Transits sur ta carte</th></tr>`;
+    for(const x of hits.slice(0,10)){
+      t+=`<tr><td class="gl">${GLYPH[x.p]}</td><td class="gl" style="color:${x.asp.c}">${x.asp.g}</td>`+
+         `<td class="sg" colspan="${kt?2:1}">${GLYPH[x.q]} natal · ${x.asp.n} ${NAMES[x.p]}–${NAMES[x.q]} <span style="color:var(--ink-soft)">${x.orb.toFixed(1)}°</span></td></tr>`;
+    }
+  }
+  $('transit-tbl').innerHTML=t;
+}
+
+/* ========================================================================
+   7. Lecture du jour
+   ======================================================================== */
+function todayKey(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function buildPrompt(tr,hits,jd){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const natalTxt=BODIES.map(b=>`${NAMES[b]} ${degStr(natal[b].lon)} ${signOf(natal[b].lon)}${natal[b].retro&&b!=='noeud'?' rétrograde':''}${kt?` (maison ${houseOf(natal[b].lon,hs.cusps)})`:''}`).join('; ');
+  const aspTxt=CHART.asp.slice(0,8).map(x=>`${NAMES[x.p]} ${x.asp.n.toLowerCase()} ${NAMES[x.q]} (orbe ${x.orb.toFixed(1)}°)`).join('; ');
+  const trTxt=BODIES.map(b=>`${NAMES[b]} ${degStr(tr[b].lon)} ${signOf(tr[b].lon)}${tr[b].retro&&b!=='noeud'?' ℞':''}${kt?` en maison ${houseOf(tr[b].lon,hs.cusps)}`:''}`).join('; ');
+  const hitTxt=hits.length?hits.slice(0,8).map(x=>`${NAMES[x.p]} en transit ${x.asp.n.toLowerCase()} ${NAMES[x.q]} natal (orbe ${x.orb.toFixed(1)}°${x.exact?', exact':''})`).join('; '):'aucun aspect serré aujourd\'hui';
+  const phase=moonPhase(tr.soleil.lon,tr.lune.lon);
+  const dateTxt=new Date().toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  return `Tu es un astrologue francophone d'expérience qui écrit pour une seule personne. Ton style : québécois naturel, tutoiement, concret, sans jargon ésotérique gratuit et sans flatterie creuse. Tu nommes toujours le transit précis qui motive ce que tu avances.
+
+THÈME NATAL${profile.nom?' DE '+profile.nom.toUpperCase():''}
+${natalTxt}
+${kt?`Ascendant ${degStr(hs.asc)} ${signOf(hs.asc)} · Milieu du Ciel ${degStr(hs.mc)} ${signOf(hs.mc)}`:'Heure de naissance inconnue : ne parle jamais d\'ascendant ni de maisons.'}
+Aspects natals dominants : ${aspTxt}
+
+CIEL DU ${dateTxt.toUpperCase()}
+${trTxt}
+Phase lunaire : ${phase}
+Transits actifs sur le thème : ${hitTxt}
+
+Écris la lecture du jour. Contraintes :
+- 2 à 3 phrases par section, jamais plus
+- chaque section s'appuie sur un transit nommé dans les données ci-dessus (ex. « Mars carré ton Saturne natal »)
+- nuance les tensions au lieu de prédire des malheurs ; parle de tendances et de choix, pas de destin
+- pas de généralités qui vaudraient pour n'importe qui
+- « conseil » : une seule action concrète et faisable aujourd'hui
+- « motCle » : deux ou trois mots
+
+Réponds UNIQUEMENT avec cet objet JSON, sans texte autour, sans balises Markdown :
+{"titre":"titre court et évocateur, max 6 mots","ciel":"1-2 phrases nommant la configuration dominante du jour","sections":[{"titre":"Énergie générale","texte":"..."},{"titre":"Amour et liens","texte":"..."},{"titre":"Travail et projets","texte":"..."},{"titre":"Corps et esprit","texte":"..."}],"conseil":"...","motCle":"..."}`;
+}
+
+/* ========================================================================
+   7bis. Moteur d'interprétation local (aucun réseau)
+   ======================================================================== */
+const ASP_VERB={
+  'Conjonction':'se superpose à','Sextile':'tend la main à','Carré':'frotte contre',
+  'Trigone':'coule vers','Opposition':'fait face à'};
+const SUJ={soleil:'Le Soleil',lune:'La Lune',mercure:'Mercure',venus:'Vénus',mars:'Mars',
+ jupiter:'Jupiter',saturne:'Saturne',uranus:'Uranus',neptune:'Neptune',pluton:'Pluton',noeud:'Le nœud lunaire'};
+const POSS={lune:'ta',venus:'ta'};
+const poss=b=>(POSS[b]||'ton')+' '+NAMES[b]+(POSS[b]?' natale':' natal');
+const low=t=>t.replace(/^Le /,'le ').replace(/^La /,'la ');
+const HARD={'Carré':'dur','Opposition':'dur','Conjonction':'conj','Sextile':'doux','Trigone':'doux'};
+const NATAL_PART={
+  soleil:'ton identité, ce que tu cherches à devenir',
+  lune:'ta vie intérieure et tes réflexes affectifs',
+  mercure:'ta façon de penser et de t\'expliquer',
+  venus:'ce que tu aimes et la manière dont tu t\'attaches',
+  mars:'ton élan, ta capacité à trancher',
+  jupiter:'ta confiance et ton appétit de croissance',
+  saturne:'ta structure, tes limites, ce que tu portes',
+  uranus:'ton besoin d\'indépendance',
+  neptune:'ton imaginaire et tes zones floues',
+  pluton:'ce que tu contrôles et ce que tu refuses de lâcher',
+  noeud:'la direction que tu sens juste sans pouvoir la nommer'};
+const CONSEQ={
+  soleil:{dur:['Quelque chose te demande de te positionner clairement, et le flou coûte plus cher que l\'erreur.','L\'attention se braque sur toi à un moment où tu aurais préféré rester discret.'],
+          doux:['Ce que tu entreprends aujourd\'hui a plus de portée que d\'habitude.','Tu te sens aligné : c\'est le bon moment pour montrer ce que tu fais.'],
+          conj:['La journée tourne autour de toi, pour le meilleur et pour le reste.']},
+  lune:{dur:['L\'humeur monte vite et redescend aussi vite — ne prends pas la vague pour le fond.','Une réaction émotive risque de dire plus long sur ta fatigue que sur la situation.'],
+        doux:['Tu lis les gens avec justesse aujourd\'hui, sers-t\'en.','Le climat intérieur est stable : les conversations difficiles passent mieux.'],
+        conj:['Tes émotions sont collées au sujet du jour, sans filtre entre les deux.']},
+  mercure:{dur:['Les mots dérapent ou arrivent de travers : relis avant d\'envoyer.','Trop d\'informations en même temps, et l\'envie de trancher trop tôt.'],
+           doux:['L\'esprit est clair et rapide — c\'est le moment d\'expliquer une chose compliquée.','Une conversation débloque quelque chose qui traînait.'],
+           conj:['Tout passe par la parole aujourd\'hui : ce que tu nommes devient réel.']},
+  venus:{dur:['Un désaccord de goût ou de valeur, plus qu\'un vrai conflit.','L\'envie de plaire pourrait te faire dire oui à quelque chose que tu ne veux pas.'],
+         doux:['Le contact est facile, et un geste chaleureux porte loin.','Bon moment pour réparer un lien ou embellir quelque chose de concret.'],
+         conj:['L\'affect et le goût prennent toute la place dans les décisions du jour.']},
+  mars:{dur:['L\'irritation cherche une cible : choisis-la, sinon elle te choisit.','Le rythme force, et forcer davantage ne fera pas gagner de temps.'],
+        doux:['L\'énergie est disponible et bien dirigée — attaque ce qui traîne.','Tu peux trancher aujourd\'hui sans que ça coûte cher.'],
+        conj:['Beaucoup de carburant, peu de patience : dirige-le vers une seule chose.']},
+  jupiter:{dur:['L\'optimisme dépasse les moyens : vérifie les chiffres avant de dire oui.','Tentation de voir trop grand, trop vite.'],
+           doux:['Une porte s\'ouvre un peu plus large que prévu.','Le moment est favorable pour demander : la réponse a des chances d\'être bonne.'],
+           conj:['Tout gonfle aujourd\'hui, les bonnes idées comme les mauvaises.']},
+  saturne:{dur:['Une limite se rappelle à toi — le raccourci n\'existe pas cette fois.','Sensation de lenteur et de résistance : c\'est le prix d\'une chose qui tient.'],
+           doux:['Le sérieux paie : ce que tu poses aujourd\'hui va durer.','Bonne journée pour du travail long et ingrat qui te débarrasse d\'un poids.'],
+           conj:['La journée demande de la rigueur plus que de l\'inspiration.']},
+  uranus:{dur:['Un imprévu bouscule un plan auquel tu tenais.','L\'envie de tout casser est forte : distingue le vrai besoin de liberté du simple ras-le-bol.'],
+          doux:['Une solution latérale apparaît là où tu ne cherchais pas.','L\'écart par rapport à la routine est bénéfique aujourd\'hui.'],
+          conj:['Rien ne se passe comme prévu, et c\'est peut-être le point.']},
+  neptune:{dur:['Le contour des choses est flou : reporte ce qui exige une signature.','Fatigue diffuse, ou envie de fuir un sujet précis.'],
+           doux:['L\'intuition est fiable aujourd\'hui, même sans argument à donner.','Bon moment pour la création, le repos, ou simplement laisser reposer.'],
+           conj:['La frontière entre ce que tu ressens et ce qui se passe vraiment est mince.']},
+  pluton:{dur:['Un enjeu de contrôle remonte, souvent déguisé en question pratique.','Ce qui insiste aujourd\'hui a des racines anciennes.'],
+          doux:['Tu vois clair dans un jeu de pouvoir qui t\'échappait.','Force de fond disponible pour un changement que tu remettais.'],
+          conj:['Sujet intense, pas de version tiède possible.']}};
+const THEME_TURN={
+  'Énergie générale':{dur:['Garde une seule priorité, le reste attendra.','Le mieux à faire est de ralentir le débit sans arrêter la machine.','Ce qui résiste aujourd\'hui n\'est pas forcément à forcer.','Une journée à tenir plutôt qu\'à gagner.'],
+    doux:['Profite de la fluidité pendant qu\'elle est là.','La journée porte : n\'attends pas d\'être parfaitement prêt.','Rien ne bloque, alors avance sur ce qui compte vraiment.','Le genre de jour où l\'effort rapporte plus que d\'habitude.'],
+    conj:['Nomme la chose qui compte aujourd\'hui, une seule, et tiens-toi à ça.','Impossible de rester en périphérie du sujet : autant y aller de front.']},
+  'Amour et liens':{dur:['Dire les choses simplement évite l\'escalade.','Un silence de vingt minutes vaut mieux qu\'une réponse immédiate.','Vérifie si tu réponds à la personne ou à un vieux réflexe.','Ce n\'est pas la journée pour régler ce qui traîne depuis des mois.'],
+    doux:['Un pas vers l\'autre est bien reçu aujourd\'hui.','Tu es plus disponible que d\'habitude — ça se sent.','Les malentendus se dissipent vite si tu prends la peine de parler.','Bon jour pour reprendre contact avec quelqu\'un que tu as laissé filer.'],
+    conj:['Les liens sont au centre du jour, pas en arrière-plan.','Ce que tu ressens et ce qui se passe se confondent : sépare les deux avant de parler.']},
+  'Travail et projets':{dur:['Vérifie les détails avant de promettre une date.','Reprends la partie qui te déplaît : c\'est là qu\'est le blocage.','Le raccourci que tu envisages va coûter du temps plus tard.','Mieux vaut livrer moins et livrer juste.'],
+    doux:['Bon moment pour avancer sur le morceau qui demande de la concentration.','Une demande faite aujourd\'hui a de bonnes chances d\'aboutir.','Ce que tu clarifies maintenant t\'épargne trois échanges plus tard.','Le travail de fond avance mieux que la coordination.'],
+    conj:['Le travail occupe tout l\'espace du jour : organise-le au lieu de le subir.','Une seule tâche mérite ton attention pleine aujourd\'hui.']},
+  'Corps et esprit':{dur:['Le corps encaisse ce que la tête refuse de regarder — bouge, sors, respire.','Coupe tôt ce soir, la récupération compte plus que l\'heure gagnée.','La tension cherche une sortie physique : donne-lui-en une.','Baisse le volume des écrans avant que la fatigue décide pour toi.'],
+    doux:['Bonne fenêtre pour l\'effort physique ou pour une vraie pause.','L\'esprit est reposé : sers-t\'en avant qu\'il se remplisse.','Le sommeil devrait être bon — ne le sacrifie pas pour rien.','Un peu d\'air dehors suffit à remettre les idées en ordre.'],
+    conj:['Écoute le signal du corps avant qu\'il monte le volume.','Ton état intérieur et ton état physique disent la même chose aujourd\'hui.']}};
+const HOUSE_THEME=['la façon dont tu te présentes et dont tu démarres les choses',
+ 'tes ressources et ce que tu estimes valoir','les échanges courts, les déplacements, l\'entourage proche',
+ 'la maison, la famille, tes racines','le jeu, la création, ce que tu fais par plaisir',
+ 'le travail quotidien, la santé, les routines','les partenariats et le face-à-face',
+ 'ce qui est partagé, les engagements profonds, les fins','le sens, l\'ailleurs, ce que tu cherches à comprendre',
+ 'ta trajectoire publique, ce que tu construis au grand jour','les réseaux, les alliances, les projets collectifs',
+ 'le retrait, le repos, ce qui travaille en coulisse'];
+const SIGN_TONE=['en mode direct, tout de suite','au rythme lent du concret','en curiosité dispersée',
+ 'avec la mémoire et l\'affect au premier plan','avec le besoin d\'être vu','en mode ajustement et détail',
+ 'en cherchant l\'accord et l\'équilibre','sans demi-mesure','avec l\'envie de voir plus grand',
+ 'avec exigence et patience','à contre-courant, par en dehors','dans le flou et la porosité'];
+const TITRES={
+  soleil:{dur:['Se tenir droit','Sous la lumière'],doux:['Le jour te porte','Plein axe'],conj:['Ton tour']},
+  lune:{dur:['Marée haute','Le fond et la vague'],doux:['Climat clément','Bonne lecture'],conj:['À fleur de peau']},
+  mercure:{dur:['Les mots de travers','Trop de fils'],doux:['Ligne claire','Le mot juste'],conj:['Tout par la parole']},
+  venus:{dur:['Question de goût','Le prix de plaire'],doux:['Contact facile','Réparer un fil'],conj:['Au cœur du lien']},
+  mars:{dur:['Frottement utile','Forcer ne sert à rien'],doux:['Carburant disponible','Trancher net'],conj:['Une seule cible']},
+  jupiter:{dur:['Voir trop grand','Vérifie les chiffres'],doux:['La porte s\'ouvre','Demander vaut la peine'],conj:['Tout gonfle']},
+  saturne:{dur:['Pas de raccourci','Le prix de ce qui tient'],doux:['Le sérieux paie','Poser une pierre'],conj:['Rigueur avant tout']},
+  uranus:{dur:['Le plan bouge','Envie de tout casser'],doux:['Par le côté','Sortir du rail'],conj:['Rien comme prévu']},
+  neptune:{dur:['Contours flous','Rien à signer'],doux:['L\'intuition tient','Laisser reposer'],conj:['Frontière mince']},
+  pluton:{dur:['Ce qui insiste','Enjeu de contrôle'],doux:['Voir clair','Force de fond'],conj:['Pas de version tiède']}};
+const CONSEILS={
+  soleil:{dur:['Prends position à voix haute sur un seul sujet, aujourd\'hui, même si c\'est inconfortable.'],
+          doux:['Montre à quelqu\'un une chose que tu as faite et que tu n\'as encore montrée à personne.'],
+          conj:['Choisis la tâche qui te ressemble le plus et donne-lui la meilleure heure de ta journée.']},
+  lune:{dur:['Avant de répondre à ce qui t\'a piqué, attends d\'avoir mangé et dormi.'],
+        doux:['Appelle la personne à qui tu penses depuis trois jours sans l\'avoir fait.'],
+        conj:['Écris trois lignes sur ce que tu ressens, pour toi seul, avant de décider quoi que ce soit.']},
+  mercure:{dur:['Relis à voix haute le message important avant de l\'envoyer.'],
+           doux:['Explique à quelqu\'un le truc compliqué que tu comprends et qu\'il ne comprend pas encore.'],
+           conj:['Mets par écrit la décision que tu gardes dans ta tête depuis trop longtemps.']},
+  venus:{dur:['Dis non une fois aujourd\'hui, sans justification longue.'],
+         doux:['Fais un geste concret et petit vers quelqu\'un : un message, un café, un coup de main.'],
+         conj:['Consacre une heure pleine à une personne ou à une chose que tu aimes, sans écran.']},
+  mars:{dur:['Sors marcher vingt minutes avant la conversation que tu appréhendes.'],
+        doux:['Attaque en premier la tâche que tu repousses depuis une semaine.'],
+        conj:['Choisis une seule bataille aujourd\'hui et laisse tomber les deux autres.']},
+  jupiter:{dur:['Avant de dire oui, écris ce que ça coûte en heures.'],
+           doux:['Fais la demande que tu remets à plus tard : le moment est bon.'],
+           conj:['Note l\'idée qui t\'emballe, puis relis-la demain matin avant d\'agir.']},
+  saturne:{dur:['Fais la partie ennuyeuse en premier, trente minutes, chrono en main.'],
+           doux:['Termine complètement une chose au lieu d\'en avancer trois.'],
+           conj:['Retire une obligation de ta liste — vraiment, pas en la reportant.']},
+  uranus:{dur:['Prévois du jeu dans ton horaire : quelque chose va bouger.'],
+          doux:['Essaie l\'approche que tu as écartée trop vite la dernière fois.'],
+          conj:['Change une seule habitude aujourd\'hui, la plus petite, et regarde ce que ça déplace.']},
+  neptune:{dur:['Ne signe rien aujourd\'hui. Dors dessus.'],
+           doux:['Réserve une heure sans but précis : c\'est là que la réponse arrive.'],
+           conj:['Vérifie un fait dont tu es sûr sans savoir pourquoi tu en es sûr.']},
+  pluton:{dur:['Demande-toi ce que tu cherches vraiment à contrôler dans cette histoire.'],
+          doux:['Aborde franchement le sujet que tout le monde contourne.'],
+          conj:['Lâche une chose que tu tiens par habitude et non par nécessité.']}};
+const MOTS={
+  soleil:['clarté, présence','axe, visibilité'],lune:['nuance, patience','écoute, marée'],
+  mercure:['précision, mots','clarté, échange'],venus:['lien, mesure','douceur, choix'],
+  mars:['direction, feu','élan, tranchant'],jupiter:['ampleur, prudence','ouverture, souffle'],
+  saturne:['rigueur, durée','patience, ossature'],uranus:['écart, souplesse','rupture, jeu'],
+  neptune:['flou, repos','intuition, marée'],pluton:['profondeur, contrôle','fond, franchise']};
+
+function seedFrom(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function rng(seed){let x=seed||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
+const pick=(a,r)=>a[Math.floor(r()*a.length)%a.length];
+
+const THEME_TARGETS={
+ 'Énergie générale':{nat:['soleil','mars','uranus','pluton'],tr:['soleil','mars','uranus','pluton'],fb:'soleil'},
+ 'Amour et liens':{nat:['venus','lune','noeud'],tr:['venus','lune'],fb:'venus'},
+ 'Travail et projets':{nat:['mercure','saturne','jupiter','soleil'],tr:['mercure','saturne','jupiter'],fb:'mercure'},
+ 'Corps et esprit':{nat:['lune','mars','neptune','saturne'],tr:['lune','neptune','saturne'],fb:'lune'}};
+
+/* --- balayage : moment exact de chaque aspect sur la période --- */
+const n180=x=>((x+180)%360+360)%360-180;
+const jdToDate=jd=>new Date((jd-2440587.5)*86400000);
+const dShort=jd=>jdToDate(jd).toLocaleDateString('fr-CA',{day:'numeric',month:'short'}).replace('.','');
+const dLong=jd=>jdToDate(jd).toLocaleDateString('fr-CA',{day:'numeric',month:'long'});
+
+function scanEvents(jd0,jd1,bodies,natal,step){
+  const N=Math.ceil((jd1-jd0)/step), cache={};
+  for(const b of bodies){
+    cache[b]=new Array(N+1);
+    for(let i=0;i<=N;i++)cache[b][i]=bodyLon(b,jd0+i*step);
+  }
+  const ev=[];
+  for(const b of bodies){
+    for(const q of BODIES){
+      if(q==='noeud')continue;
+      const nl=natal[q].lon;
+      for(const asp of ASPECTS){
+        const targets=asp.a===0?[0]:asp.a===180?[180]:[asp.a,-asp.a];
+        for(const tg of targets){
+          for(let i=0;i<N;i++){
+            const a=n180(n180(cache[b][i]-nl)-tg), c=n180(n180(cache[b][i+1]-nl)-tg);
+            if(a*c>=0||Math.abs(a)>45||Math.abs(c)>45)continue;
+            let lo=jd0+i*step, hi=jd0+(i+1)*step;
+            const g=t=>n180(n180(bodyLon(b,t)-nl)-tg);
+            const glo=g(lo);
+            for(let k=0;k<32;k++){const m=(lo+hi)/2; if(glo*g(m)<=0)hi=m; else lo=m;}
+            ev.push({jd:(lo+hi)/2,p:b,q,asp});
+          }
+        }
+      }
+    }
+  }
+  return ev.sort((x,y)=>x.jd-y.jd);
+}
+function lunations(jd0,jd1){
+  const ev=[], step=0.25;
+  const e=t=>n180(moonLon(t)-sunLon(t));
+  for(let t=jd0;t<jd1;t+=step){
+    for(const [tg,nom] of [[0,'Nouvelle lune'],[180,'Pleine lune']]){
+      const f=x=>n180(e(x)-tg);
+      const a=f(t), c=f(t+step);
+      if(a*c>=0||Math.abs(a)>45||Math.abs(c)>45)continue;
+      let lo=t,hi=t+step;
+      for(let k=0;k<26;k++){const m=(lo+hi)/2; if(f(lo)*f(m)<=0)hi=m; else lo=m;}
+      ev.push({jd:(lo+hi)/2,lune:nom});
+    }
+  }
+  return ev;
+}
+function solarReturn(natalSun,fromJD){
+  const g=t=>n180(sunLon(t)-natalSun);
+  for(let t=fromJD;t<fromJD+368;t+=2){
+    const a=g(t), c=g(t+2);
+    if(a*c>=0||Math.abs(a)>45||Math.abs(c)>45)continue;
+    let lo=t,hi=t+2;
+    for(let k=0;k<30;k++){const m=(lo+hi)/2; if(g(lo)*g(m)<=0)hi=m; else lo=m;}
+    return (lo+hi)/2;
+  }
+  return null;
+}
+
+/* --- fenêtres --- */
+const PERIOD_LABEL={jour:'Jour',semaine:'Semaine',mois:'Mois',annee:'Année'};
+const TEMPO={semaine:'cette semaine',mois:'ce mois-ci',annee:'cette année'};
+function windowFor(period,now){
+  const pad=n=>String(n).padStart(2,'0');
+  const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  if(period==='jour'){
+    const jd=jdFromUTC(now);
+    return {jd0:jd,jd1:jd+1,key:ymd(now),
+      label:now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long',year:'numeric'})};
+  }
+  const jd=jdFromUTC(now);
+  const jour=d=>{const x=new Date(now);x.setDate(x.getDate()+d);
+    return x.toLocaleDateString('fr-CA',{day:'numeric',month:'long'});};
+  if(period==='semaine')
+    return {jd0:jd,jd1:jd+7,key:ymd(now),label:'Les 7 prochains jours — du '+jour(0)+' au '+jour(6)};
+  if(period==='mois')
+    return {jd0:jd,jd1:jd+31,key:ymd(now),label:'Les 31 prochains jours — du '+jour(0)+' au '+jour(30)};
+  return {jd0:jd,jd1:jd+365,key:now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()),
+    label:'Les 12 prochains mois — '+now.toLocaleDateString('fr-CA',{month:'long',year:'numeric'})+
+          ' à '+new Date(now.getFullYear()+1,now.getMonth(),1).toLocaleDateString('fr-CA',{month:'long',year:'numeric'})};
+}
+
+/* --- lecture longue portée --- */
+const SIGNIF={pluton:0,neptune:0,uranus:0,saturne:1,jupiter:2,mars:3,soleil:4,venus:4,mercure:5,lune:6};
+const THEME_SPAN={
+  'Énergie générale':{dur:['La période demande un arbitrage plutôt qu\'un sprint.','Ce qui résiste ici ne cédera pas à la force : change d\'angle.','Une contrainte structure la période — autant t\'organiser autour.'],
+    doux:['Le terrain est dégagé : c\'est la fenêtre pour ce que tu remets depuis longtemps.','La période soutient l\'initiative plus que la prudence.','Tu avances avec moins de frottement que d\'habitude.'],
+    conj:['Un seul chantier mérite ton énergie sur cette période.','Le sujet revient tant que tu ne l\'as pas traité de front.']},
+  'Amour et liens':{dur:['Les tensions relationnelles de la période disent surtout quelque chose sur tes attentes.','Nomme ce qui accroche avant que ça s\'installe.','Une mise au point vaut mieux qu\'une accumulation de petits silences.'],
+    doux:['Bonne période pour approfondir un lien ou en réparer un.','Ce que tu offres revient plutôt bien sur cette portée.','Les rapprochements se font sans forcer.'],
+    conj:['Les liens sont le vrai sujet de la période, même quand ça se déguise en autre chose.','Un rapport occupe le devant de la scène : décide de quelle place tu lui donnes.']},
+  'Travail et projets':{dur:['Les délais et les moyens vont être renégociés : anticipe.','Une faiblesse dans la structure remonte à la surface — c\'est le bon moment pour la traiter.','Mieux vaut resserrer le périmètre que tenir une promesse trop large.'],
+    doux:['Fenêtre favorable pour lancer, demander ou négocier.','Le travail de fond porte : c\'est le moment d\'investir dans ce qui dure.','Une opportunité arrive par un canal que tu ne surveilles pas.'],
+    conj:['La période concentre l\'essentiel sur un seul dossier.','Ce que tu poses ici devient la base du reste de l\'année.']},
+  'Corps et esprit':{dur:['Surveille le rythme : c\'est une période où on tient trop longtemps sans le sentir.','Prévois de la récupération, pas seulement de la performance.','La fatigue s\'accumule discrètement sur cette portée.'],
+    doux:['Bonne période pour reprendre une routine physique et la tenir.','L\'énergie est stable : profites-en pour construire une habitude.','Le sommeil et la concentration se rétablissent d\'eux-mêmes.'],
+    conj:['Corps et moral avancent au même rythme sur cette période — soigne l\'un, tu soignes l\'autre.','Un ajustement de rythme s\'impose, pas un effort de plus.']}};
+const CONSEIL_SPAN={
+  dur:['Note le {D} : garde-toi de la marge autour de cette date, c\'est là que ça serre.',
+       'Évite de placer quoi que ce soit d\'irréversible autour du {D}.',
+       'Prépare le {D} d\'avance plutôt que de l\'encaisser sur le moment.'],
+  doux:['Le {D} est ta meilleure fenêtre : place là ce qui compte.',
+        'Si tu as une demande à faire, vise autour du {D}.',
+        'Fais converger tes efforts vers le {D} — le terrain sera porteur.'],
+  conj:['Le {D} est le pivot de la période : décide avant, exécute après.',
+        'Tout se joue autour du {D} — dégage-toi du temps ce jour-là.']};
+
+function spanReading(period,win){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const r=rng(seedFrom(period+win.key+profile.date+(profile.nom||'')));
+  const tempo=TEMPO[period];
+  const adapt=t=>t.replace(/aujourd'hui/g,tempo).replace(/journée/g,'période').replace(/Ce soir/g,'En fin de période');
+
+  const bodies=period==='annee'
+    ?['jupiter','saturne','uranus','neptune','pluton']
+    :['soleil','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton'];
+  const ev=scanEvents(win.jd0,win.jd1,bodies,natal,period==='annee'?1:0.5);
+
+  let agenda=ev.map(e=>({jd:e.jd,pri:SIGNIF[e.p]+1,g:`${GLYPH[e.p]} ${e.asp.g} ${GLYPH[e.q]}`,
+    t:`${SUJ[e.p]} ${e.asp.n.toLowerCase()} ${poss(e.q)}`,c:e.asp.c}));
+  if(period!=='annee')for(const l of lunations(win.jd0,win.jd1))
+    agenda.push({jd:l.jd,pri:0,g:'☽',t:l.lune+' en '+signEmo(moonLon(l.jd))+' '+signOf(moonLon(l.jd)),c:'#5D6B82'});
+  if(period==='annee'){
+    const sr=solarReturn(natal.soleil.lon,win.jd0);
+    if(sr!==null){
+      const a=angles(sr,profile.lat,profile.lon);
+      agenda.push({jd:sr,pri:0,g:'☉',t:`Révolution solaire — ascendant ${degStr(a.asc)} ${signEmo(a.asc)} ${signOf(a.asc)}`,c:'#3E7C6E'});
+    }
+  }
+  const cap=period==='semaine'?14:18;
+  if(agenda.length>cap){
+    const fixes=agenda.filter(a=>a.pri===0);
+    const reste=agenda.filter(a=>a.pri>0).sort((x,y)=>x.pri-y.pri||x.jd-y.jd);
+    agenda=fixes.concat(reste.slice(0,Math.max(0,cap-fixes.length)));
+  }
+  agenda.sort((x,y)=>x.jd-y.jd);
+
+  const used=new Set(), usedP=new Set(), usedQ=new Set();
+  const span=win.jd1-win.jd0;
+  const section=name=>{
+    const t=THEME_TARGETS[name];
+    const score=x=>((t.nat.includes(x.q)||t.tr.includes(x.p))?0:4)+
+                   (usedP.has(x.p)?3:0)+(usedQ.has(x.q)?3:0)+
+                   (x.jd-win.jd0)/span*1.5+SIGNIF[x.p]*0.25;
+    const h=ev.filter(x=>!used.has(x)).sort((a,b)=>score(a)-score(b))[0];
+    if(h){
+      used.add(h);usedP.add(h.p);usedQ.add(h.q);
+      const cat=HARD[h.asp.n];
+      return `${SUJ[h.p]} ${ASP_VERB[h.asp.n]} ${NATAL_PART[h.q]} — exact le ${dLong(h.jd)}. `+
+             `${adapt(pick(CONSEQ[h.p][cat],r))} ${pick(THEME_SPAN[name][cat],r)}`;
+    }
+    const cat=pick(['doux','dur'],r);
+    return `Aucun passage exact sur ce terrain ${tempo}. `+
+           `${SUJ[t.fb]} reste en ${signEmo(bodyLon(t.fb,win.jd0))} ${signOf(bodyLon(t.fb,win.jd0))}`+
+           (kt?`, dans ta maison ${houseOf(bodyLon(t.fb,win.jd0),hs.cusps)}`:'')+
+           `. ${pick(THEME_SPAN[name][cat],r)}`;
+  };
+
+  const dom=[...ev].sort((a,b)=>(SIGNIF[a.p]-SIGNIF[b.p])||(a.jd-b.jd))[0]||null;
+  const cat=dom?HARD[dom.asp.n]:'doux';
+  const key=dom?dom.p:'lune';
+  const nbEx=ev.length;
+  const ciel=dom
+    ? `${nbEx} passage${nbEx>1?'s':''} exact${nbEx>1?'s':''} sur ta carte ${tempo}. Le plus lourd : `+
+      `${low(SUJ[dom.p])} ${dom.asp.n.toLowerCase()} à ${poss(dom.q)}, le ${dLong(dom.jd)}.`
+    : `Aucun aspect ne devient exact sur ta carte ${tempo} — période de fond, sans point de bascule imposé.`;
+
+  return {
+    titre:pick(TITRES[key][cat],r),
+    ciel,
+    agenda:agenda.map(a=>({d:dShort(a.jd),g:a.g,t:a.t,c:a.c})),
+    agendaTitre:period==='annee'?'Les passages de l\'année':'Les dates à retenir',
+    sections:Object.keys(THEME_TARGETS).map(n=>({titre:n,texte:section(n)})),
+    conseil:dom?pick(CONSEIL_SPAN[cat],r).replace('{D}',dLong(dom.jd))
+               :'Rien à caler dans le calendrier : sers-toi de la période pour consolider plutôt que pour lancer.',
+    motCle:pick(MOTS[key],r)
+  };
+}
+
+function localReading(tr,hits){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const r=rng(seedFrom(todayKey()+profile.date+(profile.nom||'')));
+  const orbTxt=h=>h.orb<0.5?', exact':` (orbe ${h.orb.toFixed(1).replace('.',',')}°)`;
+  const context=b=>kt?`ta maison ${houseOf(tr[b].lon,hs.cusps)} — ${HOUSE_THEME[houseOf(tr[b].lon,hs.cusps)-1]}`
+                     :`${signEmo(tr[b].lon)} ${signOf(tr[b].lon)}, ${SIGN_TONE[signIdx(tr[b].lon)]}`;
+
+  const usable=hits.filter(h=>h.p!=='noeud'&&h.q!=='noeud');
+  const dom=usable[0]||null;
+  const SLOW={soleil:0,lune:0,mercure:0,venus:0,mars:.3,jupiter:1.6,saturne:1.8,uranus:2.6,neptune:2.6,pluton:2.6};
+  const used=new Set(), usedP=new Set(), usedQ=new Set();
+
+  const section=name=>{
+    const t=THEME_TARGETS[name];
+    const score=x=>x.orb+SLOW[x.p]+(usedP.has(x.p)?3:0)+(usedQ.has(x.q)?3:0)+
+                   ((t.nat.includes(x.q)||t.tr.includes(x.p))?0:4);
+    const h=usable.filter(x=>!used.has(x)).sort((a,b)=>score(a)-score(b))[0];
+    if(h){
+      used.add(h);usedP.add(h.p);usedQ.add(h.q);
+      const cat=HARD[h.asp.n];
+      return `${SUJ[h.p]} ${ASP_VERB[h.asp.n]} ${NATAL_PART[h.q]}${orbTxt(h)}. `+
+             `${pick(CONSEQ[h.p][cat],r)} ${pick(THEME_TURN[name][cat],r)}`;
+    }
+    const b=t.fb;
+    const cat=pick(['doux','dur'],r);
+    return `Pas d'aspect serré sur ce terrain aujourd'hui. ${SUJ[b]} traverse ${context(b)}`+
+           `${tr[b].retro?', en marche rétrograde':''}. ${pick(THEME_TURN[name][cat],r)}`;
+  };
+
+  const phase=moonPhase(tr.soleil.lon,tr.lune.lon);
+  const ciel=`${phase.charAt(0).toUpperCase()+phase.slice(1)}, Lune en ${signEmo(tr.lune.lon)} ${signOf(tr.lune.lon)}`+
+    (kt?` dans ta maison ${houseOf(tr.lune.lon,hs.cusps)}`:'')+`. `+
+    (dom?`Le fait dominant du jour : ${low(SUJ[dom.p])} en transit, ${dom.asp.n.toLowerCase()} à ${poss(dom.q)}${orbTxt(dom)}.`
+        :`Aucun transit serré sur ta carte — journée sans forçage, le ciel te laisse la main.`);
+
+  const cat=dom?HARD[dom.asp.n]:'doux';
+  const key=dom?dom.p:'lune';
+  return {
+    titre:pick(TITRES[key][cat],r),
+    ciel,
+    sections:Object.keys(THEME_TARGETS).map(n=>({titre:n,texte:section(n)})),
+    conseil:pick(CONSEILS[key][cat],r),
+    motCle:pick(MOTS[key],r)
+  };
+}
+
+
+async function askClaude(prompt){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+  });
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const data=await r.json();
+  let txt=data.content.filter(i=>i.type==="text").map(i=>i.text).join("\n").trim();
+  txt=txt.replace(/```json/gi,"").replace(/```/g,"").trim();
+  const a=txt.indexOf("{"), b=txt.lastIndexOf("}");
+  if(a<0||b<0)throw new Error("Réponse illisible");
+  return JSON.parse(txt.slice(a,b+1));
+}
+
+function paintReading(o){
+  $('reading').innerHTML=
+    `<h2 class="read-title">${esc(o.titre||'Le jour')}</h2>`+
+    (o.ciel?`<p class="sky">${esc(o.ciel)}</p>`:'')+
+    (o.agenda&&o.agenda.length?
+      `<p class="agenda-h">${esc(o.agendaTitre||'Dates')}</p><ol class="agenda">`+
+      o.agenda.map(a=>`<li><span class="ag-d">${esc(a.d)}</span>`+
+        `<span class="ag-g" style="color:${esc(a.c||'#1B2A44')}">${esc(a.g)}</span>`+
+        `<span class="ag-t">${esc(a.t)}</span></li>`).join('')+`</ol>`:'')+
+    `<div class="sect-grid">`+(o.sections||[]).map(s=>
+      `<div class="sect"><h3>${esc(s.titre)}</h3><p>${esc(s.texte)}</p></div>`).join('')+`</div>`+
+    (o.conseil?`<div class="advice"><div class="k">Le geste du jour</div><p>${esc(o.conseil)}</p></div>`:'')+
+    (o.motCle?`<p class="keyword">${esc(o.motCle)}</p>`:'');
+}
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+
+let apiDown=false, PERIOD='jour';
+
+async function loadReading(force){
+  const now=new Date();
+  const win=windowFor(PERIOD,now);
+  const key='astro:lecture:'+PERIOD+':'+win.key;
+  $('today').textContent=win.label;
+
+  const jd=jdFromUTC(now);
+  const tr=positions(jd);
+  const hits=findAspects(tr,CHART.natal,5,3,false).filter(x=>x.p!=='noeud');
+  renderTransits(tr,hits);
+
+  if(!force){
+    const cached=await store.get(key);
+    if(cached){paintReading(cached);setSource(cached.src);return;}
+  }
+
+  if(PERIOD!=='jour')$('reading').innerHTML='<p class="loading">Balayage de la période</p>';
+
+  // 1. lecture locale, immédiate et sans réseau
+  const local=PERIOD==='jour'?localReading(tr,hits):spanReading(PERIOD,win);
+  local.src='local';
+  paintReading(local);
+  setSource('local');
+  await store.set(key,local);
+
+  // 2. si l'API est joignable, on remplace la lecture du jour par une version rédigée
+  if(apiDown||PERIOD!=='jour')return;
+  try{
+    const o=await askClaude(buildPrompt(tr,hits,jd));
+    o.src='claude';
+    await store.set(key,o);
+    paintReading(o);
+    setSource('claude');
+  }catch(e){
+    apiDown=true;
+  }
+}
+const BUILD='r27';
+function setSource(src){
+  $('footnote').textContent='Build '+BUILD+' · positions calculées localement (Meeus/JPL, précision ≈ 1–2 arcmin). '+
+    (src==='claude'?'Lecture rédigée par Claude.':'Lecture composée hors ligne à partir de tes transits.');
+}
+
+/* ========================================================================
+   8. Amorçage
+   ======================================================================== */
+const sel=$('f-ville');
+CITIES.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c[0];sel.appendChild(o);});
+const other=document.createElement('option');other.value='x';other.textContent='Autre lieu — coordonnées manuelles';sel.appendChild(other);
+sel.onchange=()=>$('manual').classList.toggle('hidden',sel.value!=='x');
+$('f-nohour').onchange=e=>{$('f-heure').disabled=e.target.checked;};
+
+$('go').onclick=async()=>{
+  const err=$('setup-err');err.classList.add('hidden');
+  const date=$('f-date').value;
+  const knownTime=!$('f-nohour').checked;
+  const time=$('f-heure').value;
+  if(!date){err.textContent='Il manque la date de naissance.';err.classList.remove('hidden');return;}
+  if(knownTime&&!time){err.textContent='Il manque l\'heure de naissance — ou coche « je ne connais pas l\'heure ».';err.classList.remove('hidden');return;}
+  let lat,lon,tz,place;
+  if(sel.value==='x'){
+    lat=parseFloat($('f-lat').value);lon=parseFloat($('f-lon').value);tz=$('f-tz').value.trim();
+    if(isNaN(lat)||isNaN(lon)||!tz){err.textContent='Latitude, longitude et fuseau sont requis pour un lieu manuel.';err.classList.remove('hidden');return;}
+    try{tzOffsetMin(new Date(),tz);}catch(e){err.textContent='Fuseau inconnu. Utilise un identifiant IANA, par exemple America/Toronto.';err.classList.remove('hidden');return;}
+    place=lat.toFixed(2)+', '+lon.toFixed(2);
+  }else{
+    const c=CITIES[+sel.value];place=c[0];lat=c[1];lon=c[2];tz=c[3];
+  }
+  const profile={nom:$('f-nom').value.trim(),date,time,knownTime,lat,lon,tz,place};
+  await store.set('astro:profil',profile);
+  CHART=buildChart(profile);
+  await pushRecent(profile);
+  renderChart();
+  renderShare();
+  loadReading(false);
+};
+
+$('periods').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-p]');
+  if(!b||b.dataset.p===PERIOD)return;
+  PERIOD=b.dataset.p;
+  for(const x of $('periods').querySelectorAll('button'))x.classList.toggle('on',x===b);
+  $('reading').innerHTML='<p class="loading">Balayage de la période</p>';
+  setTimeout(()=>loadReading(false),20);
+});
+
+$('regen').onclick=()=>loadReading(true);
+$('reset').onclick=async()=>{
+  await store.del('astro:profil');
+  await store.del('astro:lecture:'+todayKey());
+  $('app').classList.add('hidden');
+  $('setup').classList.remove('hidden');
+  renderRecents();
+  window.scrollTo({top:0});
+};
+
+/* --- partage et comparaison --- */
+function copyText(t,btn){
+  const done=ok=>{const o=btn.dataset.lab||btn.textContent;btn.dataset.lab=o;
+    btn.textContent=ok?'Copié':'Copie bloquée — sélectionne le champ';
+    setTimeout(()=>btn.textContent=btn.dataset.lab,1800);};
+  const fallback=()=>{
+    const ta=document.createElement('textarea');
+    ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    let ok=false; try{ok=document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta); done(ok);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(t).then(()=>done(true),fallback);
+  else fallback();
+}
+function renderShare(){
+  const tok=encodeProfile(CHART.profile);
+  $('cpcode').dataset.tok=tok;
+  let base='';
+  try{base=location.href.split('#')[0];}catch(e){}
+  const web=/^https?:/.test(base);
+  $('cplink').dataset.url=web?base+'#c='+tok:'';
+  $('cplink').classList.toggle('hidden',!web);
+  renderPicker();
+  $('sharenote').textContent=
+    "« Copier mon code » met dans ton presse-papier une chaîne qui contient seulement ta date, ton heure et ton lieu de naissance — de quoi recalculer ta carte à l'identique. Donne-la à quelqu'un pour qu'il te compare, ou garde-la pour retrouver ta carte depuis l'écran d'accueil.";
+}
+/* --- cartes récentes --- */
+const REC_MAX=6;
+const getRecents=async()=>(await store.get('astro:recents'))||[];
+async function pushRecent(p){
+  const tok=encodeProfile(p);
+  const r=(await getRecents()).filter(x=>x.tok!==tok);
+  r.unshift({tok,nom:p.nom||'',date:p.date,place:p.place||'',kt:!!p.knownTime,ts:Date.now()});
+  await store.set('astro:recents',r.slice(0,REC_MAX));
+}
+const dateFR=d=>new Date(d+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
+function sunSignOf(tok){
+  try{
+    const p=decodeProfile(tok);
+    const [Y,M,D]=p.date.split('-').map(Number);
+    const [h,mi]=p.knownTime?p.time.split(':').map(Number):[12,0];
+    return signIdx(sunLon(jdFromUTC(localToUTC(Y,M,D,h,mi,p.tz))));
+  }catch(e){return null;}
+}
+async function renderRecents(){
+  const r=await getRecents(), box=$('recents');
+  box.classList.toggle('hidden',!r.length);
+  $('setuptabs').classList.toggle('hidden',!r.length);
+  setSetupTab(r.length?'recents':'new');
+  if(!r.length)return;
+  box.innerHTML=`<p class="sk">Cartes récentes</p><div class="recbox"><ul class="reclist">`+
+    r.map((x,i)=>{
+      const si=sunSignOf(x.tok);
+      return `<li><button class="recbtn" data-i="${i}">`+
+      `<span class="rc" aria-hidden="true">${si===null?'✳':SIGN_EMO[si]}</span>`+
+      `<span class="rtx"><span class="rn">${esc(x.nom||'Carte sans nom')}</span>`+
+      `<span class="rd">${si===null?'':SIGNS[si]+' · '}${dateFR(x.date)}${x.kt?'':' · heure inconnue'}</span>`+
+      (x.place?`<span class="rp">${esc(x.place)}</span>`:'')+
+      `</span></button>`+
+      `<button class="recdel" data-d="${i}" title="Retirer" aria-label="Retirer ${esc(x.nom||'cette carte')}">×</button></li>`;
+    }).join('')+`</ul></div>`;
+}
+function setSetupTab(t){
+  $('setupcols').dataset.tab=t;
+  for(const b of $('setuptabs').querySelectorAll('button'))b.classList.toggle('on',b.dataset.t===t);
+}
+function wireRecents(){
+  $('setuptabs').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-t]');
+    if(b)setSetupTab(b.dataset.t);
+  });
+  $('recents').addEventListener('click',async e=>{
+    const del=e.target.closest('button[data-d]');
+    if(del){
+      const r=await getRecents();
+      r.splice(+del.dataset.d,1);
+      await store.set('astro:recents',r);
+      renderRecents();
+      return;
+    }
+    const b=e.target.closest('button[data-i]');
+    if(!b)return;
+    const r=await getRecents();
+    const item=r[+b.dataset.i];
+    if(item)chargerCode(item.tok,'setup-err2');
+  });
+}
+
+
+async function chargerCode(val,errId,btn){
+  const err=$(errId); err.classList.add('hidden');
+  let p;
+  try{p=decodeProfile(val);}
+  catch(e){
+    err.textContent="Ce code n'est pas lisible. Copie-le en entier, sans espace ni retour à la ligne.";
+    err.classList.remove('hidden'); return false;
+  }
+  try{
+    await store.set('astro:profil',p);
+    CHART=buildChart(p);
+    await pushRecent(p);
+    renderChart(); renderShare(); loadReading(false);
+    if(btn)window.scrollTo({top:0,behavior:'smooth'});
+    return true;
+  }catch(e){
+    err.textContent='Carte impossible à calculer à partir de ce code ('+e.message+').';
+    err.classList.remove('hidden'); return false;
+  }
+}
+let COMBO=[], COMBOI=-1;
+async function renderPicker(){
+  const cur=CHART?encodeProfile(CHART.profile):'';
+  COMBO=(await getRecents()).filter(x=>x.tok!==cur);
+  $('combotog').classList.toggle('hidden',!COMBO.length);
+  if(!COMBO.length)closeCombo();
+}
+function comboItems(){
+  const q=$('othercode').value.trim().toLowerCase();
+  if(!q)return COMBO;
+  return COMBO.filter(x=>((x.nom||'')+' '+dateFR(x.date)+' '+(x.place||'')).toLowerCase().includes(q));
+}
+function paintCombo(items){
+  const ul=$('combolist');
+  ul._items=items;
+  ul.innerHTML=items.length
+    ? items.map((x,i)=>{
+        const si=sunSignOf(x.tok);
+        return `<li role="option" data-i="${i}" class="${i===COMBOI?'hi':''}" aria-selected="${i===COMBOI}">`+
+          `<span class="ce">${si===null?'✳':SIGN_EMO[si]}</span>`+
+          `<span class="cn">${esc(x.nom||'Carte sans nom')}</span>`+
+          `<span class="cd">${si===null?'':SIGNS[si]+' · '}${dateFR(x.date)}</span></li>`;
+      }).join('')
+    : '<li class="vide">Aucune carte enregistrée ne correspond — colle un code.</li>';
+}
+function openCombo(){
+  if(!COMBO.length)return;
+  const items=comboItems();
+  paintCombo(items);
+  $('combolist').classList.remove('hidden');
+  $('othercode').setAttribute('aria-expanded','true');
+}
+function closeCombo(){
+  $('combolist').classList.add('hidden');
+  $('othercode').setAttribute('aria-expanded','false');
+  COMBOI=-1;
+}
+function chooseCombo(i){
+  const it=($('combolist')._items||[])[i];
+  if(!it)return;
+  $('othercode').value=it.tok;
+  closeCombo();
+  $('docomp').click();
+}
+function wireCombo(){
+  const inp=$('othercode');
+  inp.addEventListener('focus',openCombo);
+  inp.addEventListener('input',()=>{COMBOI=-1;openCombo();});
+  inp.addEventListener('blur',()=>setTimeout(closeCombo,140));
+  inp.addEventListener('keydown',e=>{
+    const ouvert=!$('combolist').classList.contains('hidden');
+    const n=($('combolist')._items||[]).length;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+      e.preventDefault();
+      if(!ouvert){openCombo();return;}
+      if(!n)return;
+      COMBOI=e.key==='ArrowDown'?(COMBOI+1)%n:(COMBOI<=0?n-1:COMBOI-1);
+      paintCombo($('combolist')._items);
+    }else if(e.key==='Enter'){
+      e.preventDefault();
+      if(ouvert&&COMBOI>=0)chooseCombo(COMBOI); else {closeCombo();$('docomp').click();}
+    }else if(e.key==='Escape'){closeCombo();}
+  });
+  $('combotog').addEventListener('mousedown',e=>{
+    e.preventDefault();
+    $('combolist').classList.contains('hidden')?(inp.focus(),openCombo()):closeCombo();
+  });
+  $('combolist').addEventListener('mousedown',e=>{
+    const li=e.target.closest('li[data-i]');
+    if(!li)return;
+    e.preventDefault();
+    chooseCombo(+li.dataset.i);
+  });
+}
+function wireShare(){
+  wireCombo();
+  $('cpcode').onclick=()=>copyText($('cpcode').dataset.tok||'',$('cpcode'));
+  $('gocode').onclick=()=>chargerCode($('setupcode').value,'setup-err2');
+  $('setupcode').addEventListener('keydown',e=>{if(e.key==='Enter')$('gocode').click();});
+  $('cplink').onclick=()=>copyText($('cplink').dataset.url,$('cplink'));
+  const lire=()=>{
+    try{return decodeProfile($('othercode').value);}
+    catch(e){
+      $('syn').innerHTML='<p class="err">Ce code n\'est pas lisible. Colle le code complet copié depuis une autre carte, ou un lien qui se termine par #c=…</p>';
+      return null;
+    }
+  };
+  $('docomp').onclick=()=>{
+    const p=lire(); if(!p)return;
+    try{renderSyn(CHART,buildChart(p));}
+    catch(e){$('syn').innerHTML='<p class="err">Calcul impossible pour cette carte ('+esc(e.message)+').</p>';}
+  };
+
+}
+function profileFromURL(){
+  try{
+    const m=(location.hash+location.search).match(/[#?&]c=([A-Za-z0-9\-_]+)/);
+    return m?decodeProfile(m[1]):null;
+  }catch(e){return null;}
+}
+
+wireShare(); wireRecents(); wireElements();
+(async()=>{
+  await renderRecents();
+  const p=profileFromURL()||await store.get('astro:profil');
+  if(p){
+    CHART=buildChart(p);
+    await pushRecent(p);
+    renderChart();renderShare();loadReading(false);
+    renderRecents();
+  }
+})();
+
+</script>
