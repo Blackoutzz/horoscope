@@ -422,7 +422,7 @@
       <div class="row">
         <div class="field">
           <label for="f-date">Date de naissance</label>
-          <input id="f-date" type="date">
+          <input id="f-date" type="date" min="1900-01-01">
         </div>
         <div class="field">
           <label for="f-heure">Heure de naissance</label>
@@ -1315,17 +1315,39 @@ function encodeProfile(p){
   let b=''; for(const x of new TextEncoder().encode(raw))b+=String.fromCharCode(x);
   return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
+/* Un jeton arrive d'un lien ou d'un copier-coller : c'est là qu'on vérifie.
+   Les bornes servent moins à bloquer un attaquant qu'à empêcher une carte
+   silencieusement fausse — une latitude de 999 sort un ascendant crédible. */
+const EPHEM_MIN='1900-01-01';
+const isDate=s=>{
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return false;
+  const [y,m,d]=s.split('-').map(Number);
+  const dt=new Date(Date.UTC(y,m-1,d));
+  return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d;
+};
+const isTime=s=>/^([01]\d|2[0-3]):[0-5]\d$/.test(s||'');
+function checkProfile(p){
+  if(!isDate(p.date))throw new Error('date de naissance invalide');
+  if(p.date<EPHEM_MIN)throw new Error('date trop ancienne : les positions ne sont calculées qu\'à partir de 1900');
+  if(p.date>todayKey())throw new Error('date de naissance dans le futur');
+  if(p.knownTime&&!isTime(p.time))throw new Error('heure de naissance invalide');
+  if(!(p.lat>=-90&&p.lat<=90))throw new Error('latitude hors bornes (-90 à 90)');
+  if(!(p.lon>=-180&&p.lon<=180))throw new Error('longitude hors bornes (-180 à 180)');
+  if(!p.tz)throw new Error('fuseau horaire manquant');
+  tzOffsetMin(new Date(),p.tz);
+  return p;
+}
 function decodeProfile(tok){
   let s=String(tok||'').trim().replace(/^.*[#?&]c=/,'').replace(/-/g,'+').replace(/_/g,'/');
   while(s.length%4)s+='=';
   const bin=atob(s);
   const txt=new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)));
   const [nom,date,time,kt,lat,lon,tz,place]=txt.split('|');
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))throw new Error('format');
-  if(isNaN(+lat)||isNaN(+lon)||!tz)throw new Error('format');
-  tzOffsetMin(new Date(),tz);
-  return {nom:nom||'',date,time:time||'12:00',knownTime:kt==='1',
-          lat:+lat,lon:+lon,tz,place:place||(+lat).toFixed(2)+', '+(+lon).toFixed(2)};
+  return checkProfile({
+    nom:(nom||'').slice(0,60), date, time:time||'12:00', knownTime:kt==='1',
+    lat:+lat, lon:+lon, tz,
+    place:(place||((+lat).toFixed(2)+', '+(+lon).toFixed(2))).slice(0,80)
+  });
 }
 
 const SYN_W={soleil:5,lune:5,venus:4,mars:3.5,mercure:2,jupiter:2,saturne:2.5,
@@ -2596,6 +2618,7 @@ CITIES.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.text
 const other=document.createElement('option');other.value='x';other.textContent='Autre lieu — coordonnées manuelles';sel.appendChild(other);
 sel.onchange=()=>$('manual').classList.toggle('hidden',sel.value!=='x');
 $('f-nohour').onchange=e=>{$('f-heure').disabled=e.target.checked;};
+$('f-date').max=todayKey();
 
 $('go').onclick=async()=>{
   const err=$('setup-err');err.classList.add('hidden');
@@ -2608,14 +2631,18 @@ $('go').onclick=async()=>{
   if(sel.value==='x'){
     lat=parseFloat($('f-lat').value);lon=parseFloat($('f-lon').value);tz=$('f-tz').value.trim();
     if(isNaN(lat)||isNaN(lon)||!tz){err.textContent='Latitude, longitude et fuseau sont requis pour un lieu manuel.';err.classList.remove('hidden');return;}
+    if(lat<-90||lat>90||lon<-180||lon>180){err.textContent='Coordonnées hors bornes : la latitude va de -90 à 90, la longitude de -180 à 180.';err.classList.remove('hidden');return;}
     try{tzOffsetMin(new Date(),tz);}catch(e){err.textContent='Fuseau inconnu. Utilise un identifiant IANA, par exemple America/Toronto.';err.classList.remove('hidden');return;}
     place=lat.toFixed(2)+', '+lon.toFixed(2);
   }else{
     const c=CITIES[+sel.value];place=c[0];lat=c[1];lon=c[2];tz=c[3];
   }
-  const profile={nom:$('f-nom').value.trim(),date,time,knownTime,lat,lon,tz,place};
+  const profile={nom:$('f-nom').value.trim().slice(0,60),date,time,knownTime,lat,lon,tz,place};
+  /* Calculer avant d'enregistrer : un profil qu'on n'arrive pas à calculer
+     ne doit pas rester en mémoire et casser le prochain démarrage. */
+  try{checkProfile(profile);CHART=buildChart(profile);}
+  catch(e){err.textContent='Carte impossible à calculer : '+e.message+'.';err.classList.remove('hidden');return;}
   await store.set('astro:profil',profile);
-  CHART=buildChart(profile);
   await pushRecent(profile);
   renderChart();
   renderShare();
@@ -2764,8 +2791,8 @@ async function chargerCode(val,errId,btn){
     err.classList.remove('hidden'); return false;
   }
   try{
-    await store.set('astro:profil',p);
     CHART=buildChart(p);
+    await store.set('astro:profil',p);
     await pushRecent(p);
     renderChart(); renderShare(); loadReading(false);
     if(btn)window.scrollTo({top:0,behavior:'smooth'});
@@ -2881,15 +2908,21 @@ wireShare(); wireRecents(); wireElements();
   await renderRecents();
   const fromURL=profileFromURL();
   const p=fromURL||await store.get('astro:profil');
-  if(p){
+  if(!p)return;
+  try{
     CHART=buildChart(p);
-    /* Une carte ouverte depuis un lien partagé ne remplace pas la tienne :
-       elle atterrit dans les récentes, d'où tu peux la rouvrir. */
-    if(!fromURL)await store.set('astro:profil',p);
-    await pushRecent(p);
-    renderChart();renderShare();loadReading(false);
-    renderRecents();
+  }catch(e){
+    /* Profil illisible : on le jette et on repart de l'écran d'accueil,
+       plutôt que de rester bloqué sur une page vide à chaque visite. */
+    if(!fromURL)await store.del('astro:profil');
+    return;
   }
+  /* Une carte ouverte depuis un lien partagé ne remplace pas la tienne :
+     elle atterrit dans les récentes, d'où tu peux la rouvrir. */
+  if(!fromURL)await store.set('astro:profil',p);
+  await pushRecent(p);
+  renderChart();renderShare();loadReading(false);
+  renderRecents();
 })();
 
 </script>
