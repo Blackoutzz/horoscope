@@ -2,6 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- Tout est en ligne dans ce fichier, d'où 'unsafe-inline' pour le script et
+     les styles : sans lui, rien ne démarre. Le vrai gain est ailleurs — aucun
+     script distant, et connect-src/img-src verrouillés, donc du HTML injecté
+     ne peut plus expédier les cartes stockées vers un serveur tiers. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'unsafe-inline';
+  style-src 'unsafe-inline';
+  img-src 'self';
+  manifest-src 'self';
+  connect-src https://api.anthropic.com;
+  base-uri 'none';
+  form-action 'none'">
 <title>Horoscope</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -487,9 +500,9 @@
           </svg>
         </button>
         <ul class="shlist hidden" id="shlist" role="menu" aria-label="Partager">
-          <li role="none"><button role="menuitem" type="button" id="mcode">Copier mon code</button></li>
-          <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" id="mlink">Copier le lien</button></li>
-          <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" id="mshare">Partager le lien…</button></li>
+          <li role="none"><button role="menuitem" type="button" tabindex="-1" id="mcode">Copier mon code</button></li>
+          <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" tabindex="-1" id="mlink">Copier le lien</button></li>
+          <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" tabindex="-1" id="mshare">Partager le lien…</button></li>
         </ul>
       </div>
     </div>
@@ -2687,15 +2700,39 @@ function copyText(t,btn){
 const SITE='https://blackoutzz.github.io/horoscope/';
 function wireShareMenu(){
   const tog=$('shtog'), list=$('shlist'), menu=$('shmenu');
-  const open=on=>{list.classList.toggle('hidden',!on);tog.setAttribute('aria-expanded',on?'true':'false');};
-  tog.onclick=e=>{e.stopPropagation();open(list.classList.contains('hidden'));};
-  document.addEventListener('click',e=>{if(!menu.contains(e.target))open(false);});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){open(false);}});
-  $('mcode').onclick=()=>{copyText(menu.dataset.tok||'',$('mcode'));setTimeout(()=>open(false),1800);};
-  $('mlink').onclick=()=>{copyText(menu.dataset.url||'',$('mlink'));setTimeout(()=>open(false),1800);};
+  /* role="menu" est un contrat : au clavier, les flèches circulent entre les
+     entrées, Échap referme et rend le focus au bouton. Les entrées sortent de
+     l'ordre de tabulation (tabindex="-1") — c'est le bouton qui y reste. */
+  const items=()=>[...list.querySelectorAll('li:not(.hidden) button')];
+  const estOuvert=()=>!list.classList.contains('hidden');
+  const open=(on,bouger)=>{
+    list.classList.toggle('hidden',!on);
+    tog.setAttribute('aria-expanded',on?'true':'false');
+    if(!bouger)return;
+    if(on){const it=items();if(it.length)it[0].focus();}
+    /* Ne reprend le focus que s'il est resté dans le menu qui disparaît. */
+    else if(menu.contains(document.activeElement))tog.focus();
+  };
+  tog.onclick=e=>{e.stopPropagation();open(!estOuvert(),true);};
+  tog.addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();open(true,true);}
+  });
+  list.addEventListener('keydown',e=>{
+    const it=items(); if(!it.length)return;
+    const i=it.indexOf(document.activeElement);
+    if(e.key==='ArrowDown'){e.preventDefault();it[(i+1)%it.length].focus();}
+    else if(e.key==='ArrowUp'){e.preventDefault();it[(i-1+it.length)%it.length].focus();}
+    else if(e.key==='Home'){e.preventDefault();it[0].focus();}
+    else if(e.key==='End'){e.preventDefault();it[it.length-1].focus();}
+    else if(e.key==='Tab')open(false,false);
+  });
+  document.addEventListener('click',e=>{if(!menu.contains(e.target))open(false,false);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&estOuvert())open(false,true);});
+  $('mcode').onclick=()=>{copyText(menu.dataset.tok||'',$('mcode'));setTimeout(()=>open(false,true),1800);};
+  $('mlink').onclick=()=>{copyText(menu.dataset.url||'',$('mlink'));setTimeout(()=>open(false,true),1800);};
   $('mshare').onclick=()=>{
     const url=menu.dataset.url; if(!url)return;
-    open(false);
+    open(false,true);
     const nom=(CHART&&CHART.profile&&CHART.profile.nom)||'';
     navigator.share({
       title:'Horoscope',
