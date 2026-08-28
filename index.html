@@ -178,6 +178,20 @@
   ul.elems .ev{flex:0 0 3em;text-align:right;font-family:var(--data);font-size:11px;color:var(--ink-soft)}
   .elements .etxt{font-size:14px;margin:0 0 14px;max-width:88ch}
   .elements .esub{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.55;max-width:88ch}
+  .elements .k.sep{border-top:1px solid var(--rule);padding-top:20px;margin:30px 0 8px}
+  .polar{margin:0 0 12px}
+  .polval{font-family:var(--data);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-soft);margin-bottom:8px}
+  .polval b{font-family:var(--display);font-size:23px;font-weight:400;letter-spacing:0;
+    text-transform:none;color:var(--ink);margin-right:7px}
+  .polbar{height:11px;border:1px solid var(--rule);position:relative}
+  .polbar i{position:absolute;inset:0 auto 0 0;background:var(--verdigris)}
+  .polbar u{position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--ink);opacity:.55}
+  .pollab{display:flex;justify-content:space-between;gap:14px;font-family:var(--data);font-size:9px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-top:6px}
+  .pollab span:last-child{text-align:right}
+  .polnote{font-family:var(--data);font-size:9.5px;letter-spacing:.05em;color:var(--ink-soft);
+    line-height:1.65;margin:12px 0 0;max-width:88ch}
   button.erow{width:100%;display:flex;align-items:center;gap:14px;background:transparent;border:0;
     padding:7px 0;cursor:pointer;color:var(--ink);font-family:var(--body);border-radius:0;text-align:left}
   button.erow:hover .en{color:var(--verdigris)}
@@ -2005,6 +2019,47 @@ function dominance(natal,hs,kt){
     return r;};
   return {elem:top(e),mode:top(m),faible:bas(e),e:pct(e),m:pct(m),detE,detM};
 }
+/* Axe dedans/dehors. Trois lectures traditionnelles, moyennées :
+   polarité des signes (yang = feu + air), hémisphère (au-dessus de l'horizon =
+   maisons 7 à 12), angularité (angulaire = engagement, cadente = retrait).
+   Les deux dernières exigent l'heure — sans elle on retombe sur la polarité. */
+function polarite(natal,hs,kt){
+  const W={soleil:3,lune:3,mercure:2,venus:2,mars:2,jupiter:1.5,saturne:1.5,uranus:1,neptune:1,pluton:1};
+  const yang=l=>['feu','air'].includes(elemOf(l));
+  let ys=0, ts=0;
+  for(const k in W){ts+=W[k]; if(yang(natal[k].lon))ys+=W[k];}
+  if(kt){ts+=3; if(yang(hs.asc))ys+=3;}
+  const axes=[{k:'polarité',v:ys/ts*100}];
+  if(kt){
+    let hy=0,ay=0,t=0;
+    for(const k in W){
+      const h=houseOf(natal[k].lon,hs.cusps), kind=HOUSE_KIND(h);
+      t+=W[k];
+      if(h>=7)hy+=W[k];                                       // au-dessus de l'horizon
+      ay+=W[k]*(kind==='angulaire'?1:kind==='succédente'?0.5:0);
+    }
+    axes.push({k:'hémisphère',v:hy/t*100},{k:'angularité',v:ay/t*100});
+  }
+  const score=Math.round(axes.reduce((a,b)=>a+b.v,0)/axes.length);
+  return {score,axes:axes.map(a=>({k:a.k,v:Math.round(a.v)})),kt};
+}
+const POL_BANDES=[
+ [64,'yang','extraverti',
+  'Carte franchement yang : polarité positive dominante, et le haut du ciel occupé.',
+  'Tu vas vers le dehors par défaut. Le retrait, tu le prends rarement de toi-même — il faut que quelque chose te l\'impose.'],
+ [56,'yang','extraverti',
+  'Carte penchée yang, sans être unilatérale.',
+  'L\'élan vers le dehors précède le repli. Tu sais te retirer, mais c\'est un second temps, jamais le premier.'],
+ [45,'équilibre','équilibré',
+  'Carte équilibrée sur l\'axe dedans/dehors : aucun pôle ne prend le dessus.',
+  'Tu bascules selon le contexte plutôt que selon un pli. Souple, au prix d\'un tempérament moins lisible pour les autres — et pour toi.'],
+ [37,'yin','introverti',
+  'Carte penchée yin : polarité négative dominante, astres plutôt sous l\'horizon.',
+  'Tu passes par le dedans avant de sortir. L\'extérieur ne te coûte pas, mais il vient après, et il se prépare.'],
+ [0,'yin','introverti',
+  'Carte franchement yin : polarité négative dominante, ciel bas et maisons de retrait chargées.',
+  'Tu fonctionnes de l\'intérieur. Le monde extérieur se traverse, il ne se prend pas comme point de départ.']];
+const polBande=s=>POL_BANDES.find(b=>s>=b[0]);
 const ELEM_EMO={feu:'🔥',terre:'🌎',air:'💨',eau:'💧'};
 const ELEM_TRAITS={
  feu:{f:['Élan','Initiative','Enthousiasme','Franchise'],l:['Impatience','Brusquerie','Feu de paille']},
@@ -2102,11 +2157,32 @@ function renderElements(){
       :(d.e[d.faible]===0?`Aucun point de ta carte n'est en signe ${EN_ELEM[d.faible]} — c'est un manque franc, pas une simple faiblesse. `:'')+ELEM_FAIBLE[d.faible]}</p>
     <ul class="tags">${T.f.map(t=>`<li class="tf">${t}</li>`).join('')}${T.l.map(t=>`<li class="tl">${t}</li>`).join('')}</ul>
 
-    <p class="k" style="margin-top:26px">Modes</p>
+    <p class="k sep">Modes</p>
     <p class="esub">Le rythme : ta façon d'aborder le changement — le lancer, le tenir, ou t'y ajuster. Même pondération.</p>
     ${bloc('m',['cardinal','fixe','mutable'],d.m,d.detM,33,d.mode,null)}
     <p class="etxt">${MODE_TXT[d.mode]}${
-      Object.keys(d.m).filter(k=>d.m[k]===0).map(k=>` Le mode ${k} est absent : rien chez toi ne fonctionne sur ce registre.`).join('')}</p>`;
+      Object.keys(d.m).filter(k=>d.m[k]===0).map(k=>` Le mode ${k} est absent : rien chez toi ne fonctionne sur ce registre.`).join('')}</p>
+
+    <p class="k sep">Polarité</p>
+    <p class="esub">L'axe dedans/dehors, celui que la tradition fait correspondre à l'extraversion. Trois lectures moyennées : la polarité des signes, la moitié du ciel qu'occupent tes astres, et le type de maisons où ils tombent.</p>
+    ${blocPolarite(polarite(CHART.natal,CHART.hs,CHART.profile.knownTime))}`;
+}
+
+function blocPolarite(p){
+  const [,pole,mot,carte,toi]=polBande(p.score);
+  // on affiche toujours le pôle dominant, donc le complément quand la carte est yin
+  const part=pole==='yin'?100-p.score:p.score;
+  const legende=pole==='équilibre'?`yang · ${100-p.score} % yin — ${mot}`:`${pole} · ${mot}`;
+  return `<div class="polar">
+      <div class="polval"><b>${part} %</b> ${legende}</div>
+      <div class="polbar" role="img" aria-label="Polarité : ${p.score} % yang, ${100-p.score} % yin"><i style="width:${p.score}%"></i><u></u></div>
+      <div class="pollab"><span>yang · feu, air · extraverti</span><span>yin · terre, eau · introverti</span></div>
+    </div>
+    <p class="etxt">${carte}</p>
+    <p class="etxt">${toi}</p>
+    <p class="polnote">${p.axes.map(a=>`${a.k} ${a.v} %`).join(' · ')}${
+      p.kt?'':' — heure inconnue : l\'hémisphère et l\'angularité la demandent, seule la polarité des signes entre ici'
+    }. La correspondance entre ces trois mesures et l'extraversion est une convention astrologique : les études contrôlées ne la retrouvent pas.</p>`;
 }
 function wireElements(){
   $('elements').addEventListener('click',e=>{

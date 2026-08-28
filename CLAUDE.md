@@ -36,7 +36,7 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 | 5bis. Numérologie | ~1038 | Life path, master numbers (11/22/33), personal year/month cycles, traits, challenges, talents |
 | 5quinquies. Encodage + synastrie | ~1323 | `encodeProfile`/`decodeProfile`/`checkProfile`, inter-chart aspect scoring, compatibility text |
 | 5quater. Vie amoureuse | ~1666 | Venus/Mars/Moon sign profiles, DC sign, relationship archetype text |
-| 5ter. Croisement | ~1764 | Element/mode balance, dignities, rulerships, planet strength |
+| 5ter. Croisement | ~1764 | Element/mode balance, dignities, rulerships, planet strength, `polarite()` |
 | 6. Rendu | ~2052 | `buildChart()`, `renderChart()`, share menu, recents |
 | 7. Lecture du jour | ~2138 | `askClaude()` POSTs to `api.anthropic.com/v1/messages` (model: `claude-sonnet-4-6`) |
 | 7bis. Moteur local | ~2179 | Offline template reading, used when the API call fails |
@@ -51,6 +51,12 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 - « Plein écran » is a CSS overlay (`.fsmode`, `position:fixed`), **not** `requestFullscreen()`. The native API is silently useless in embedded webviews — the promise never settles, `fullscreenElement` stays `null`, nothing throws — and `Element.requestFullscreen` doesn't exist on iPhone at all. The overlay also fixes the control bar to the bottom, locks body scroll, and exits on Escape; `mountWheel()` clears both on re-mount so a re-render can't leave the page locked.
 - `.wheelview` is `background:transparent`. `.wrap` paints a radial gradient; a flat `var(--vellum)` panel on top of it reads as a brighter rectangle around the wheel.
 - The darkened core is two `.disc` circles (R3, R4) at `fill-opacity:.035`, stacked so the centre sits deepest — a deliberate tint. It replaces an accidental one: `.wheel .hair` had no `fill`, so those same circles filled **black** at 35 % opacity and drowned the aspect lines. Every SVG `circle` needs an explicit `fill`.
+
+### Polarity (intro/extraversion)
+
+`polarite()` averages three traditional readings of the same in/out axis, each weighted like `dominance()` (Sun/Moon/ASC triple): sign polarity (yang = fire + air), hemisphere (above the horizon = houses 7–12), angularity (angular 1, succedent 0.5, cadent 0). The last two need a birth time; without one the function returns the sign-polarity axis alone — and drops the ASC weight with it, so the score legitimately differs from the timed one.
+
+The wording is deliberate and should stay that way. Astrology does not predict personality — controlled tests (Carlson, *Nature* 1985; Dean & Kelly 2003) find no effect — so the block reports **two** sentences per band: one describing the chart, one addressing the reader, plus a `.polnote` line naming the three axes and stating plainly that the extraversion correspondence is convention, not a study result. Don't quietly promote the number to a psychometric claim.
 
 ### Data persistence & sharing
 
