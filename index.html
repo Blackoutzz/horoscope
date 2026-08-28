@@ -312,8 +312,26 @@
 
   /* ---------- wheel ---------- */
   .wheel{width:100%;height:auto;display:block}
+  /* transparent : .wrap pose un dégradé, un aplat de vellum dessus dessine un rectangle */
+  .wheelview{position:relative;overflow:hidden;touch-action:pan-y;background:transparent}
+  .wheelview.zoomed{touch-action:none;cursor:grab}
+  .wheelview.drag{cursor:grabbing}
+  .wheelpan{transform-origin:0 0;will-change:transform}
+  /* plein écran maison : l'API native reste muette dans les webvues intégrées */
+  .wheelview.fsmode{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;
+    background:var(--vellum);padding:0 0 62px}
+  .wheelview.fsmode .wheelpan{width:min(100vw,calc(100vh - 62px))}
+  .wheelctl{display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:10px}
+  .wheelctl.fsmode{position:fixed;left:0;right:0;bottom:16px;z-index:91;margin:0}
+  button.zbtn{font-family:var(--data);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    background:transparent;color:var(--ink-soft);border:1px solid var(--rule);padding:6px 11px;
+    cursor:pointer;border-radius:1px;line-height:1.1;min-width:30px;transition:color .18s,border-color .18s}
+  button.zbtn:hover{color:var(--verdigris);border-color:var(--verdigris)}
+  .zlvl{font-family:var(--data);font-size:10px;letter-spacing:.14em;color:var(--ink-soft);min-width:52px;text-align:center}
   .wheel .ring{fill:none;stroke:var(--ink);stroke-width:1;opacity:.85}
-  .wheel .hair{stroke:var(--ink);stroke-width:.5;opacity:.35}
+  .wheel .hair{stroke:var(--ink);stroke-width:.5;opacity:.35;fill:none}
+  /* cœur assombri : teinte franche, pas le noir plein qu'un fill manquant produisait */
+  .wheel .disc{stroke:none;fill:var(--ink);fill-opacity:.035}
   .wheel .spoke{stroke:var(--ink);stroke-width:.6;opacity:.3;stroke-dasharray:2 3}
   .wheel .axis{stroke:var(--ink);stroke-width:1.2;opacity:.8}
   .wheel .asp{stroke-width:.7;fill:none;opacity:.5}
@@ -975,6 +993,9 @@ function drawWheel(natal,hs,knownTime,aspects){
   };
   let s=`<svg class="wheel" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Roue de la carte du ciel">`;
   const circ=r=>2*Math.PI*r;
+  // fonds empilés : le centre se creuse, les aspects restent lisibles par-dessus
+  s+=`<circle class="disc" cx="${c}" cy="${c}" r="${R3}"/>`;
+  s+=`<circle class="disc" cx="${c}" cy="${c}" r="${R4}"/>`;
   s+=`<circle class="ring draw" style="--len:${circ(R1)}" cx="${c}" cy="${c}" r="${R1}"/>`;
   s+=`<circle class="ring draw" style="--len:${circ(R2)}" cx="${c}" cy="${c}" r="${R2}"/>`;
   s+=`<circle class="hair draw" style="--len:${circ(R3)}" cx="${c}" cy="${c}" r="${R3}"/>`;
@@ -1032,6 +1053,142 @@ function drawWheel(natal,hs,knownTime,aspects){
   }
   s+=`</g></svg>`;
   return s;
+}
+
+/* ---- zoom et panoramique de la roue (lecture manuelle) ----
+   Transformation CSS sur un conteneur, pas de viewBox : traits, glyphes et
+   degrés grossissent ensemble, comme sur une carte imprimée qu'on approche. */
+const ZMIN=1, ZMAX=8;
+let wz={z:1,tx:0,ty:0,view:null,pan:null,lab:null,ptr:new Map(),pinch:null,onEsc:null};
+
+function wzApply(){
+  const {view,pan}=wz;
+  if(!view||!pan||!view.isConnected)return;
+  const ox=pan.offsetLeft, oy=pan.offsetTop;
+  const sw=pan.offsetWidth*wz.z, sh=pan.offsetHeight*wz.z;
+  const vw=view.clientWidth, vh=view.clientHeight;
+  // recadrage : jamais de vide au bord tant que le dessin déborde
+  wz.tx = sw<=vw ? (vw-sw)/2-ox : Math.min(-ox, Math.max(vw-ox-sw, wz.tx));
+  wz.ty = sh<=vh ? (vh-sh)/2-oy : Math.min(-oy, Math.max(vh-oy-sh, wz.ty));
+  pan.style.transform=`translate(${wz.tx.toFixed(2)}px,${wz.ty.toFixed(2)}px) scale(${wz.z.toFixed(4)})`;
+  view.classList.toggle('zoomed', wz.z>1.001);
+  if(wz.lab)wz.lab.textContent=Math.round(wz.z*100)+' %';
+}
+function wzZoom(f,cx,cy){
+  const {view,pan}=wz;
+  if(!view||!pan)return;
+  const z2=Math.min(ZMAX,Math.max(ZMIN,wz.z*f));
+  if(Math.abs(z2-wz.z)<1e-4)return;
+  const r=view.getBoundingClientRect();
+  const px=(cx==null? r.width/2 : cx-r.left)-pan.offsetLeft;
+  const py=(cy==null? r.height/2 : cy-r.top)-pan.offsetTop;
+  wz.tx=px-(px-wz.tx)*z2/wz.z;
+  wz.ty=py-(py-wz.ty)*z2/wz.z;
+  wz.z=z2;
+  wzApply();
+}
+function wzReset(){wz.z=1;wz.tx=0;wz.ty=0;wzApply();}
+window.addEventListener('resize',wzApply);
+
+function mountWheel(box,svg){
+  // un re-rendu pendant le plein écran laisserait le corps bloqué et un écouteur orphelin
+  if(wz.onEsc)document.removeEventListener('keydown',wz.onEsc);
+  document.body.style.overflow='';
+  box.innerHTML=
+    `<div class="wheelview" id="wheelview" tabindex="0" role="group" aria-label="Roue de la carte du ciel, zoomable. `+
+      `Molette pour agrandir, glisser pour déplacer, touches plus, moins, zéro et flèches au clavier.">`+
+      `<div class="wheelpan" id="wheelpan">${svg}</div>`+
+    `</div>`+
+    `<div class="wheelctl">`+
+      `<button type="button" class="zbtn" id="zout" aria-label="Dézoomer">−</button>`+
+      `<span class="zlvl" id="zlvl" aria-live="polite">100 %</span>`+
+      `<button type="button" class="zbtn" id="zin" aria-label="Zoomer">+</button>`+
+      `<button type="button" class="zbtn" id="zrst">Ajuster</button>`+
+      `<button type="button" class="zbtn" id="zfs" aria-pressed="false">Plein écran</button>`+
+    `</div>`;
+  const view=$('wheelview'), pan=$('wheelpan');
+  wz={z:1,tx:0,ty:0,view,pan,lab:$('zlvl'),ptr:new Map(),pinch:null,onEsc:null};
+
+  const mid=()=>{
+    const p=[...wz.ptr.values()];
+    if(p.length<2)return null;
+    const dx=p[1].x-p[0].x, dy=p[1].y-p[0].y;
+    return {d:Math.hypot(dx,dy)||1,x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2};
+  };
+  const drop=e=>{
+    wz.ptr.delete(e.pointerId);
+    if(wz.ptr.size<2)wz.pinch=null;
+    if(!wz.ptr.size)view.classList.remove('drag');
+  };
+
+  view.addEventListener('wheel',e=>{
+    e.preventDefault();
+    wzZoom(e.deltaY<0?1.18:1/1.18,e.clientX,e.clientY);
+  },{passive:false});
+
+  view.addEventListener('dblclick',e=>{
+    e.preventDefault();
+    if(wz.z>1.001)wzReset(); else wzZoom(2.6,e.clientX,e.clientY);
+  });
+
+  view.addEventListener('pointerdown',e=>{
+    wz.ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    try{view.setPointerCapture(e.pointerId);}catch(err){}
+    if(wz.ptr.size===2)wz.pinch=mid();
+    if(wz.z>1.001)view.classList.add('drag');
+  });
+  view.addEventListener('pointermove',e=>{
+    const p=wz.ptr.get(e.pointerId);
+    if(!p)return;
+    const dx=e.clientX-p.x, dy=e.clientY-p.y;
+    p.x=e.clientX; p.y=e.clientY;
+    if(wz.ptr.size>=2){
+      const st=mid();
+      if(wz.pinch&&st){wzZoom(st.d/wz.pinch.d,st.x,st.y);wz.pinch=st;}
+      return;
+    }
+    if(wz.z>1.001){wz.tx+=dx;wz.ty+=dy;wzApply();}
+  });
+  view.addEventListener('pointerup',drop);
+  view.addEventListener('pointercancel',drop);
+
+  view.addEventListener('keydown',e=>{
+    const step=44;
+    switch(e.key){
+      case '+': case '=': wzZoom(1.25); break;
+      case '-': case '_': wzZoom(1/1.25); break;
+      case '0': wzReset(); break;
+      case 'ArrowLeft':  wz.tx+=step; wzApply(); break;
+      case 'ArrowRight': wz.tx-=step; wzApply(); break;
+      case 'ArrowUp':    wz.ty+=step; wzApply(); break;
+      case 'ArrowDown':  wz.ty-=step; wzApply(); break;
+      default: return;
+    }
+    e.preventDefault();
+  });
+
+  $('zin').onclick=()=>wzZoom(1.35);
+  $('zout').onclick=()=>wzZoom(1/1.35);
+  $('zrst').onclick=()=>wzReset();
+
+  // Plein écran maison. L'API native se contente d'ignorer la demande dans les
+  // webvues intégrées — promesse jamais tenue, aucune erreur — et n'existe pas
+  // sur iPhone. Une superposition CSS marche partout, sans permission.
+  const fs=$('zfs'), ctl=fs.parentNode;
+  const onEsc=e=>{if(e.key==='Escape')setFs(false);};
+  function setFs(on){
+    view.classList.toggle('fsmode',on);
+    ctl.classList.toggle('fsmode',on);
+    document.body.style.overflow=on?'hidden':'';
+    fs.textContent=on?'Quitter':'Plein écran';
+    fs.setAttribute('aria-pressed',on?'true':'false');
+    if(on){document.addEventListener('keydown',onEsc);view.focus();}
+    else document.removeEventListener('keydown',onEsc);
+    wz.onEsc=on?onEsc:null;
+    requestAnimationFrame(wzApply);
+  }
+  fs.onclick=()=>setFs(!view.classList.contains('fsmode'));
+  wzApply();
 }
 
 /* ========================================================================
@@ -2086,7 +2243,7 @@ function renderChart(){
     `<div><div class="k">${k}</div><div class="g">${g} <span class="emo">${signEmo(lon)}</span></div>`+
     `<div class="v">${signOf(lon)}</div><div class="d">${degStr(lon)} · ${d}</div></div>`).join('');
 
-  $('wheelbox').innerHTML=drawWheel(natal,hs,kt,asp);
+  mountWheel($('wheelbox'),drawWheel(natal,hs,kt,asp));
   $('wheelcap').textContent=kt?'Maisons Placidus · ascendant à gauche':'Heure inconnue · roue alignée sur 0° Bélier';
   if(!kt)$('houses-block').classList.add('hidden');
 

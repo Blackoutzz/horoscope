@@ -32,7 +32,7 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 | 2. Vocabulaire | ~797 | Sign/glyph/aspect constants, Placidus house system, aspect orbs |
 | 3. Lieux et fuseaux | ~850 | City table (lat/lon/tz) |
 | 4. Stockage | ~935 | `store` — see Data persistence below |
-| 5. Roue gravée | ~966 | `drawWheel()`, inline SVG |
+| 5. Roue gravée | ~966 | `drawWheel()`, inline SVG ; `mountWheel()` + `wzZoom/wzApply` — zoom et panoramique |
 | 5bis. Numérologie | ~1038 | Life path, master numbers (11/22/33), personal year/month cycles, traits, challenges, talents |
 | 5quinquies. Encodage + synastrie | ~1323 | `encodeProfile`/`decodeProfile`/`checkProfile`, inter-chart aspect scoring, compatibility text |
 | 5quater. Vie amoureuse | ~1666 | Venus/Mars/Moon sign profiles, DC sign, relationship archetype text |
@@ -41,6 +41,16 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 | 7. Lecture du jour | ~2138 | `askClaude()` POSTs to `api.anthropic.com/v1/messages` (model: `claude-sonnet-4-6`) |
 | 7bis. Moteur local | ~2179 | Offline template reading, used when the API call fails |
 | 8. Amorçage | ~2627 | Startup: URL token → stored profile → setup screen |
+
+### Wheel zoom
+
+`mountWheel()` wraps the SVG in `.wheelview` (clipping box) → `.wheelpan` (transformed). Zoom is a **CSS `transform`**, not a `viewBox` change: strokes and glyphs grow with the drawing, which is what a manual reading needs — a viewBox zoom would leave hairlines hairline-thin. State lives in the single `wz` object; `wzApply()` re-clamps translation so the drawing never pulls away from the edges, and is also the `resize` handler.
+
+- Zoom 100→800 %: wheel, pinch, double-click, ± buttons, `+`/`-`/`0`/arrows on the focused view.
+- `touch-action` is `pan-y` at 100 % (one finger still scrolls the page) and flips to `none` via `.zoomed` once zoomed, so one finger pans instead.
+- « Plein écran » is a CSS overlay (`.fsmode`, `position:fixed`), **not** `requestFullscreen()`. The native API is silently useless in embedded webviews — the promise never settles, `fullscreenElement` stays `null`, nothing throws — and `Element.requestFullscreen` doesn't exist on iPhone at all. The overlay also fixes the control bar to the bottom, locks body scroll, and exits on Escape; `mountWheel()` clears both on re-mount so a re-render can't leave the page locked.
+- `.wheelview` is `background:transparent`. `.wrap` paints a radial gradient; a flat `var(--vellum)` panel on top of it reads as a brighter rectangle around the wheel.
+- The darkened core is two `.disc` circles (R3, R4) at `fill-opacity:.035`, stacked so the centre sits deepest — a deliberate tint. It replaces an accidental one: `.wheel .hair` had no `fill`, so those same circles filled **black** at 35 % opacity and drowned the aspect lines. Every SVG `circle` needs an explicit `fill`.
 
 ### Data persistence & sharing
 
