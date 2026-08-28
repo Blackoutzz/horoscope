@@ -1522,13 +1522,15 @@ function numeroCouple(A,B){
 
 function renderSyn(A,B){
   const S=synastrie(A,B);
-  const nom=B.profile.nom||'l\'autre carte';
+  /* Échappé ici une fois pour toutes : nom traverse pairDesc() et
+     temperaments(), qui le recrachent dans des phrases insérées en HTML. */
+  const nom=esc(B.profile.nom||'l\'autre carte');
   const NM={asc:'Ascendant'};
   const label=k=>NM[k]||NAMES[k];
   const mien=k=>(k==='asc'?'Ton ':POSS[k]?'Ta ':'Ton ')+label(k);
   const deNom=/^[aeiouyàâéèêîôûAEIOUYÀÂÉÈÊÎÔÛHh]/.test(nom)?'d\''+nom:'de '+nom;
   const ligne=l=>`<li><span class="lg">${l.a==='asc'?'⌖':GLYPH[l.a]} ${l.asp.g} ${l.b==='asc'?'⌖':GLYPH[l.b]}</span>`+
-    `<span class="lt"><b>${mien(l.a)} / ${label(l.b)} ${esc(deNom)} — ${l.asp.n.toLowerCase()}</b>`+
+    `<span class="lt"><b>${mien(l.a)} / ${label(l.b)} ${deNom} — ${l.asp.n.toLowerCase()}</b>`+
     `<span class="sub"> · orbe ${l.orb.toFixed(1).replace('.',',')}°</span>`+
     `<br>${pairDesc(l.a,l.b,l.asp.n,nom)}</span></li>`;
   const pos=S.liens.filter(l=>l.val>0).slice(0,6);
@@ -1560,7 +1562,7 @@ function blocSuperposition(A,B,nom,deNom){
   if(!r)return `<p class="k" style="margin-top:26px">Superposition des maisons</p>`+
     `<p class="ed2">Impossible sans ton heure de naissance : les maisons en dépendent entièrement.</p>`;
   const top=r.slice(0,3);
-  return `<p class="k" style="margin-top:26px">Où ${esc(nom)} tombe dans ta carte</p>
+  return `<p class="k" style="margin-top:26px">Où ${nom} tombe dans ta carte</p>
     <p class="esub">Les planètes de l'autre projetées dans tes maisons : pas un aspect, une localisation. C'est ce qui dit dans quel secteur de ta vie la personne agit, indépendamment de l'entente.</p>
     <ul class="epts">`+r.map(x=>
       `<li><span class="pg">${x.pl.map(p=>GLYPH[p]).join(' ')}</span>`+
@@ -1570,7 +1572,7 @@ function blocSuperposition(A,B,nom,deNom){
 }
 function blocTemperaments(A,B,nom){
   const t=temperaments(A,B,nom);
-  const moi=A.profile.nom||'Toi';
+  const moi=esc(A.profile.nom||'Toi');
   const ligne=(k,va,vb,moy)=>{
     const ecart=Math.abs(va-vb);
     let tag='';
@@ -1584,7 +1586,7 @@ function blocTemperaments(A,B,nom){
   };
   return `<p class="k" style="margin-top:26px">Tempéraments croisés</p>
     <p class="esub">Vos deux profils d'éléments et de modes, superposés.
-      <span class="lg1">${esc(moi)}</span> <span class="lg2">${esc(nom)}</span></p>
+      <span class="lg1">${moi}</span> <span class="lg2">${nom}</span></p>
     <ul class="tcl">`+
       ['feu','terre','air','eau'].map(k=>ligne(k,t.da.e[k],t.db.e[k],25)).join('')+
     `</ul><ul class="tcl">`+
@@ -1616,12 +1618,12 @@ function blocNumero(A,B,nom){
     <p class="esub">Vos deux chemins de vie et le nombre qu'ils forment ensemble.</p>
     <ul class="epts">
       <li><span class="pn">Toi</span><span class="ps">chemin de vie ${N.lpa} — ${LIFEPATH[N.lpa].nm}</span><span class="pw">année perso ${N.pya}</span></li>
-      <li><span class="pn">${esc(nom)}</span><span class="ps">chemin de vie ${N.lpb} — ${LIFEPATH[N.lpb].nm}</span><span class="pw">année perso ${N.pyb}</span></li>
+      <li><span class="pn">${nom}</span><span class="ps">chemin de vie ${N.lpb} — ${LIFEPATH[N.lpb].nm}</span><span class="pw">année perso ${N.pyb}</span></li>
       <li><span class="pn">Le couple</span><span class="ps">nombre ${N.n}</span><span class="pw"></span></li>
     </ul>
     <p class="ed2" style="margin-top:12px">Ensemble, ${COUPLE[N.n]}. `+
     (meme?`Vous traversez la même année personnelle (${N.pya}) : mêmes envies au même moment, ce qui aide — et prive le couple d'un contrepoids.`
-         :`Vous n'êtes pas dans la même année personnelle : ${N.pya} pour toi, ${N.pyb} pour ${esc(nom)}. Les périodes d'élan et de repli ne coïncident pas, et c'est souvent là que naissent les malentendus de rythme.`)+`</p>`;
+         :`Vous n'êtes pas dans la même année personnelle : ${N.pya} pour toi, ${N.pyb} pour ${nom}. Les périodes d'élan et de repli ne coïncident pas, et c'est souvent là que naissent les malentendus de rythme.`)+`</p>`;
 }
 
 
@@ -2037,7 +2039,7 @@ function renderChart(){
   const dl=new Date(profile.date+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
   $('birthline').textContent=`${dl}${kt?' · '+profile.time:''} · ${profile.place} · ${ageDe(profile.date)} ans`;
   $('whoami').innerHTML = profile.nom
-    ? `${profile.nom}, <em>${signOf(natal.soleil.lon).toLowerCase()}</em> <span class="emo">${signEmo(natal.soleil.lon)}</span>`
+    ? `${esc(profile.nom)}, <em>${signOf(natal.soleil.lon).toLowerCase()}</em> <span class="emo">${signEmo(natal.soleil.lon)}</span>`
     : `Ta carte du ciel`;
 
   const triad=[
@@ -2536,7 +2538,10 @@ function paintReading(o){
     (o.conseil?`<div class="advice"><div class="k">Le geste du jour</div><p>${esc(o.conseil)}</p></div>`:'')+
     (o.motCle?`<p class="keyword">${esc(o.motCle)}</p>`:'');
 }
-const esc=s=>String(s==null?'':s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+/* Les guillemets comptent : esc() sert aussi dans des attributs (aria-label,
+   style), où un " ou un ' suffit à sortir de l'attribut. */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,
+  m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
 let apiDown=false, PERIOD='jour';
 
@@ -2874,10 +2879,13 @@ function profileFromURL(){
 wireShare(); wireRecents(); wireElements();
 (async()=>{
   await renderRecents();
-  const p=profileFromURL()||await store.get('astro:profil');
+  const fromURL=profileFromURL();
+  const p=fromURL||await store.get('astro:profil');
   if(p){
     CHART=buildChart(p);
-    await store.set('astro:profil',p);
+    /* Une carte ouverte depuis un lien partagé ne remplace pas la tienne :
+       elle atterrit dans les récentes, d'où tu peux la rouvrir. */
+    if(!fromURL)await store.set('astro:profil',p);
     await pushRecent(p);
     renderChart();renderShare();loadReading(false);
     renderRecents();
