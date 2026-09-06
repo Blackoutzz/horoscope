@@ -717,7 +717,7 @@ const PL={
           -0.00031596,0.00005170,0.00004818,145.20780515,-0.04062942,-0.01183482]
 };
 function helio(name,T){
-  const e0=PL[name];
+  const e0=Array.isArray(name)?name:PL[name];
   const a=e0[0]+e0[6]*T, ec=e0[1]+e0[7]*T, I=e0[2]+e0[8]*T,
         L=e0[3]+e0[9]*T, wb=e0[4]+e0[10]*T, om=e0[5]+e0[11]*T;
   const w=wb-om;
@@ -736,25 +736,119 @@ function helio(name,T){
     z:(sw*si)*xp+(cw*si)*yp
   };
 }
+/* Précession générale depuis J2000, en degrés (Lieske) : les éléments de
+   Standish sont rapportés à l'écliptique J2000, le zodiaque tropical à
+   l'équinoxe de la date. Sans ce terme, les planètes dérivent de 1,4° en
+   1900 — assez pour afficher un signe faux près d'une cuspide. */
+const precession=T=>1.3969713*T+0.0003086*T*T;
 function planetLon(name,jd){
   const T=centuries(jd);
   const p=helio(name,T), e=helio('terre',T);
-  return n360(atan2(p.y-e.y,p.x-e.x));
+  return n360(atan2(p.y-e.y,p.x-e.x)+precession(T));
+}
+
+/* --- Points karmiques ---------------------------------------------------
+   Le nœud sud est le nœud nord à 180°, jamais autre chose : aucun calcul.
+   La Lune noire est l'apogée *moyen* de la Lune (même famille de polynômes
+   que moonNode). L'apogée osculateur — la « vraie » Lune noire — oscille de
+   ±26° autour, mesuré sur les vecteurs lunaires JPL : ce n'est pas un
+   raffinement de celui-ci mais un autre point, et il demanderait la distance
+   et la latitude lunaires, que moonLon() ne calcule pas. Voir CLAUDE.md. */
+function moonApogee(jd){
+  const T=centuries(jd);
+  return n360(263.3530513+4069.0137287*T-0.0103200*T*T-T*T*T/80053);
+}
+
+/* Chiron : absent des éléments de Standish. Le keplerien seul dérive de 0,7°
+   sur 1900–2100 (perturbations de Saturne et d'Uranus), assez pour afficher
+   un signe faux. On ajuste donc trois polynômes de Tchebychev — longitude,
+   latitude, rayon héliocentriques — sur l'éphéméride JPL Horizons. Erreur
+   maximale résultante : 0,04° sur 1900–2100, soit mieux que Jupiter.
+   Les coefficients sont des données, comme PL et MOON_T : rien à compiler. */
+const CHIRON_EL=[13.65143588,0.38056063,6.9256604,216.32651154,188.666729,209.3880686,
+                 0.00829574,0.00086055,0.01719721,713.95693354,0.47329873,-0.29419348];
+const CHIRON_T0=-1.005, CHIRON_T1=1.010;
+const CHIRON_C={
+ LON:[
+  -0.08761369,0.0962903,-0.2722948,0.1775541,0.04362625,
+  -0.0428389,-0.05118413,0.03196362,-0.07252356,0.03963395,
+  0.01158535,-0.01562984,0.01870719,0.009926155,-0.01750196,
+  0.03157895,0.02419105,-0.007904071,-0.005641115,-0.01202048,
+  0.001945796,0.01050204,-0.002309111,-0.006659346,0.002383695,
+  -0.005345876,-0.005609587,0.01531877,0.006430611,-0.006945832,
+  -0.008744237,-0.004800604,0.008801747,0.008372004,-0.002206006,
+  0.003889389,-0.00219782,-0.006191054,0.0002628505,0.0108808],
+ LAT:[
+  0.0006196497,0.01247162,-0.0003698586,0.01393158,-0.02029506,
+  0.01483251,-0.01262399,0.001982542,0.005138914,0.01025416,
+  -0.008384975,0.001740207,0.002531915,-0.001449279,-0.006811292,
+  0.005020149,0.003826777,-0.00401924,-0.002872674,0.0004946184,
+  0.001487205,0.003060002,-0.001548666,-0.0008440548,0.002521926,
+  -0.001352523,-0.002176245,0.003563757,0.001482956,-0.002803341,
+  -0.0008352444,0.0003713239,0.0008723211,0.000951135,-0.00126999,
+  0.0001540654,0.001219446,-0.0006046559,-0.0004333163,0.001854255],
+ RAY:[
+  -0.005841016,0.005603881,-0.01651878,0.006182655,0.001089834,
+  0.005805084,-0.003045132,-0.000688277,-0.004561683,-0.003484664,
+  0.002373408,-0.001617187,-0.002058994,0.001413414,-0.0009202797,
+  -0.001119893,-0.0006606214,0.001641453,7.07568e-05,-0.0003375646,
+  -0.0001339629,0.0008041142,0.0008012287,-8.173671e-06,0.001133524,
+  -0.0007810565,0.0002116732,-0.0003542135,-0.002021521,0.001168617,
+  0.0002715271,-0.0008719943,0.001709388,0.0003480216,-3.891895e-05,
+  -0.0001811362,-0.001176271,-0.0002664645,0.001727108,-0.0002252206]
+};
+function chebSum(coef,t){
+  let b0=1, b1=t, s=coef[0]+coef[1]*t;
+  for(let k=2;k<coef.length;k++){
+    const b2=2*t*b1-b0;
+    s+=coef[k]*b2; b0=b1; b1=b2;
+  }
+  return s;
+}
+function chironLon(jd){
+  const T=centuries(jd);
+  const t=(2*T-(CHIRON_T0+CHIRON_T1))/(CHIRON_T1-CHIRON_T0);
+  const h=helio(CHIRON_EL,T);
+  const r=Math.sqrt(h.x*h.x+h.y*h.y+h.z*h.z);
+  const lon=atan2(h.y,h.x)+chebSum(CHIRON_C.LON,t);
+  const lat=asin(h.z/r)+chebSum(CHIRON_C.LAT,t);
+  const ray=r+chebSum(CHIRON_C.RAY,t);
+  const x=ray*cos(lat)*cos(lon), y=ray*cos(lat)*sin(lon);
+  const e=helio('terre',T);
+  return n360(atan2(y-e.y,x-e.x)+precession(T));
 }
 
 const BODIES=['soleil','lune','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton','noeud'];
+/* Points karmiques : calculés comme les autres, mais tenus hors de BODIES —
+   ils ne sont ni des acteurs de la roue, ni des partenaires d'aspect. */
+const KBODIES=['noeud','noeudsud','lilith','chiron'];
+/* Le ℞ ne veut rien dire pour un point moyen : sa vitesse est constante par
+   construction. Chiron, lui, rétrograde pour de bon cinq mois par an. */
+const NO_RETRO=new Set(['noeud','noeudsud','lilith']);
 function bodyLon(b,jd){
   if(b==='soleil')return sunLon(jd);
   if(b==='lune')return moonLon(jd);
   if(b==='noeud')return moonNode(jd);
+  if(b==='noeudsud')return n360(moonNode(jd)+180);
+  if(b==='lilith')return moonApogee(jd);
+  if(b==='chiron')return chironLon(jd);
   return planetLon(b,jd);
+}
+function kpositions(jd){
+  const out={};
+  for(const b of KBODIES){
+    const l=bodyLon(b,jd), l2=bodyLon(b,jd+1);
+    let d=l2-l; if(d>180)d-=360; if(d<-180)d+=360;
+    out[b]={lon:l,retro:!NO_RETRO.has(b)&&d<0,speed:d};
+  }
+  return out;
 }
 function positions(jd){
   const out={};
   for(const b of BODIES){
     const l=bodyLon(b,jd), l2=bodyLon(b,jd+1);
     let d=l2-l; if(d>180)d-=360; if(d<-180)d+=360;
-    out[b]={lon:l,retro:d<0,speed:d};
+    out[b]={lon:l,retro:!NO_RETRO.has(b)&&d<0,speed:d};
   }
   return out;
 }
