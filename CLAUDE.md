@@ -112,6 +112,14 @@ A chart token is untrusted input: it arrives from a link or a paste. Three invar
 - A hash-based `script-src` would block inline handlers outright, but the hash needs recomputing on every edit to `index.html`, and a stale hash means a silently blank app. Rejected: it breaks the no-build-step property.
 - `frame-ancestors` is ignored in a `<meta>` CSP; it would need a real response header.
 
+### Theme
+
+Three states — `auto` (default, follows `prefers-color-scheme`), `light`, `dark` — cycled by `#themebtn` and stored in `astro:theme`. Auto exists so that picking `light` one evening doesn't silently pin the chart to light forever.
+
+- The preference is applied by a **second inline `<script>` in `<head>`**, read from `localStorage` directly rather than through `store`: the main script runs at the end of the body, so going through it would show the light palette for a frame before switching. That is the only reason the app has two script tags.
+- **Every colour must be a token.** A literal anywhere outside `:root` survives the switch and will be wrong in one theme. Tints compose as `rgb(var(--v-rgb) / .13)` from raw triplets, and `--shadow` / `--ring` are separate tokens because a shadow built from `--ink` glows once the ink turns pale. `--disc` is the wheel's core tint, raised in dark where 3.5 % is invisible. The JS colours in `ASPECTS`, the agenda and the gauge are `var(--…)` strings for the same reason — inline SVG resolves them.
+- The dark palette is not an inversion: `#EFE9DA` on `#1B2A44` vibrates, so ink and vellum are re-picked, and verdigris and minium are lightened to hold contrast.
+
 ### Accessibility
 
 The share menu (`#shlist`) declares `role="menu"`, which is a contract: arrow keys cycle entries and wrap, Home/End jump to the ends, Escape closes and returns focus to `#shtog`, hidden entries are skipped, and entries carry `tabindex="-1"` so only the button sits in the tab order. `#combolist` implements the same pattern. If you add a menu, match it or drop the roles — declaring the role without the keyboard behaviour is worse than no role.

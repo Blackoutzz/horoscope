@@ -24,6 +24,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>
+/* Appliqué avant le rendu : lu ici plutôt que dans le script de fin de page,
+   sinon la palette claire s'affiche une fraction de seconde avant de basculer.
+   Sans préférence enregistrée, on laisse prefers-color-scheme décider. */
+try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}
+</script>
 <style>
   :root{
     --vellum:#EFE9DA;
@@ -37,14 +43,71 @@
     --body:"Avenir Next",Avenir,"Segoe UI",system-ui,-apple-system,sans-serif;
     --data:ui-monospace,"SF Mono","Roboto Mono","Courier New",monospace;
     --glyph:"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols 2",serif;
+    --halo-a:rgba(62,124,110,.07);
+    --halo-b:rgba(27,42,68,.08);
+    --disc:0.035;
+    /* Triplets bruts : les teintes se composent en rgb(... / alpha) pour
+       qu'un changement de thème les emporte aussi. Une valeur en dur ici
+       survivrait au basculement et jurerait sur fond sombre. */
+    --v-rgb:62 124 110;
+    --m-rgb:166 67 47;
+    --shadow:rgba(27,42,68,.16);
+    --ring:rgba(27,42,68,.22);
   }
+  /* Thème sombre. Les tokens sont redéfinis, jamais les règles : toute couleur
+     doit passer par une variable, sinon elle survit au basculement. Encre et
+     vélin ne s'inversent pas bêtement — un #EFE9DA sur #1B2A44 vibre. Le vert-
+     de-gris et le minium sont éclaircis pour tenir le contraste sur fond sombre. */
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --vellum:#141A28;
+      --vellum-deep:#1C2434;
+      --ink:#DCD5C4;
+      --ink-soft:#9AA3B4;
+      --verdigris:#6FB3A1;
+      --minium:#D9755C;
+      --rule:rgba(220,213,196,.20);
+      --halo-a:rgba(111,179,161,.10);
+      --halo-b:rgba(220,213,196,.06);
+      --disc:0.10;
+      --v-rgb:111 179 161;
+      --m-rgb:217 117 92;
+      --shadow:rgba(0,0,0,.45);
+      --ring:rgba(220,213,196,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --vellum:#141A28;
+    --vellum-deep:#1C2434;
+    --ink:#DCD5C4;
+    --ink-soft:#9AA3B4;
+    --verdigris:#6FB3A1;
+    --minium:#D9755C;
+    --rule:rgba(220,213,196,.20);
+    --halo-a:rgba(111,179,161,.10);
+    --halo-b:rgba(220,213,196,.06);
+    --disc:0.10;
+    --v-rgb:111 179 161;
+    --m-rgb:217 117 92;
+    --shadow:rgba(0,0,0,.45);
+    --ring:rgba(220,213,196,.28);
+  }
+  html{background:var(--vellum)}
   *{box-sizing:border-box}
+  .topbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px}
+  .tbtn{
+    font-family:var(--data);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-soft);background:transparent;border:1px solid var(--rule);
+    border-radius:2px;padding:5px 9px;cursor:pointer;line-height:1;
+  }
+  .tbtn:hover{color:var(--ink);border-color:var(--ink-soft)}
+  .tbtn:focus-visible{outline:2px solid var(--verdigris);outline-offset:2px}
   .wrap{
     font-family:var(--body);
     color:var(--ink);
     background:
-      radial-gradient(ellipse at 20% 0%,rgba(62,124,110,.07),transparent 60%),
-      radial-gradient(ellipse at 100% 100%,rgba(27,42,68,.08),transparent 55%),
+      radial-gradient(ellipse at 20% 0%,var(--halo-a),transparent 60%),
+      radial-gradient(ellipse at 100% 100%,var(--halo-b),transparent 55%),
       var(--vellum);
     padding:clamp(20px,4vw,48px);
     border-radius:2px;
@@ -127,7 +190,7 @@
     #numblock{order:2}
   }
   .reveal{margin-top:34px;border:1px solid var(--rule);border-left:2px solid var(--verdigris);
-    background:rgba(62,124,110,.045);padding:18px clamp(16px,2.5vw,26px) 4px}
+    background:rgb(var(--v-rgb) / .045);padding:18px clamp(16px,2.5vw,26px) 4px}
   .reveal .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
     color:var(--ink-soft);margin:0 0 14px}
   .reveal b{font-weight:600}
@@ -145,7 +208,7 @@
   .recents{max-width:420px}
   .recents .sk{display:none}
   .recbox{border:1px solid var(--rule);border-left:2px solid var(--verdigris);
-    background:rgba(62,124,110,.045);padding:4px 14px}
+    background:rgb(var(--v-rgb) / .045);padding:4px 14px}
   ul.reclist{list-style:none;margin:0;padding:0}
   ul.reclist li{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule)}
   ul.reclist li:last-child{border-bottom:0}
@@ -198,7 +261,7 @@
   .erow .ech{flex:0 0 auto;font-size:10px;color:var(--ink-soft);transition:transform .15s}
   button.erow.on .ech{transform:rotate(90deg);color:var(--verdigris)}
   .edraw{margin:2px 0 14px;padding:14px 18px;border-left:2px solid var(--verdigris);
-    background:rgba(62,124,110,.05)}
+    background:rgb(var(--v-rgb) / .05)}
   .edraw .ed1{font-size:12.5px;color:var(--ink-soft);margin:0 0 7px;max-width:88ch}
   .edraw .ed1 b{color:var(--ink)}
   .edraw .ed2{font-size:14px;margin:0 0 12px;max-width:80ch}
@@ -221,13 +284,13 @@
     stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   ul.shlist{position:absolute;z-index:30;top:calc(100% + 5px);right:0;margin:0;padding:0;list-style:none;
     min-width:210px;background:var(--vellum);border:1px solid var(--ink);
-    box-shadow:0 8px 22px rgba(27,42,68,.16)}
+    box-shadow:0 8px 22px var(--shadow)}
   ul.shlist li{border-bottom:1px solid var(--rule)}
   ul.shlist li:last-child{border-bottom:0}
   ul.shlist button{display:block;width:100%;text-align:left;background:transparent;border:0;cursor:pointer;
     font-family:var(--data);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--ink);padding:11px 14px}
-  ul.shlist button:hover{background:rgba(62,124,110,.13);color:var(--verdigris)}
+  ul.shlist button:hover{background:rgb(var(--v-rgb) / .13);color:var(--verdigris)}
   .comparebar{margin-top:24px;border-top:1px solid var(--rule);padding-top:18px}
   .comparebar .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;max-width:82ch}
   .comparebar .err{margin-top:12px}
@@ -247,11 +310,11 @@
   button.combotog:hover{color:var(--verdigris)}
   ul.combolist{position:absolute;z-index:20;top:100%;left:0;right:0;margin:2px 0 0;padding:0;list-style:none;
     background:var(--vellum);border:1px solid var(--ink);max-height:264px;overflow:auto;
-    box-shadow:0 8px 22px rgba(27,42,68,.16)}
+    box-shadow:0 8px 22px var(--shadow)}
   ul.combolist li{display:flex;align-items:baseline;gap:10px;padding:9px 12px;cursor:pointer;
     border-bottom:1px solid var(--rule)}
   ul.combolist li:last-child{border-bottom:0}
-  ul.combolist li:hover,ul.combolist li.hi{background:rgba(62,124,110,.13)}
+  ul.combolist li:hover,ul.combolist li.hi{background:rgb(var(--v-rgb) / .13)}
   .combolist .ce{flex:0 0 auto;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:14px}
   .combolist .cn{flex:0 1 auto;font-family:var(--display);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .combolist .cd{flex:0 0 auto;margin-left:auto;font-family:var(--data);font-size:9.5px;
@@ -280,8 +343,8 @@
   .tcv{flex:0 0 3.4em;text-align:right;font-family:var(--data);font-size:10px;color:var(--ink-soft);line-height:1.45}
   .tg{flex:0 0 auto;font-family:var(--data);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
     padding:4px 8px;border:1px solid var(--rule);border-radius:2px;white-space:nowrap}
-  .tg.cp{border-color:rgba(62,124,110,.5);background:rgba(62,124,110,.09);color:var(--verdigris)}
-  .tg.am{border-color:rgba(166,67,47,.4);background:rgba(166,67,47,.06);color:var(--minium)}
+  .tg.cp{border-color:rgb(var(--v-rgb) / .5);background:rgb(var(--v-rgb) / .09);color:var(--verdigris)}
+  .tg.am{border-color:rgb(var(--m-rgb) / .4);background:rgb(var(--m-rgb) / .06);color:var(--minium)}
   .tg.ph{color:var(--ink-soft)}
   .lg1,.lg2{font-family:var(--data);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
     padding-left:15px;position:relative;margin-left:10px}
@@ -360,7 +423,7 @@
   .wheel .ring{fill:none;stroke:var(--ink);stroke-width:1;opacity:.85}
   .wheel .hair{stroke:var(--ink);stroke-width:.5;opacity:.35;fill:none}
   /* cœur assombri : teinte franche, pas le noir plein qu'un fill manquant produisait */
-  .wheel .disc{stroke:none;fill:var(--ink);fill-opacity:.035}
+  .wheel .disc{stroke:none;fill:var(--ink);fill-opacity:var(--disc)}
   .wheel .spoke{stroke:var(--ink);stroke-width:.6;opacity:.3;stroke-dasharray:2 3}
   .wheel .axis{stroke:var(--ink);stroke-width:1.2;opacity:.8}
   .wheel .asp{stroke-width:.7;fill:none;opacity:.5}
@@ -418,7 +481,7 @@
     flex:0 0 76px;height:76px;border:1px solid var(--ink);border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     font-family:var(--display);font-size:34px;line-height:1;
-    box-shadow:0 0 0 3px var(--vellum),0 0 0 4px rgba(27,42,68,.22);
+    box-shadow:0 0 0 3px var(--vellum),0 0 0 4px var(--ring);
   }
   .numero .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
   .numero .nm{font-family:var(--display);font-size:23px;line-height:1.15;margin:5px 0 4px}
@@ -428,8 +491,8 @@
     color:var(--ink-soft);margin:0 0 8px}
   ul.tags{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px;padding:0}
   ul.tags li{font-size:12.5px;line-height:1;padding:6px 10px;border:1px solid var(--rule);border-radius:2px}
-  ul.tags li.tf{border-color:rgba(62,124,110,.45);background:rgba(62,124,110,.07);color:var(--ink)}
-  ul.tags li.tl{border-color:rgba(166,67,47,.35);background:rgba(166,67,47,.05);color:var(--ink)}
+  ul.tags li.tf{border-color:rgb(var(--v-rgb) / .45);background:rgb(var(--v-rgb) / .07);color:var(--ink)}
+  ul.tags li.tl{border-color:rgb(var(--m-rgb) / .35);background:rgb(var(--m-rgb) / .05);color:var(--ink)}
   .numero .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0}
   .emo{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:.95em;line-height:1}
   .loading{font-family:var(--data);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
@@ -464,6 +527,10 @@
 <body>
 
 <div class="wrap">
+  <div class="topbar">
+    <button class="tbtn" id="themebtn" type="button" aria-live="polite"></button>
+  </div>
+
   <!-- ============ SETUP ============ -->
   <section id="setup">
     <p class="eyebrow">Registre de naissance</p>
@@ -947,9 +1014,9 @@ const SIGN_GL=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒'
 const SIGN_EMO=['♈️','♉️','♊️','♋️','♌️','♍️','♎️','♏️','♐️','♑️','♒️','♓️'];
 const NAMES={soleil:'Soleil',lune:'Lune',mercure:'Mercure',venus:'Vénus',mars:'Mars',jupiter:'Jupiter',saturne:'Saturne',uranus:'Uranus',neptune:'Neptune',pluton:'Pluton',noeud:'Nœud lunaire'};
 const GLYPH={soleil:'☉',lune:'☽',mercure:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturne:'♄',uranus:'♅',neptune:'♆',pluton:'♇',noeud:'☊'};
-const ASPECTS=[{n:'Conjonction',a:0,g:'☌',c:'#3E7C6E'},{n:'Sextile',a:60,g:'⚹',c:'#3E7C6E'},
-               {n:'Carré',a:90,g:'□',c:'#A6432F'},{n:'Trigone',a:120,g:'△',c:'#3E7C6E'},
-               {n:'Opposition',a:180,g:'☍',c:'#A6432F'}];
+const ASPECTS=[{n:'Conjonction',a:0,g:'☌',c:'var(--verdigris)'},{n:'Sextile',a:60,g:'⚹',c:'var(--verdigris)'},
+               {n:'Carré',a:90,g:'□',c:'var(--minium)'},{n:'Trigone',a:120,g:'△',c:'var(--verdigris)'},
+               {n:'Opposition',a:180,g:'☍',c:'var(--minium)'}];
 const signIdx=l=>Math.floor(n360(l)/30);
 const signOf=l=>SIGNS[signIdx(l)];
 const signEmo=l=>SIGN_EMO[signIdx(l)];
@@ -3050,14 +3117,14 @@ function spanReading(period,win){
   let agenda=ev.map(e=>({jd:e.jd,pri:SIGNIF[e.p]+1,g:`${GLYPH[e.p]} ${e.asp.g} ${GLYPH[e.q]}`,
     t:`${SUJ[e.p]} ${e.asp.n.toLowerCase()} ${poss(e.q)}`,c:e.asp.c}));
   for(const e of karmaEvents(win.jd0,win.jd1,CHART.karma))
-    agenda.push({jd:e.jd,pri:0,g:e.g,t:e.t,c:'#6E5D82'});
+    agenda.push({jd:e.jd,pri:0,g:e.g,t:e.t,c:'var(--ink-soft)'});
   if(period!=='annee')for(const l of lunations(win.jd0,win.jd1))
-    agenda.push({jd:l.jd,pri:0,g:'☽',t:l.lune+' en '+signEmo(moonLon(l.jd))+' '+signOf(moonLon(l.jd)),c:'#5D6B82'});
+    agenda.push({jd:l.jd,pri:0,g:'☽',t:l.lune+' en '+signEmo(moonLon(l.jd))+' '+signOf(moonLon(l.jd)),c:'var(--ink-soft)'});
   if(period==='annee'){
     const sr=solarReturn(natal.soleil.lon,win.jd0);
     if(sr!==null){
       const a=angles(sr,profile.lat,profile.lon);
-      agenda.push({jd:sr,pri:0,g:'☉',t:`Révolution solaire — ascendant ${degStr(a.asc)} ${signEmo(a.asc)} ${signOf(a.asc)}`,c:'#3E7C6E'});
+      agenda.push({jd:sr,pri:0,g:'☉',t:`Révolution solaire — ascendant ${degStr(a.asc)} ${signEmo(a.asc)} ${signOf(a.asc)}`,c:'var(--verdigris)'});
     }
   }
   const cap=period==='semaine'?14:18;
@@ -3180,7 +3247,7 @@ function paintReading(o){
     (o.agenda&&o.agenda.length?
       `<p class="agenda-h">${esc(o.agendaTitre||'Dates')}</p><ol class="agenda">`+
       o.agenda.map(a=>`<li><span class="ag-d">${esc(a.d)}</span>`+
-        `<span class="ag-g" style="color:${esc(a.c||'#1B2A44')}">${esc(a.g)}</span>`+
+        `<span class="ag-g" style="color:${esc(a.c||'var(--ink)')}">${esc(a.g)}</span>`+
         `<span class="ag-t">${esc(a.t)}</span></li>`).join('')+`</ol>`:'')+
     `<div class="sect-grid">`+(o.sections||[]).map(s=>
       `<div class="sect"><h3>${esc(s.titre)}</h3><p>${esc(s.texte)}</p></div>`).join('')+`</div>`+
@@ -3259,6 +3326,30 @@ function setSource(src){
 /* ========================================================================
    8. Amorçage
    ======================================================================== */
+/* --- thème ---
+   Trois états, pas deux : « auto » suit le système et reste le défaut, sinon
+   choisir « clair » un soir figerait la carte en clair pour toujours sans que
+   rien ne le dise. La préférence est écrite en localStorage direct, pas via
+   store : le script d'en-tête la relit avant que store existe. */
+const THEMES=[['auto','Thème : auto'],['light','Thème : clair'],['dark','Thème : sombre']];
+function applyTheme(mode){
+  const root=document.documentElement;
+  if(mode==='auto')delete root.dataset.theme; else root.dataset.theme=mode;
+  $('themebtn').textContent=(THEMES.find(t=>t[0]===mode)||THEMES[0])[1];
+  $('themebtn').setAttribute('aria-label',
+    'Changer le thème — actuellement '+(mode==='auto'?'automatique, selon ton système':mode==='dark'?'sombre':'clair'));
+  try{mode==='auto'?localStorage.removeItem('astro:theme'):localStorage.setItem('astro:theme',mode);}catch(e){}
+}
+let themeMode=(()=>{try{const t=localStorage.getItem('astro:theme');return t==='dark'||t==='light'?t:'auto';}catch(e){return 'auto';}})();
+applyTheme(themeMode);
+$('themebtn').onclick=()=>{
+  themeMode=THEMES[(THEMES.findIndex(t=>t[0]===themeMode)+1)%THEMES.length][0];
+  applyTheme(themeMode);
+  /* La roue est un SVG déjà écrit : ses couleurs sont des var(), donc elles
+     suivent, mais wzApply() se recale au cas où la barre de contrôle bouge. */
+  if(typeof wzApply==='function')wzApply();
+};
+
 const sel=$('f-ville');
 CITIES.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c[0];sel.appendChild(o);});
 const other=document.createElement('option');other.value='x';other.textContent='Autre lieu — coordonnées manuelles';sel.appendChild(other);
