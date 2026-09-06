@@ -16,6 +16,8 @@ Everything lives in a single file: `index.html`. CSS, HTML, and JS are all inlin
 
 ### HTML structure
 
+A `.topbar` at the top of `.wrap` sits above both views and holds the two square controls — theme and share — at the same 30x30 box (`.tbtn`). `#shmenu` lives there rather than in `.apphead` so the pair line up; it carries `.hidden` on the setup screen and both view switches toggle it, since sharing a chart that does not exist yet is meaningless. Its dropdown still positions against `.shmenu`, which stays `position:relative`.
+
 Two mutually exclusive views toggled via `.hidden`:
 - `#setup` — birth data form (name, date, time, city or lat/lon/tz), recent profiles, chart-code loader
 - `#app` — full chart display (triad, wheel, numerology, readings, ephemeris tables, synastry)

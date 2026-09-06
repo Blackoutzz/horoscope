@@ -94,7 +94,7 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   }
   html{background:var(--vellum)}
   *{box-sizing:border-box}
-  .topbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px}
+  .topbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:6px}
   .tbtn{
     display:flex;align-items:center;justify-content:center;
     color:var(--ink-soft);background:transparent;border:1px solid var(--rule);
@@ -279,10 +279,11 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .apphead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
   .apphead .eyebrow{flex:1 1 auto}
   .shmenu{position:relative;flex:0 0 auto}
-  button.shtog{background:transparent;border:1px solid var(--rule);border-radius:1px;padding:8px;
-    cursor:pointer;color:var(--ink-soft);line-height:0;transition:color .18s,border-color .18s}
+  /* La boite vient de .tbtn : les deux commandes de la barre doivent faire
+     exactement le meme carre, sinon l'alignement se voit. */
+  button.shtog{transition:color .18s,border-color .18s}
   button.shtog:hover{color:var(--verdigris);border-color:var(--verdigris)}
-  button.shtog svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;
+  button.shtog svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   ul.shlist{position:absolute;z-index:30;top:calc(100% + 5px);right:0;margin:0;padding:0;list-style:none;
     min-width:210px;background:var(--vellum);border:1px solid var(--ink);
@@ -531,6 +532,20 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
 <div class="wrap">
   <div class="topbar">
     <button class="tbtn" id="themebtn" type="button" aria-live="polite"></button>
+    <div class="shmenu hidden" id="shmenu">
+      <button class="tbtn shtog" id="shtog" type="button" aria-label="Partager cette carte"
+              aria-haspopup="true" aria-expanded="false" aria-controls="shlist">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="18" cy="5" r="2.7"/><circle cx="6" cy="12" r="2.7"/><circle cx="18" cy="19" r="2.7"/>
+          <path d="M8.4 10.7 15.6 6.5M8.4 13.3l7.2 4.2"/>
+        </svg>
+      </button>
+      <ul class="shlist hidden" id="shlist" role="menu" aria-label="Partager">
+        <li role="none"><button role="menuitem" type="button" tabindex="-1" id="mcode">Copier mon code</button></li>
+        <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" tabindex="-1" id="mlink">Copier le lien</button></li>
+        <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" tabindex="-1" id="mshare">Partager le lien…</button></li>
+      </ul>
+    </div>
   </div>
 
   <!-- ============ SETUP ============ -->
@@ -610,20 +625,6 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   <section id="app" class="hidden">
     <div class="apphead">
       <p class="eyebrow" id="birthline"></p>
-      <div class="shmenu" id="shmenu">
-        <button class="shtog" id="shtog" type="button" aria-label="Partager cette carte"
-                aria-haspopup="true" aria-expanded="false" aria-controls="shlist">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="18" cy="5" r="2.7"/><circle cx="6" cy="12" r="2.7"/><circle cx="18" cy="19" r="2.7"/>
-            <path d="M8.4 10.7 15.6 6.5M8.4 13.3l7.2 4.2"/>
-          </svg>
-        </button>
-        <ul class="shlist hidden" id="shlist" role="menu" aria-label="Partager">
-          <li role="none"><button role="menuitem" type="button" tabindex="-1" id="mcode">Copier mon code</button></li>
-          <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" tabindex="-1" id="mlink">Copier le lien</button></li>
-          <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" tabindex="-1" id="mshare">Partager le lien…</button></li>
-        </ul>
-      </div>
     </div>
     <h1 class="title" id="whoami"></h1>
     <p class="intro" id="intro"></p>
@@ -2725,6 +2726,7 @@ function renderChart(){
   const kt=profile.knownTime;
   $('setup').classList.add('hidden');
   $('app').classList.remove('hidden');
+  $('shmenu').classList.remove('hidden');
 
   const dl=new Date(profile.date+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
   $('birthline').textContent=`${dl}${kt?' · '+profile.time:''} · ${profile.place} · ${ageDe(profile.date)} ans`;
@@ -3416,6 +3418,7 @@ $('reset').onclick=async()=>{
     if(k.startsWith('astro:lecture:')&&k.endsWith(id))await store.del(k);
   $('app').classList.add('hidden');
   $('setup').classList.remove('hidden');
+  $('shmenu').classList.add('hidden');
   renderRecents();
   window.scrollTo({top:0});
 };
