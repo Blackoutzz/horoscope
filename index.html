@@ -296,6 +296,21 @@
   ul.synl .lg{flex:0 0 3.6em;font-family:var(--glyph);font-size:13px;letter-spacing:.08em}
   ul.synl .lt{flex:1 1 auto}
   ul.synl .sub{color:var(--ink-soft);font-family:var(--data);font-size:10px}
+  /* Axe karmique — même gabarit que .amour, glyphes tracés plutôt qu'écrits */
+  .karma{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .karma .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}
+  .karma .knote{font-size:11.5px;color:var(--ink-soft);margin:0 0 16px;max-width:80ch}
+  .karma .ksub{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:400;margin:22px 0 4px}
+  .karma .sect h3{display:flex;align-items:center;gap:6px}
+  .karma .axe p{max-width:60ch}
+  .karma .vide{color:var(--ink-soft);font-size:13px;margin:6px 0 0;max-width:80ch}
+  .karma .note{font-size:11.5px;color:var(--ink-soft);margin:16px 0 0;max-width:80ch}
+  .karma details{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px}
+  .karma details .sub{display:block;font-size:11.5px;color:var(--ink-soft);margin:10px 0;max-width:80ch}
+  .karma details td.g{width:1.6em}
+  .ksvg{width:1em;height:1em;vertical-align:-.14em;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .amour{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
   .amour .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px}
   .amour .lead{font-size:15px;max-width:78ch;margin:6px 0 20px}
@@ -350,6 +365,9 @@
   .wheel .axis{stroke:var(--ink);stroke-width:1.2;opacity:.8}
   .wheel .asp{stroke-width:.7;fill:none;opacity:.5}
   .wheel .signglyph{font-family:var(--glyph);font-size:15px;fill:var(--ink);opacity:.55;text-anchor:middle;dominant-baseline:central}
+  .wheel .kaxis{stroke:var(--ink);stroke-width:.8;opacity:.45;stroke-dasharray:5 4}
+  .wheel .kmark{fill:none;stroke:var(--ink);stroke-width:2;opacity:.55;stroke-linecap:round;stroke-linejoin:round}
+  .wheel .karm{opacity:.55}
   .wheel .plglyph{font-family:var(--glyph);font-size:17px;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
   .wheel .pldeg{font-family:var(--data);font-size:7px;fill:var(--ink-soft);text-anchor:middle;dominant-baseline:central}
   .wheel .axlabel{font-family:var(--data);font-size:8.5px;letter-spacing:.12em;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
@@ -561,6 +579,8 @@
     <section class="synth" id="synth"></section>
 
     <section class="amour" id="amour"></section>
+
+    <section class="karma" id="karma"></section>
 
     <div class="comparebar">
       <div class="sharerow">
@@ -1091,7 +1111,7 @@ const store={
 /* ========================================================================
    5. Roue gravée
    ======================================================================== */
-function drawWheel(natal,hs,knownTime,aspects){
+function drawWheel(natal,hs,knownTime,aspects,karma){
   const S=440,c=S/2;
   const R1=c-6, R2=c-34, R3=c-46, R4=c-118, R5=c-132;
   const rot = knownTime? hs.asc : 0;
@@ -1141,10 +1161,20 @@ function drawWheel(natal,hs,knownTime,aspects){
     const [x1,y1]=pt(natal[a.p].lon,R5), [x2,y2]=pt(natal[a.q].lon,R5);
     s+=`<line class="asp" stroke="${a.asp.c}" ${a.asp.a===0?'stroke-dasharray="2 2"':''} x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
   }
-  // planètes, avec anti-collision simple
+  // axe des nœuds : un seul trait, le nœud sud étant le nœud nord à 180°
+  if(karma){
+    const [ax1,ay1]=pt(karma.noeud.lon,R5), [ax2,ay2]=pt(karma.noeudsud.lon,R5);
+    s+=`<line class="kaxis" x1="${ax1.toFixed(1)}" y1="${ay1.toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${ay2.toFixed(1)}"/>`;
+  }
+  // planètes, puis points karmiques : mêmes anneaux, tracé plus discret —
+  // ce sont des repères, pas des acteurs.
   const placed=[];
-  for(const b of BODIES){
-    let lon=natal[b].lon, r=R3-16;
+  const ring=karma?BODIES.concat(KBODIES.map(b=>'k:'+b)):BODIES;
+  for(const key of ring){
+    const kar=key.startsWith('k:'), b=kar?key.slice(2):key;
+    if(kar&&b==='noeud')continue;   // déjà tracé avec les planètes
+    const src=kar?karma:natal;
+    let lon=src[b].lon, r=R3-16;
     for(let k=0;k<40;k++){
       const clash=placed.some(p=>{let d=Math.abs(n360(p.lon-lon));if(d>180)d=360-d;return d<7.5&&Math.abs(p.r-r)<12;});
       if(!clash)break;
@@ -1154,10 +1184,14 @@ function drawWheel(natal,hs,knownTime,aspects){
     placed.push({lon,r});
     const [x,y]=pt(lon,r);
     const [tx,ty]=pt(lon,r-14);
-    const [lx,ly]=pt(natal[b].lon,R3), [mx,my]=pt(natal[b].lon,R3-4);
-    s+=`<line class="hair" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}"/>`;
-    s+=`<text class="plglyph" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${GLYPH[b]}</text>`;
-    s+=`<text class="pldeg" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}">${Math.floor(n360(natal[b].lon)%30)}°${natal[b].retro?' ℞':''}</text>`;
+    const [lx,ly]=pt(src[b].lon,R3), [mx,my]=pt(src[b].lon,R3-4);
+    // le nœud nord vient de BODIES mais reste un point karmique : même discrétion
+    const cl=(kar||(karma&&b==='noeud'))?' karm':'';
+    s+=`<line class="hair${cl}" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}"/>`;
+    s+= kar&&KSVG[b]
+      ? `<g class="kmark" transform="translate(${(x-9).toFixed(1)},${(y-9).toFixed(1)}) scale(.75)">${KSVG[b]}</g>`
+      : `<text class="plglyph${cl}" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${kar?KGLYPH[b]:GLYPH[b]}</text>`;
+    s+=`<text class="pldeg${cl}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}">${Math.floor(n360(src[b].lon)%30)}°${src[b].retro?' ℞':''}</text>`;
   }
   s+=`</g></svg>`;
   return s;
@@ -2376,6 +2410,168 @@ function renderSynthese(lp){
 }
 
 /* ========================================================================
+   5sexies. Axe karmique — nœuds, Lune noire, Chiron
+   ======================================================================== */
+/* Glyphes dessinés plutôt qu'écrits : ☊ et ☋ (U+260A/260B) existent partout,
+   mais ⚷ et ⚸ (U+26B7/26B8) manquent à Apple Symbols — sur iPhone, l'app
+   afficherait un carré vide. Un tracé inline ne dépend d'aucune police et ne
+   demande pas d'élargir la CSP. */
+const KSVG={
+  chiron:'<circle cx="12" cy="17" r="4.6"/><path d="M12 12.4V2M12 6.6 16.4 2M12 6.6 7.6 2"/>',
+  lilith:'<path d="M12 22V9M8 19h8"/><path d="M15.6 2.4a5.2 5.2 0 1 0 0 8.6 6.4 6.4 0 0 1 0-8.6Z"/>'
+};
+const kglyph=(b,cls)=>KSVG[b]
+  ? `<svg class="ksvg ${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${KSVG[b]}</svg>`
+  : `<span class="${cls||''}" aria-hidden="true">${KGLYPH[b]}</span>`;
+const KGLYPH={noeud:'☊',noeudsud:'☋',lilith:'⚸',chiron:'⚷'};
+const KNOM={noeud:'Nœud nord',noeudsud:'Nœud sud',lilith:'Lune noire',chiron:'Chiron'};
+
+/* L'axe : un texte par signe du nœud nord, qui nomme les deux bouts — le nœud
+   sud est toujours le signe opposé, deux tableaux se contrediraient. */
+const AXE_S=[
+ 'un réflexe d\'accord — t\'ajuster, arrondir, attendre que l\'autre se prononce. Ce qui te fait avancer est plus abrupt : décider seul, dire non, partir le premier',
+ 'l\'intensité et les liens qui engagent tout. Ce qui te fait avancer est plus simple : la durée, le calme, ce qui t\'appartient vraiment et ne dépend de personne',
+ 'les grandes convictions et les vues d\'ensemble. Ce qui te fait avancer tient dans le détail : écouter, questionner, accepter que le vrai se trouve dans la conversation',
+ 'le devoir, le contrôle, la réussite qui se prouve. Ce qui te fait avancer est moins glorieux : le foyer, l\'attachement, admettre que tu as besoin des autres',
+ 'le groupe, le collectif, la juste distance. Ce qui te fait avancer demande de sortir du rang : assumer ton nom, ton goût, ta place devant',
+ 'le flou, la porosité, le grand tout. Ce qui te fait avancer est terre à terre : le geste utile, la méthode, l\'ordre que tu poses toi-même',
+ 'l\'élan solitaire et le passage en force. Ce qui te fait avancer suppose quelqu\'un en face : négocier, tenir compte, faire à deux',
+ 'le confort, la lenteur, ce qui ne bouge pas. Ce qui te fait avancer est plus risqué : lâcher, laisser mourir ce qui doit mourir, partager pour de vrai',
+ 'la curiosité rapide et les mille informations. Ce qui te fait avancer demande de trancher : une direction, une conviction, un engagement qui coûte',
+ 'la famille, le nid, ce qui protège. Ce qui te fait avancer est plus exposé : construire dehors, tenir un rôle, assumer une autorité',
+ 'le besoin d\'être vu et reconnu personnellement. Ce qui te fait avancer passe par le nombre : servir une idée plus grande que toi, sans y mettre ton visage',
+ 'la correction, le tri, l\'inquiétude utile. Ce qui te fait avancer se contrôle moins : faire confiance, créer, accepter le flou'];
+
+const LILITH_S=[
+ 'l\'endroit où tu refuses d\'attendre ton tour. Ta colère est nette, elle sort vite, et on te l\'a fait payer assez tôt pour que tu hésites encore à la montrer',
+ 'ton rapport au corps et à ce qui t\'appartient. Tu ne cèdes ni sur ton confort ni sur ta valeur, et cette fermeté a souvent été lue comme de l\'avidité',
+ 'ta parole. Tu dis la chose que personne ne dit, au mauvais moment, et tu refuses de la reprendre',
+ 'ton besoin d\'un chez-toi, et ta rage quand on y touche. La famille est l\'endroit où tu ne fais aucun compromis, ni dans l\'attachement ni dans la rupture',
+ 'ton droit d\'être remarqué. Tu ne joues pas la modestie, et ça dérange plus que ça ne le devrait',
+ 'ton exigence. Tu ne fais pas semblant que c\'est bien quand c\'est bâclé, et ça t\'a coûté des places',
+ 'ton refus de la fausse harmonie. Tu préfères la scène franche au sourire tenu, et on te trouve difficile pour ça',
+ 'ce que tu ne dis à personne. Ton intensité et ton désir n\'ont jamais été négociables, et tu as appris à les cacher plutôt qu\'à les réduire',
+ 'ta liberté de penser autrement. Tu n\'entres pas dans la croyance du groupe, même quand ce serait plus simple',
+ 'ton rapport à l\'autorité. Tu ne t\'inclines pas devant un rôle, seulement devant ce qui se prouve — et ça se paie dans les structures',
+ 'ton écart. Tu ne rejoins pas le rang pour avoir la paix, et l\'appartenance t\'a toujours demandé un effort que d\'autres ne font pas',
+ 'ce que tu ressens et que personne ne valide. Ton monde intérieur ne se justifie pas, et on t\'a trop souvent demandé d\'en sortir'];
+
+const CHIRON_S=[
+ 'l\'existence même de ton élan : le droit de vouloir, de foncer, d\'exister sans permission. Là où tu as douté, tu sais aujourd\'hui remettre les autres en mouvement',
+ 'ta valeur et ta sécurité — ce que tu vaux, ce que tu possèdes, ce qui tient. De cette insécurité-là tu as tiré une capacité rare à rassurer concrètement',
+ 'ta parole et ton intelligence : on t\'a laissé croire que tu ne comprenais pas, ou que tu parlais mal. Tu expliques aujourd\'hui mieux que ceux qui n\'ont jamais douté',
+ 'l\'appartenance et le soin reçu : la famille a manqué quelque part. Tu sais accueillir des gens que personne n\'accueille',
+ 'le droit de briller : quelque chose a éteint ton envie d\'être vu. Tu donnes de la place aux autres avec une justesse que peu ont',
+ 'ton utilité et ton corps — jamais assez bien, jamais assez efficace. Tu répares, tu ajustes, tu prends soin, et ce n\'est pas une posture',
+ 'le lien à deux : quelque chose s\'est cassé dans l\'idée même d\'être choisi. Tu sais faire de la place à l\'autre sans t\'effacer, et c\'est rare',
+ 'la confiance et l\'abandon : on t\'a trahi, ou tu l\'as cru. Tu tiens debout dans des situations qui écrasent les autres',
+ 'le sens : ce en quoi tu croyais s\'est effondré une fois. Tu ne vends de certitude à personne, et c\'est exactement pour ça qu\'on t\'écoute',
+ 'la légitimité — ta place, ton autorité, ton droit de tenir un rôle. Tu construis lentement, et ce que tu construis tient',
+ 'l\'appartenance au groupe : dehors, à côté, jamais tout à fait dedans. Tu vois ce que les groupes font aux gens, et tu protèges ceux qu\'ils excluent',
+ 'la frontière entre toi et le reste : trop poreux, trop touché, trop tôt. Tu comprends la douleur des autres sans qu\'on te l\'explique'];
+
+/* Contacts serrés (3°, conjonction et opposition seulement) aux points
+   personnels. Les orbes larges n'ont pas de sens sur des points abstraits ;
+   le balayage complet, plus bas, sert la curiosité, pas la lecture. */
+const KROLE={noeud:'ta direction de croissance',noeudsud:'ton réflexe d\'origine',
+ lilith:'ton refus non négociable',chiron:'ta blessure fondatrice'};
+const KCIBLE={soleil:'ton identité',lune:'ta vie intérieure',asc:'ton abord'};
+const KCIBLE_NOM={soleil:'ton Soleil',lune:'ta Lune',asc:'ton Ascendant'};
+const KFEM={lilith:1};   /* « la Lune noire conjointe », les trois autres au masculin */
+const KCONT={
+ noeud:['ce que tu dois développer n\'est pas à côté de toi : c\'est au centre, et ça se voit dans tout ce que tu fais',
+        'ta direction tire à l\'inverse de ce point — grandir te demandera de contrarier ton propre naturel'],
+ noeudsud:['ton réflexe le plus ancien occupe la place centrale : c\'est ta facilité, et c\'est aussi ce qui te retient',
+           'ce que tu fuis par habitude se tient exactement en face — impossible de l\'éviter longtemps'],
+ lilith:['ton refus est au milieu de ce que tu es : aucun moyen de le rendre discret',
+         'ce qui ne se plie pas chez toi s\'oppose frontalement à cette part de ta vie'],
+ chiron:['la blessure touche le centre : elle colore tout, et c\'est aussi de là que vient ta compétence',
+         'la blessure se joue dans le face-à-face : elle se réveille au contact des autres plutôt qu\'en solitaire']};
+
+function karmaContacts(k,natal,hs,kt){
+  const cibles={soleil:natal.soleil.lon,lune:natal.lune.lon};
+  if(kt)cibles.asc=hs.asc;
+  const out=[];
+  for(const p of KBODIES)for(const c in cibles){
+    let d=Math.abs(n360(k[p].lon-cibles[c])); if(d>180)d=360-d;
+    for(const a of [0,180]){
+      const diff=Math.abs(d-a);
+      if(diff<=3)out.push({p,c,a,orb:diff});
+    }
+  }
+  return out.sort((x,y)=>x.orb-y.orb);
+}
+
+/* Balayage complet : des lignes, pas des phrases. Une opposition nœud nord /
+   nœud sud est vraie par construction — l'afficher serait annoncer une
+   trouvaille à chaque carte. */
+const NODE_PAIR=new Set(['noeud','noeudsud']);
+function karmaScan(k,natal){
+  const res=[];
+  for(const p of KBODIES)for(const q of BODIES){
+    if(p===q||(NODE_PAIR.has(p)&&NODE_PAIR.has(q)))continue;
+    let d=Math.abs(n360(k[p].lon-natal[q].lon)); if(d>180)d=360-d;
+    for(const asp of ASPECTS){
+      const o=['soleil','lune'].includes(q)?8:6;
+      const diff=Math.abs(d-asp.a);
+      if(diff<=o){res.push({p,q,asp,orb:diff});break;}
+    }
+  }
+  return res.sort((x,y)=>x.orb-y.orb);
+}
+
+function renderKarma(){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const k=CHART.karma;
+  const maison=lon=>kt?`, maison ${houseOf(lon,hs.cusps)} — ${HOUSE_THEME[houseOf(lon,hs.cusps)-1]}`:'';
+  const ligne=(b,lon,txt)=>
+    `<div class="sect"><h3>${kglyph(b)} ${KNOM[b]}</h3>`+
+    `<p><b>${signLab(lon)}</b> ${degStr(lon)}${maison(lon)}.<br>${txt}</p></div>`;
+
+  const ns=signIdx(k.noeud.lon);
+  const axe=
+   `<div class="sect axe"><h3>${kglyph('noeud')} L'axe des nœuds</h3>`+
+   `<p><b>Nœud nord ${signLab(k.noeud.lon)} ${degStr(k.noeud.lon)}${maison(k.noeud.lon)}</b> — `+
+   `<b>nœud sud ${signLab(k.noeudsud.lon)}</b>${kt?`, maison ${houseOf(k.noeudsud.lon,hs.cusps)}`:''}.<br>`+
+   `Ce que tu ramènes : ${AXE_S[ns]}.</p></div>`;
+
+  const cont=karmaContacts(k,natal,hs,kt);
+  const contHtml=cont.length
+    ? `<ul class="synl">${cont.map(c=>
+        `<li><span class="lg">${kglyph(c.p)} ${c.a===0?'☌':'☍'} ${c.c==='asc'?'⌖':GLYPH[c.c]}</span>`+
+        `<span class="lt"><b>${KNOM[c.p]} ${c.a===0?'conjoint':'opposé'}${KFEM[c.p]?'e':''} à ${KCIBLE_NOM[c.c]}</b>`+
+        `<span class="sub"> · orbe ${c.orb.toFixed(1).replace('.',',')}°</span><br>`+
+        `${KROLE[c.p]} rencontre ${KCIBLE[c.c]} — ${KCONT[c.p][c.a===0?0:1]}.</span></li>`).join('')}</ul>`
+    : `<p class="vide">Aucun de ces quatre points ne touche ton Soleil, ta Lune${kt?' ou ton Ascendant':''} à moins de 3°. Ils travaillent alors par leur signe et leur maison, sans se brancher sur tes points personnels.</p>`;
+
+  const scan=karmaScan(k,natal);
+  const scanHtml=scan.length
+    ? `<table class="eph"><tr><th colspan="2">Point</th><th>Aspect</th><th>Planète</th><th>Orbe</th></tr>`+
+      scan.map(a=>`<tr><td class="g">${kglyph(a.p)}</td><td>${KNOM[a.p]}</td>`+
+        `<td>${a.asp.g} ${a.asp.n}</td><td>${GLYPH[a.q]} ${NAMES[a.q]}</td>`+
+        `<td>${a.orb.toFixed(2).replace('.',',')}°</td></tr>`).join('')+`</table>`
+    : `<p class="vide">Aucun aspect dans les orbes retenues.</p>`;
+
+  $('karma').innerHTML=
+   `<p class="k">L'axe karmique</p>
+    <p class="sub knote">Ces quatre points viennent du ciel de ta naissance, pas de ta date réduite en chiffres : ils n'ont rien à voir avec les « défis karmiques » de la numérologie, plus haut.</p>
+    <div class="synth-grid">
+      ${axe}
+      ${ligne('lilith',k.lilith.lon,`Ce qui ne se négocie pas chez toi : ${LILITH_S[signIdx(k.lilith.lon)]}.`)}
+      ${ligne('chiron',k.chiron.lon,`Ta blessure porte sur ${CHIRON_S[signIdx(k.chiron.lon)]}.`)}
+    </div>
+    <h3 class="ksub">Ce qui touche tes points personnels</h3>
+    ${contHtml}
+    ${kt?'':'<p class="note">Heure de naissance inconnue : les signes ci-dessus sont sûrs — ces quatre points bougent de moins de 0,2° par jour — mais les maisons, elles, demandent l\'heure. Il manque donc la moitié de la lecture : le domaine de vie où chaque point se joue.</p>'}
+    <details class="kscan"><summary>Balayage complet des aspects karmiques</summary>
+      <p class="sub">Orbes larges, comme dans la table des aspects natals : 8° sur les luminaires, 6° ailleurs. Sur des points abstraits, la tradition retient des orbes bien plus serrées — c'est pourquoi la lecture ci-dessus s'en tient à 3°. Ce tableau est là pour la curiosité, pas pour l'interprétation.</p>
+      ${scanHtml}
+    </details>
+    <p class="note">Lune noire : apogée <i>moyen</i> de la Lune, la convention la plus répandue. Il existe une Lune noire « vraie » (l'apogée osculateur) qui s'en écarte de plus de 25° et peut tomber dans un autre signe — ce n'est pas un calcul plus fin, c'est un autre point. Chiron est calculé à 0,04° près sur 1900–2100.</p>`;
+}
+
+/* ========================================================================
    6. Rendu
    ======================================================================== */
 const $=id=>document.getElementById(id);
@@ -2387,9 +2583,10 @@ function buildChart(profile){
   const utc=localToUTC(y,mo,d,h,mi,profile.tz);
   const jd=jdFromUTC(utc);
   const natal=positions(jd);
+  const karma=kpositions(jd);
   const hs=houses(jd,profile.lat,profile.lon,'placidus');
   const asp=findAspects(natal,natal,8,6,true).filter(a=>a.p!=='noeud'&&a.q!=='noeud');
-  return {jd,utc,natal,hs,asp,profile};
+  return {jd,utc,natal,karma,hs,asp,profile};
 }
 
 function renderChart(){
@@ -2413,7 +2610,7 @@ function renderChart(){
     `<div><div class="k">${k}</div><div class="g">${g} <span class="emo">${signEmo(lon)}</span></div>`+
     `<div class="v">${signOf(lon)}</div><div class="d">${degStr(lon)} · ${d}</div></div>`).join('');
 
-  mountWheel($('wheelbox'),drawWheel(natal,hs,kt,asp));
+  mountWheel($('wheelbox'),drawWheel(natal,hs,kt,asp,CHART.karma));
   $('wheelcap').textContent=kt?'Maisons Placidus · ascendant à gauche':'Heure inconnue · roue alignée sur 0° Bélier';
   if(!kt)$('houses-block').classList.add('hidden');
 
@@ -2439,7 +2636,7 @@ function renderChart(){
     for(let i=0;i<12;i++)h+=`<tr><td>${i+1}</td><td>${degStr(hs.cusps[i])} ${signLab(hs.cusps[i])}</td></tr>`;
     $('house-tbl').innerHTML=h;
   }
-  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderAmour();
+  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderAmour(); renderKarma();
 }
 
 function renderTransits(tr,hits){
