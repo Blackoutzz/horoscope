@@ -3334,12 +3334,12 @@ function setSource(src){
    Deux états. Au premier chargement, aucune préférence n'est enregistrée et
    c'est prefers-color-scheme qui tranche — le bouton part donc du réglage
    système ; le premier clic fige un choix explicite.
-   Le soleil et le croissant sont tracés, pas écrits : ☀ et ☾ existent dans
+   Le soleil et le croissant de lune sont tracés, pas écrits : ☀ et ☾ existent dans
    la plupart des polices, mais l'app a déjà été mordue par U+26B7 absent
    d'Apple Symbols, et une icône seule n'a aucun texte pour rattraper un carré
    vide. Le bouton annonce ce vers quoi il bascule, pas l'état courant. */
 const TICO={
-  dark:'<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18 7 7 0 0 1 0-18Z" fill="currentColor" stroke="none"/>',
+  dark:'<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/>',
   light:'<circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>'};
 function applyTheme(mode){
   document.documentElement.dataset.theme=mode;
