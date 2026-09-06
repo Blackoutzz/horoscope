@@ -96,10 +96,12 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   *{box-sizing:border-box}
   .topbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px}
   .tbtn{
-    font-family:var(--data);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;
     color:var(--ink-soft);background:transparent;border:1px solid var(--rule);
-    border-radius:2px;padding:5px 9px;cursor:pointer;line-height:1;
+    border-radius:2px;width:30px;height:30px;padding:0;cursor:pointer;
   }
+  .tico{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;
+    stroke-linecap:round;stroke-linejoin:round}
   .tbtn:hover{color:var(--ink);border-color:var(--ink-soft)}
   .tbtn:focus-visible{outline:2px solid var(--verdigris);outline-offset:2px}
   .wrap{
@@ -3327,23 +3329,31 @@ function setSource(src){
    8. Amorçage
    ======================================================================== */
 /* --- thème ---
-   Trois états, pas deux : « auto » suit le système et reste le défaut, sinon
-   choisir « clair » un soir figerait la carte en clair pour toujours sans que
-   rien ne le dise. La préférence est écrite en localStorage direct, pas via
-   store : le script d'en-tête la relit avant que store existe. */
-const THEMES=[['auto','Thème : auto'],['light','Thème : clair'],['dark','Thème : sombre']];
+   Deux états. Au premier chargement, aucune préférence n'est enregistrée et
+   c'est prefers-color-scheme qui tranche — le bouton part donc du réglage
+   système ; le premier clic fige un choix explicite.
+   Le soleil et le croissant sont tracés, pas écrits : ☀ et ☾ existent dans
+   la plupart des polices, mais l'app a déjà été mordue par U+26B7 absent
+   d'Apple Symbols, et une icône seule n'a aucun texte pour rattraper un carré
+   vide. Le bouton annonce ce vers quoi il bascule, pas l'état courant. */
+const TICO={
+  dark:'<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18 7 7 0 0 1 0-18Z" fill="currentColor" stroke="none"/>',
+  light:'<circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>'};
 function applyTheme(mode){
-  const root=document.documentElement;
-  if(mode==='auto')delete root.dataset.theme; else root.dataset.theme=mode;
-  $('themebtn').textContent=(THEMES.find(t=>t[0]===mode)||THEMES[0])[1];
-  $('themebtn').setAttribute('aria-label',
-    'Changer le thème — actuellement '+(mode==='auto'?'automatique, selon ton système':mode==='dark'?'sombre':'clair'));
-  try{mode==='auto'?localStorage.removeItem('astro:theme'):localStorage.setItem('astro:theme',mode);}catch(e){}
+  document.documentElement.dataset.theme=mode;
+  const vers=mode==='dark'?'light':'dark';
+  const b=$('themebtn');
+  b.innerHTML=`<svg class="tico" viewBox="0 0 24 24" aria-hidden="true">${TICO[vers]}</svg>`;
+  b.setAttribute('aria-label',vers==='dark'?'Passer au thème sombre':'Passer au thème clair');
+  try{localStorage.setItem('astro:theme',mode);}catch(e){}
 }
-let themeMode=(()=>{try{const t=localStorage.getItem('astro:theme');return t==='dark'||t==='light'?t:'auto';}catch(e){return 'auto';}})();
+let themeMode=(()=>{
+  try{const t=localStorage.getItem('astro:theme'); if(t==='dark'||t==='light')return t;}catch(e){}
+  return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+})();
 applyTheme(themeMode);
 $('themebtn').onclick=()=>{
-  themeMode=THEMES[(THEMES.findIndex(t=>t[0]===themeMode)+1)%THEMES.length][0];
+  themeMode=themeMode==='dark'?'light':'dark';
   applyTheme(themeMode);
   /* La roue est un SVG déjà écrit : ses couleurs sont des var(), donc elles
      suivent, mais wzApply() se recale au cas où la barre de contrôle bouge. */

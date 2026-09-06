@@ -114,9 +114,10 @@ A chart token is untrusted input: it arrives from a link or a paste. Three invar
 
 ### Theme
 
-Three states — `auto` (default, follows `prefers-color-scheme`), `light`, `dark` — cycled by `#themebtn` and stored in `astro:theme`. Auto exists so that picking `light` one evening doesn't silently pin the chart to light forever.
+Two states, toggled by `#themebtn` and stored in `astro:theme`. With nothing stored — a first visit — `prefers-color-scheme` decides, so the toggle starts from the system setting and the first click pins an explicit choice.
 
-- The preference is applied by a **second inline `<script>` in `<head>`**, read from `localStorage` directly rather than through `store`: the main script runs at the end of the body, so going through it would show the light palette for a frame before switching. That is the only reason the app has two script tags.
+- The button shows the theme it switches **to**, not the current one: a moon means "go dark". The icons are drawn inline (`TICO`), not ☀/☾, for the reason recorded under Karmic points — and an icon-only button has no text to fall back on if the glyph turns into an empty box.
+- The preference is applied by a **second inline `<script>` in `<head>`**, read from `localStorage` directly rather than through `store`: the main script runs at the end of the body, so going through it would show the light palette for a frame before switching. That is the only reason the app has two script tags. It sets nothing when no preference is stored, which is what lets the media query paint the right palette on a first visit.
 - **Every colour must be a token.** A literal anywhere outside `:root` survives the switch and will be wrong in one theme. Tints compose as `rgb(var(--v-rgb) / .13)` from raw triplets, and `--shadow` / `--ring` are separate tokens because a shadow built from `--ink` glows once the ink turns pale. `--disc` is the wheel's core tint, raised in dark where 3.5 % is invisible. The JS colours in `ASPECTS`, the agenda and the gauge are `var(--…)` strings for the same reason — inline SVG resolves them.
 - The dark palette is not an inversion: `#EFE9DA` on `#1B2A44` vibrates, so ink and vellum are re-picked, and verdigris and minium are lightened to hold contrast.
 
