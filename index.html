@@ -1105,6 +1105,14 @@ const store={
     delete mem[k];
     if(LS){try{LS.removeItem(k);}catch(e){}}
     try{await window.storage.delete(k);}catch(e){}
+  },
+  /* Énumération : localStorage la donne, window.storage non. Sert uniquement
+     au ménage des lectures périmées — un échec partiel laisse des clés
+     mortes, jamais une lecture fausse. */
+  keys(){
+    const out=new Set(Object.keys(mem));
+    if(LS){try{for(let i=0;i<LS.length;i++)out.add(LS.key(i));}catch(e){}}
+    return [...out];
   }
 };
 
@@ -3186,10 +3194,28 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,
 
 let apiDown=false, PERIOD='jour';
 
+/* La clé de lecture doit porter *quelle carte* : sans ça, ouvrir une deuxième
+   carte le même jour rejouait la lecture de la première — révolution solaire
+   et agenda de transits compris. L'empreinte se prend sur le code de carte,
+   qui contient déjà tout ce qui distingue deux cartes. */
+const chartKey=p=>seedFrom(encodeProfile(p)).toString(36);
+const readKey=(period,winKey,p)=>'astro:lecture:'+period+':'+winKey+':'+chartKey(p);
+
+/* Les lectures d'hier ne resservent jamais, et il y en a désormais une par
+   carte consultée : sans ménage, le stock ne fait que grossir. On efface tout
+   ce qui ne porte pas la fenêtre du jour, ancien format compris. */
+async function pruneReadings(keep){
+  for(const k of store.keys()){
+    if(!k.startsWith('astro:lecture:')||k===keep)continue;
+    const parts=k.split(':');
+    if(parts.length<5||parts[3]!==todayKey())await store.del(k);
+  }
+}
+
 async function loadReading(force){
   const now=new Date();
   const win=windowFor(PERIOD,now);
-  const key='astro:lecture:'+PERIOD+':'+win.key;
+  const key=readKey(PERIOD,win.key,CHART.profile);
   $('today').textContent=win.label;
 
   const jd=jdFromUTC(now);
@@ -3210,6 +3236,7 @@ async function loadReading(force){
   paintReading(local);
   setSource('local');
   await store.set(key,local);
+  await pruneReadings(key);
 
   // 2. si l'API est joignable, on remplace la lecture du jour par une version rédigée
   if(apiDown||PERIOD!=='jour')return;
@@ -3280,7 +3307,12 @@ $('periods').addEventListener('click',e=>{
 $('regen').onclick=()=>loadReading(true);
 $('reset').onclick=async()=>{
   await store.del('astro:profil');
-  await store.del('astro:lecture:'+todayKey());
+  /* Les lectures de cette carte n'ont plus de porteur affiché ; on les retire
+     plutôt que de laisser une clé morte, ce que faisait l'ancienne ligne :
+     elle effaçait « astro:lecture:<date> », un format qui n'a jamais existé. */
+  const id=':'+chartKey(CHART.profile);
+  for(const k of store.keys())
+    if(k.startsWith('astro:lecture:')&&k.endsWith(id))await store.del(k);
   $('app').classList.add('hidden');
   $('setup').classList.remove('hidden');
   renderRecents();

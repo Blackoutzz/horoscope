@@ -89,7 +89,9 @@ Sharing:
 - Parsing accepts `#c=`, `?c=`, or a bare pasted code, so links shared before the fragment switch still work. Keep it that way.
 - **Build the chart before writing to storage.** Both `chargerCode()` and the setup form do this, and startup drops a stored profile it can no longer compute. Reversing that order lets one bad code poison `astro:profil` and leave the app on a blank chart every visit.
 
-Reading cache keys are `astro:lecture:<period>:<date>` — **no chart identity**. Load a second chart on the same day and it shows the first chart's reading until the key expires. Known, not yet fixed.
+Reading cache keys are `astro:lecture:<period>:<date>:<chartKey>`, where `chartKey()` is a 32-bit FNV hash of `encodeProfile()` in base 36. The chart segment is not optional: without it, opening a second chart the same day replayed the first one's reading — solar return and transit agenda included. Two charts colliding on the hash would resurrect that bug, but at ~1 in 4 billion per pair it is not worth a longer key.
+
+`pruneReadings()` runs after each write and drops every `astro:lecture:` key whose window segment isn't today's, legacy four-segment keys included — there is now one entry per chart per period, so nothing would ever be reclaimed otherwise. It needs `store.keys()`, which enumerates localStorage and `mem`; `window.storage` has no listing API, so in the sandbox stale keys simply survive. Ménage failing is harmless; serving a wrong reading is not.
 
 `askClaude()` has **no `x-api-key` header** — an API key must be injected if direct browser calls are intended, or a proxy must be used.
 
