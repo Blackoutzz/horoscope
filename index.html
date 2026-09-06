@@ -578,9 +578,9 @@
 
     <section class="synth" id="synth"></section>
 
-    <section class="amour" id="amour"></section>
-
     <section class="karma" id="karma"></section>
+
+    <section class="amour" id="amour"></section>
 
     <div class="comparebar">
       <div class="sharerow">
@@ -2698,7 +2698,7 @@ function renderChart(){
     for(let i=0;i<12;i++)h+=`<tr><td>${i+1}</td><td>${degStr(hs.cusps[i])} ${signLab(hs.cusps[i])}</td></tr>`;
     $('house-tbl').innerHTML=h;
   }
-  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderAmour(); renderKarma();
+  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderAmour();
 }
 
 function renderTransits(tr,hits){
