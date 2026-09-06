@@ -1888,7 +1888,8 @@ function renderSyn(A,B){
       <div class="sect"><h3>Ce qui frotte</h3><ul class="synl">${neg.length?neg.map(ligne).join(''):'<li><span class="lg">—</span><span class="lt"><b>Aucun aspect dur notable</b><br>C\'est rare, et pas forcément une bonne nouvelle : sans friction, un lien manque souvent de moteur.</span></li>'}</ul></div>
     </div>
     <p class="note">Croisement de tous les corps des deux cartes, pondéré par l'importance relationnelle de chaque planète et par la précision de l'orbe. Les contacts à l'Ascendant valent aussi pour le Descendant : c'est un seul axe, compté une fois. Les aspects durs comptent négativement dans l'indice mais font souvent la longévité d'un couple : lis la colonne de droite comme un mode d'emploi, pas comme un verdict.</p>`
-    + blocSuperposition(A,B,nom,deNom) + blocTemperaments(A,B,nom) + blocComposite(A,B) + blocNumero(A,B,nom);
+    + blocSuperposition(A,B,nom,deNom) + blocTemperaments(A,B,nom) + blocKarma(A,B,nom,deNom)
+    + blocComposite(A,B) + blocNumero(A,B,nom);
 }
 
 function blocSuperposition(A,B,nom,deNom){
@@ -1945,6 +1946,53 @@ function blocComposite(A,B){
      Lune composite en ${SIGNS[li]} : le climat émotionnel du couple est ${COMP_LUN[li]}.</p>`+
     (kt?'':`<p class="ed2 vide">Ascendant composite indisponible — il faudrait les deux heures de naissance.</p>`);
 }
+/* --- 5. liens karmiques entre les deux cartes ---
+   Volontairement hors de l'indice sur 100 : ajouter ces points à synastrie()
+   changerait poidsMax, donc tous les scores déjà affichés et partagés. Ils ont
+   aussi droit à une orbe plus serrée que les planètes. */
+const KSYN_MIEN={
+ noeud:'Ta direction de croissance passe par là : ce lien tire vers où tu dois aller, ce qui est rarement confortable',
+ noeudsud:'C\'est ton terrain le plus ancien qui se branche ici : familiarité immédiate, et la tentation d\'y rester parce que c\'est facile',
+ lilith:'Ce qui ne se plie pas chez toi tombe exactement là : attirance nette, rien de tiède',
+ chiron:'Ta blessure se pose là : ce lien la soigne ou appuie dessus, souvent les deux'};
+const KSYN_SIEN={
+ noeud:'Sa direction de croissance vient chercher cette part de toi — tu l\'aides à avancer, parfois sans le vouloir',
+ noeudsud:'Son réflexe d\'origine se pose là : tu lui es familier tout de suite, et c\'est aussi ce qui peut l\'endormir',
+ lilith:'Son refus non négociable touche cette part de toi : rien ne restera poli entre vous sur ce terrain',
+ chiron:'Sa blessure se pose là : tu la réveilles sans le faire exprès, et tu peux aussi l\'apaiser'};
+function liensKarmiques(A,B){
+  const out=[];
+  const scan=(src,cible,sens)=>{
+    for(const p of KSCAN)for(const q of PERSO){
+      let d=Math.abs(n360(src.karma[p].lon-cible.natal[q].lon)); if(d>180)d=360-d;
+      for(const a of [0,180]){
+        const diff=Math.abs(d-a);
+        if(diff<=3)out.push({p:kFace(p,a),q,a:p==='noeud'?0:a,orb:diff,sens});
+      }
+    }
+  };
+  scan(A,B,'mien');
+  scan(B,A,'sien');
+  return out.sort((x,y)=>x.orb-y.orb).slice(0,6);
+}
+function blocKarma(A,B,nom,deNom){
+  const L=liensKarmiques(A,B);
+  const ligne=l=>`<li><span class="lg">${kglyph(l.p)} ${l.a===0?'☌':'☍'} ${GLYPH[l.q]}</span>`+
+    `<span class="lt"><b>${l.sens==='mien'
+      ? `${KNOM[l.p]} (toi) ${l.a===0?'sur':'face à'} ${low(SUJ[l.q])} ${deNom}`
+      : `${KNOM[l.p]} ${deNom} ${l.a===0?'sur':'face à'} ${low(SUJ[l.q])} (toi)`}</b>`+
+    `<span class="sub"> · orbe ${l.orb.toFixed(1).replace('.',',')}°</span><br>`+
+    (l.sens==='mien'
+      ? `${KSYN_MIEN[l.p]} — chez ${nom}, sur ${low(ROLE[l.q])}.`
+      : `${KSYN_SIEN[l.p]} — chez toi, ${low(ROLE[l.q])}.`)+
+    `</span></li>`;
+  return `<p class="k" style="margin-top:26px">Liens karmiques</p>`+
+    `<p class="sub" style="margin:0 0 10px">Nœuds, Lune noire et Chiron d'une carte sur les planètes personnelles de l'autre, conjonction ou opposition à 3°. Ces contacts ne comptent pas dans l'indice ci-dessus : ce sont des repères, pas des planètes.</p>`+
+    (L.length
+      ? `<ul class="synl">${L.map(ligne).join('')}</ul>`
+      : `<p class="ed2 vide">Aucun contact karmique serré entre vos deux cartes. Le lien se joue sur les planètes, pas sur ces axes-là.</p>`);
+}
+
 function blocNumero(A,B,nom){
   const N=numeroCouple(A,B);
   const meme=N.pya===N.pyb;
@@ -2488,15 +2536,21 @@ const KCONT={
  chiron:['la blessure touche le centre : elle colore tout, et c\'est aussi de là que vient ta compétence',
          'la blessure se joue dans le face-à-face : elle se réveille au contact des autres plutôt qu\'en solitaire']};
 
+/* L'axe ne se balaie qu'une fois : le nœud sud étant le nœud nord à 180°,
+   scanner les deux donnerait « nœud nord opposé au Soleil » et « nœud sud
+   conjoint au Soleil » — un seul fait, énoncé deux fois. L'opposition du nœud
+   nord est donc rendue comme ce qu'elle est : une conjonction au nœud sud. */
+const KSCAN=KBODIES.filter(b=>b!=='noeudsud');
+const kFace=(p,a)=>(p==='noeud'&&a===180)?'noeudsud':p;
 function karmaContacts(k,natal,hs,kt){
   const cibles={soleil:natal.soleil.lon,lune:natal.lune.lon};
   if(kt)cibles.asc=hs.asc;
   const out=[];
-  for(const p of KBODIES)for(const c in cibles){
+  for(const p of KSCAN)for(const c in cibles){
     let d=Math.abs(n360(k[p].lon-cibles[c])); if(d>180)d=360-d;
     for(const a of [0,180]){
       const diff=Math.abs(d-a);
-      if(diff<=3)out.push({p,c,a,orb:diff});
+      if(diff<=3)out.push({p:kFace(p,a),c,a:p==='noeud'?0:a,orb:diff});
     }
   }
   return out.sort((x,y)=>x.orb-y.orb);
@@ -2670,6 +2724,10 @@ function buildPrompt(tr,hits,jd){
   const kt=profile.knownTime;
   const natalTxt=BODIES.map(b=>`${NAMES[b]} ${degStr(natal[b].lon)} ${signOf(natal[b].lon)}${natal[b].retro&&b!=='noeud'?' rétrograde':''}${kt?` (maison ${houseOf(natal[b].lon,hs.cusps)})`:''}`).join('; ');
   const aspTxt=CHART.asp.slice(0,8).map(x=>`${NAMES[x.p]} ${x.asp.n.toLowerCase()} ${NAMES[x.q]} (orbe ${x.orb.toFixed(1)}°)`).join('; ');
+  /* Les points karmiques sont fournis à part, avec leur statut : sans ça la
+     lecture du jour ignorerait ce que la page vient d'expliquer en détail. */
+  const k=CHART.karma;
+  const karmaTxt=KBODIES.map(bb=>`${KNOM[bb]} ${degStr(k[bb].lon)} ${signOf(k[bb].lon)}${kt?` (maison ${houseOf(k[bb].lon,hs.cusps)})`:''}`).join('; ');
   const trTxt=BODIES.map(b=>`${NAMES[b]} ${degStr(tr[b].lon)} ${signOf(tr[b].lon)}${tr[b].retro&&b!=='noeud'?' ℞':''}${kt?` en maison ${houseOf(tr[b].lon,hs.cusps)}`:''}`).join('; ');
   const hitTxt=hits.length?hits.slice(0,8).map(x=>`${NAMES[x.p]} en transit ${x.asp.n.toLowerCase()} ${NAMES[x.q]} natal (orbe ${x.orb.toFixed(1)}°${x.exact?', exact':''})`).join('; '):'aucun aspect serré aujourd\'hui';
   const phase=moonPhase(tr.soleil.lon,tr.lune.lon);
@@ -2681,6 +2739,7 @@ THÈME NATAL${profile.nom?' DE '+profile.nom.toUpperCase():''}
 ${natalTxt}
 ${kt?`Ascendant ${degStr(hs.asc)} ${signOf(hs.asc)} · Milieu du Ciel ${degStr(hs.mc)} ${signOf(hs.mc)}`:'Heure de naissance inconnue : ne parle jamais d\'ascendant ni de maisons.'}
 Aspects natals dominants : ${aspTxt}
+Points karmiques (repères, pas des planètes — n'en parle que s'ils éclairent vraiment le jour) : ${karmaTxt}
 
 CIEL DU ${dateTxt.toUpperCase()}
 ${trTxt}
@@ -2872,6 +2931,27 @@ function scanEvents(jd0,jd1,bodies,natal,step){
   }
   return ev.sort((x,y)=>x.jd-y.jd);
 }
+/* Retours karmiques : le seul événement de ces points qui vaille une ligne
+   d'agenda. Chiron revient une fois vers 50 ans, l'axe des nœuds tous les
+   18,6 ans. Ils restent hors du moteur des quatre thèmes — un carré de la
+   Lune noire à Neptune n'a rien à dire sur « Travail et projets ». */
+const KRETOUR={
+  chiron:['☌','Retour de Chiron — la blessure d\'origine revient pour être regardée en face, pas pour se rouvrir'],
+  noeud:['☊','Retour des nœuds — le même carrefour qu\'à 18 et 37 ans, avec ce que tu as appris depuis']};
+function karmaEvents(jd0,jd1,karma){
+  const ev=[], step=2;
+  for(const p in KRETOUR){
+    const nl=karma[p].lon, g=t=>n180(bodyLon(p,t)-nl);
+    for(let t=jd0;t<jd1;t+=step){
+      const hi0=Math.min(t+step,jd1), a=g(t), c=g(hi0);
+      if(a*c>=0||Math.abs(a)>45||Math.abs(c)>45)continue;
+      let lo=t,hi=hi0;
+      for(let k=0;k<32;k++){const m=(lo+hi)/2; if(g(lo)*g(m)<=0)hi=m; else lo=m;}
+      ev.push({jd:(lo+hi)/2,g:KRETOUR[p][0],t:KRETOUR[p][1]});
+    }
+  }
+  return ev;
+}
 function lunations(jd0,jd1){
   const ev=[], step=0.25;
   const e=t=>n180(moonLon(t)-sunLon(t));
@@ -2961,6 +3041,8 @@ function spanReading(period,win){
 
   let agenda=ev.map(e=>({jd:e.jd,pri:SIGNIF[e.p]+1,g:`${GLYPH[e.p]} ${e.asp.g} ${GLYPH[e.q]}`,
     t:`${SUJ[e.p]} ${e.asp.n.toLowerCase()} ${poss(e.q)}`,c:e.asp.c}));
+  for(const e of karmaEvents(win.jd0,win.jd1,CHART.karma))
+    agenda.push({jd:e.jd,pri:0,g:e.g,t:e.t,c:'#6E5D82'});
   if(period!=='annee')for(const l of lunations(win.jd0,win.jd1))
     agenda.push({jd:l.jd,pri:0,g:'☽',t:l.lune+' en '+signEmo(moonLon(l.jd))+' '+signOf(moonLon(l.jd)),c:'#5D6B82'});
   if(period==='annee'){
