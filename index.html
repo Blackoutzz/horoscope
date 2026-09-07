@@ -381,6 +381,10 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .amour .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px}
   .amour .lead{font-size:15px;max-width:78ch;margin:6px 0 20px}
   .amour .note{font-size:11.5px;color:var(--ink-soft);margin:16px 0 0;max-width:80ch}
+  .amour .ksub{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:400;margin:26px 0 4px;border-top:1px solid var(--rule);padding-top:16px}
+  .amour .esub{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;line-height:1.55;max-width:88ch}
+  .amour .ed2{font-size:14px;margin:0 0 10px;max-width:82ch}
   ul.compat{list-style:none;margin:0;padding:0;column-width:290px;column-gap:clamp(24px,4vw,50px)}
   ul.compat li{display:flex;align-items:center;gap:10px;padding:5px 0;break-inside:avoid}
   ul.compat .cs{flex:0 0 auto;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:13px}
@@ -1811,14 +1815,14 @@ const pairDesc=(a,b,asp,nom)=>{
 };
 const pairKey=(a,b)=>[a,b].sort().join('-');
 
+const synPts=c=>{
+  const o={};
+  for(const k of ['soleil','lune','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton'])o[k]=c.natal[k].lon;
+  if(c.profile.knownTime)o.asc=c.hs.asc;
+  return o;
+};
 function synastrie(A,B){
-  const pts=c=>{
-    const o={};
-    for(const k of ['soleil','lune','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton'])o[k]=c.natal[k].lon;
-    if(c.profile.knownTime)o.asc=c.hs.asc;
-    return o;
-  };
-  const PA=pts(A), PB=pts(B), liens=[];
+  const PA=synPts(A), PB=synPts(B), liens=[];
   let total=0, poidsMax=0;
   for(const a in PA)for(const b in PB){
     const w=Math.sqrt(SYN_W[a]*SYN_W[b]);
@@ -1836,6 +1840,60 @@ function synastrie(A,B){
   liens.sort((x,y)=>Math.abs(y.val)-Math.abs(x.val));
   const score=Math.max(3,Math.min(97,Math.round(50+total/Math.max(1,poidsMax)*22)));
   return {score,liens};
+}
+
+/* --- 0bis. indice d'attirance ---------------------------------------
+   Même balayage inter-cartes que synastrie(), trois différences qui en
+   font un indice distinct et non un doublon :
+   1. on ne retient que les contacts touchant Mars, Vénus, Pluton ou
+      l'Ascendant — les autres paires ne disent rien de ce registre ;
+   2. les aspects durs comptent POSITIVEMENT. Un carré Mars/Vénus est le
+      contact d'attirance le plus banal qui soit ; le pénaliser comme le
+      fait l'indice de synastrie donnerait exactement le mauvais signe ;
+   3. la part de tension est rendue séparément, pour que « fort » ne se
+      confonde pas avec « confortable ».
+   Les deux indices peuvent donc légitimement diverger — c'est le but. */
+const EROS_CORE=['mars','venus','pluton','asc'];
+const EROS_W={mars:5,venus:4.5,pluton:3.2,lune:2.6,soleil:2.2,asc:3.4,
+              uranus:1.6,neptune:1.3,saturne:1.2,mercure:.8,jupiter:1};
+const EROS_Q={'Conjonction':1,'Opposition':.92,'Carré':.82,'Trigone':.72,'Sextile':.48};
+const EROS_KIND={'Conjonction':'fusionnel','Opposition':'polarisé','Carré':'électrique',
+                 'Trigone':'fluide','Sextile':'disponible'};
+const EROS_DUR=['Carré','Opposition'];
+/* pairDesc() ajoute « mais en carré : ça accroche » sur les aspects durs.
+   Juste dans l'indice de synastrie, contradictoire ici où le dur est le
+   moteur : d'où un ton propre au bloc, et la même table PAIRTXT. */
+const EROS_TON={'Conjonction':'Les deux se superposent, la charge est directe.',
+ 'Trigone':'Ça circule sans effort — agréable, peu tendu.',
+ 'Sextile':'Disponible, à condition d\'aller le chercher.',
+ 'Opposition':'Attirance par contraste : chacun tient un bout de l\'axe.',
+ 'Carré':'Ça frotte, et c\'est précisément ce qui fait moteur.'};
+const erosDesc=(a,b,asp,nom)=>{
+  const t=PAIRTXT[pairKey(a,b)];
+  return (t?capF(t)+'. ':a===b?`Le même registre des deux côtés — ${ROLE[a]}. `
+          :`Ce qui se touche ici : ${ROLE[a]} chez toi, ${ROLE[b]} chez ${nom}. `)+EROS_TON[asp];
+};
+function attraction(A,B){
+  const PA=synPts(A), PB=synPts(B), liens=[];
+  let total=0, poidsMax=0, tension=0;
+  for(const a in PA)for(const b in PB){
+    if(!EROS_CORE.includes(a)&&!EROS_CORE.includes(b))continue;
+    const w=Math.sqrt(EROS_W[a]*EROS_W[b]);
+    /* 0,124 = valeur moyenne d'une paire au hasard (26,7 % de chance de
+       toucher un aspect à 6°, qualité moyenne 0,745, serrage moyen 0,625).
+       Ramené à 50 plus bas, une carte quelconque tombe donc autour de 50. */
+    poidsMax+=w*0.124;
+    const asp=aspectBetween(PA[a],PB[b],6);
+    if(!asp)continue;
+    const dur=EROS_DUR.includes(asp.asp.n);
+    const val=w*EROS_Q[asp.asp.n]*(1-asp.orb/8);
+    total+=val; if(dur)tension+=val;
+    liens.push({a,b,asp:asp.asp,orb:asp.orb,val,dur});
+  }
+  liens.sort((x,y)=>y.val-x.val);
+  return {liens,
+    score:Math.max(3,Math.min(97,Math.round(total/Math.max(1,poidsMax)*50))),
+    part:total>0?Math.round(tension/total*100):0};
 }
 
 /* --- 1. superposition : les planètes de B dans les maisons de A --- */
@@ -1966,8 +2024,49 @@ function renderSyn(A,B){
       <div class="sect"><h3>Ce qui frotte</h3><ul class="synl">${neg.length?neg.map(ligne).join(''):'<li><span class="lg">—</span><span class="lt"><b>Aucun aspect dur notable</b><br>C\'est rare, et pas forcément une bonne nouvelle : sans friction, un lien manque souvent de moteur.</span></li>'}</ul></div>
     </div>
     <p class="note">Croisement de tous les corps des deux cartes, pondéré par l'importance relationnelle de chaque planète et par la précision de l'orbe. Les contacts à l'Ascendant valent aussi pour le Descendant : c'est un seul axe, compté une fois. Les aspects durs comptent négativement dans l'indice mais font souvent la longévité d'un couple : lis la colonne de droite comme un mode d'emploi, pas comme un verdict.</p>`
-    + blocSuperposition(A,B,nom,deNom) + blocTemperaments(A,B,nom) + blocKarma(A,B,nom,deNom)
-    + blocComposite(A,B) + blocNumero(A,B,nom);
+    + blocSuperposition(A,B,nom,deNom) + blocTemperaments(A,B,nom) + blocEros(A,B,nom,deNom)
+    + blocKarma(A,B,nom,deNom) + blocComposite(A,B) + blocNumero(A,B,nom);
+}
+
+function blocEros(A,B,nom,deNom){
+  const E=attraction(A,B);
+  const NM={asc:'Ascendant'};
+  const label=k=>NM[k]||NAMES[k];
+  const mien=k=>(k==='asc'||!POSS[k]?'Ton ':'Ta ')+label(k);
+  const top=E.liens.slice(0,5);
+  const x=(6+E.score/100*248).toFixed(1);
+  const verd=E.score>=70?'Attirance magnétique':E.score>=58?'Attirance nette'
+            :E.score>=45?'Attirance modérée':'Attirance discrète';
+  const ligne=l=>`<li><span class="lg">${l.a==='asc'?'⌖':GLYPH[l.a]} ${l.asp.g} ${l.b==='asc'?'⌖':GLYPH[l.b]}</span>`+
+    `<span class="lt"><b>${mien(l.a)} / ${label(l.b)} ${deNom} — ${l.asp.n.toLowerCase()}</b>`+
+    `<span class="sub"> · ${EROS_KIND[l.asp.n]} · orbe ${l.orb.toFixed(1).replace('.',',')}°</span>`+
+    `<br>${erosDesc(l.a,l.b,l.asp.n,nom)}</span></li>`;
+  const partTxt=E.liens.length===0
+    ? `Aucun contact retenu sur ces quatre points : l'attirance, si elle est là, ne passe pas par l'évidence astrologique.`
+    : E.part>=55
+      ? `${E.part} % de la charge vient d'aspects durs : ça tire plus que ça ne coule. Ce type de lien s'installe vite et se gère ensuite.`
+      : E.part<=20
+        ? `Seulement ${E.part} % de la charge vient d'aspects durs : le registre est fluide, agréable, et sans grand moteur de tension.`
+        : `${E.part} % de la charge vient d'aspects durs — un mélange de fluidité et de friction, ce qui est le cas le plus courant.`;
+  return `<p class="k" style="margin-top:26px">Attirance</p>
+    <p class="esub">Les mêmes deux cartes, relues sur les seuls contacts qui touchent Mars, Vénus, Pluton ou l'Ascendant.
+      Ici les aspects durs comptent <b>positivement</b> : un carré Mars/Vénus est un classique de l'attirance, pas un défaut.
+      Cet indice n'est donc pas l'indice de synastrie et n'a aucune raison de lui ressembler.</p>
+    <div class="synhead">
+      <div class="verdict">${verd}</div>
+      <div class="gaugewrap">
+        <svg viewBox="0 0 260 30" class="gauge" role="img" aria-label="Indice d'attirance ${E.score} sur 100">
+          <line x1="6" y1="23" x2="254" y2="23" stroke="var(--ink)" stroke-width="1"/>
+          <polygon points="${x},17 ${(+x-5.5).toFixed(1)},7 ${(+x+5.5).toFixed(1)},7" fill="var(--verdigris)"/>
+        </svg>
+        <div class="gaugelab"><span>Discrète</span><span>Attirance ${E.score}/100</span><span>Magnétique</span></div>
+      </div>
+    </div>
+    <ul class="synl">${top.length?top.map(ligne).join('')
+      :'<li><span class="lg">—</span><span class="lt"><b>Aucun contact serré sur ces points</b><br>Rien ne se joue dans les orbes retenues : à lire comme une absence de signal, pas comme une incompatibilité.</span></li>'}</ul>
+    <p class="ed2" style="margin-top:12px">${partTxt}</p>
+    <p class="note">Sans heure de naissance des deux côtés, l'Ascendant sort du calcul et l'indice perd un de ses quatre points d'appui.
+     Comme le reste de cette page, c'est une lecture symbolique : elle décrit une configuration de deux cartes, pas ce qui se passe entre deux personnes.</p>`;
 }
 
 function blocSuperposition(A,B,nom,deNom){
@@ -2065,7 +2164,7 @@ function blocKarma(A,B,nom,deNom){
       : `${KSYN_SIEN[l.p]} — chez toi, ${low(ROLE[l.q])}.`)+
     `</span></li>`;
   return `<p class="k" style="margin-top:26px">Liens karmiques</p>`+
-    `<p class="sub" style="margin:0 0 10px">Nœuds, Lune noire et Chiron d'une carte sur les planètes personnelles de l'autre, conjonction ou opposition à 3°. Ces contacts ne comptent pas dans l'indice ci-dessus : ce sont des repères, pas des planètes.</p>`+
+    `<p class="sub" style="margin:0 0 10px">Nœuds, Lune noire et Chiron d'une carte sur les planètes personnelles de l'autre, conjonction ou opposition à 3°. Ces contacts ne comptent ni dans l'indice de synastrie ni dans celui d'attirance : ce sont des repères, pas des planètes.</p>`+
     (L.length
       ? `<ul class="synl">${L.map(ligne).join('')}</ul>`
       : `<p class="ed2 vide">Aucun contact karmique serré entre vos deux cartes. Le lien se joue sur les planètes, pas sur ces axes-là.</p>`);
@@ -2121,6 +2220,69 @@ const DC_S=['quelqu\'un de direct, qui décide et t\'entraîne','quelqu\'un de s
  'quelqu\'un d\'équilibré et conciliant, qui adoucit tes angles','quelqu\'un d\'intense, qui ne se contente pas de la surface',
  'quelqu\'un d\'indépendant et d\'ouvert, qui élargit ton horizon','quelqu\'un de sérieux et structurant, qui tient la barre',
  'quelqu\'un de libre et atypique, qui ne t\'enferme pas','quelqu\'un de sensible et poreux, qui te relie à autre chose'];
+/* Registre intime — volontairement qualitatif, pas un second classement.
+   Un classement Mars/Vénus par signe reprendrait les mêmes points que
+   celui d'au-dessus avec d'autres poids : deux listes de douze barres
+   presque identiques, qui se lisent comme du remplissage. Ici on décrit
+   le réglage (élan, texture, accord des deux) plutôt que de le noter. */
+const MARS_X=['il se déclenche vite et se dépense franchement — l\'attente n\'aiguise rien chez toi',
+ 'il monte lentement et tient longtemps ; le rythme compte plus que la surprise',
+ 'il passe par la tête et par les mots avant le corps ; la variété te garde éveillé',
+ 'il a besoin de confiance pour sortir — en terrain sûr, il est très présent',
+ 'il demande à être vu et reçu ; la générosité fait partie du plaisir',
+ 'il se règle sur l\'attention au détail et sur le retour de l\'autre, pas sur la démonstration',
+ 'il se cale sur l\'autre et sur la réciprocité ; le déséquilibre le coupe',
+ 'il va au fond, sans demi-mesure, et supporte mal le divertissant',
+ 'il aime la nouveauté et le jeu ; l\'enfermement l\'éteint plus sûrement que la routine',
+ 'il est patient et maîtrisé, avec une endurance que peu soupçonnent',
+ 'il refuse les scripts convenus ; l\'inattendu le rallume',
+ 'il fonctionne par ambiance et par imaginaire plus que par programme'];
+const VENUS_X=['le direct et le franc — les longues approches t\'ennuient',
+ 'la lenteur, le toucher, la durée : le sensoriel avant l\'idée',
+ 'la parole et le jeu — être surpris compte autant qu\'être touché',
+ 'la tendresse et la sécurité ; le lien affectif précède le reste',
+ 'la chaleur, le compliment, une part de théâtre assumée',
+ 'la justesse du geste et l\'attention exacte ; l\'excès te refroidit',
+ 'l\'esthétique et la réciprocité — un cadre soigné change tout pour toi',
+ 'la profondeur et la confiance entière, sans quoi rien ne s\'ouvre',
+ 'le mouvement et l\'ailleurs, ce qui sort du décor habituel',
+ 'un cadre clair et une confiance installée ; ensuite, tu t\'autorises beaucoup',
+ 'la liberté et l\'absence de règles héritées ; l\'expérimentation te va',
+ 'la fusion et le flou — l\'ambiance fait partie du corps'];
+/* [élément de Mars][élément de Vénus] — ce qui pousse contre ce qui plaît */
+const MV_MIX=[
+ ['Ce qui te pousse et ce qui te plaît vont dans le même sens : intense, rapide, peu de latence — et peu de temps mort pour laisser monter.',
+  'Tu pousses vite mais tu goûtes lentement : ton élan dépasse souvent ton propre rythme de plaisir. Ralentir n\'est pas une concession, c\'est ton réglage.',
+  'Élan et goût passent tous deux par la stimulation : l\'idée, la parole et le jeu allument autant que le corps.',
+  'Élan direct, plaisir sensible : tu vas plus vite que ce que ton affect suit. Le lien est la condition, pas le décor.'],
+ ['Tu montes lentement et tu aimes le panache : ton rythme et ton goût ne partent pas ensemble, ce qui crée une tension utile.',
+  'Corps et goût accordés : durée, toucher, régularité. Peu de spectaculaire, beaucoup de constance.',
+  'Le corps est lent, la tête est vive : tu as besoin qu\'on te parle autant qu\'on te touche, et l\'un sans l\'autre reste incomplet.',
+  'Sensualité et affect dans le même registre : le mélange le plus fluide, à condition de ne pas confondre confort et désir.'],
+ ['Le désir démarre dans la tête et cherche de l\'éclat : l\'ennui te coupe plus vite que n\'importe quel désaccord.',
+  'Tu penses le désir et tu goûtes le concret : le décalage se règle en descendant du mental, pas en le supprimant.',
+  'Tout passe par l\'échange : la conversation fait partie de la scène, et le silence prolongé t\'en sort.',
+  'Tu abordes par les mots, tu ressens par l\'ambiance : dire ce qui se passe est chez toi une condition, pas un supplément.'],
+ ['Ton désir vient de l\'intérieur, ton goût réclame de la chaleur visible : tu as besoin qu\'on te confirme ce que tu ressens déjà.',
+  'Affect et sensualité s\'appuient l\'un sur l\'autre : lent à s\'ouvrir, difficile à refermer.',
+  'Tu ressens d\'abord et tu expliques ensuite — souvent trop tard. Nommer les choses pendant, pas après, change tout.',
+  'Tout est affect : porosité forte, très peu de distance. Juste quand la confiance est là, illisible quand elle manque.']];
+const MARS_TEMPO={cardinal:'Mars en signe cardinal : c\'est toi qui lances, même quand tu prétends attendre.',
+ fixe:'Mars en signe fixe : tu tiens le rythme longtemps et tu changes de cap difficilement.',
+ mutable:'Mars en signe mutable : ton rythme varie, et il s\'ajuste à l\'autre plus que tu ne le crois.'};
+const H8_S=['l\'initiative — tu avances à découvert ou pas du tout',
+ 'le corps et la durée : la confiance passe par la matière et par le temps',
+ 'la parole : ce qui n\'est pas dit ne se partage pas',
+ 'l\'attachement : donner accès, c\'est donner accès au foyer',
+ 'la reconnaissance : tu te livres à qui sait recevoir',
+ 'la justesse plutôt que l\'abandon — tu observes avant de lâcher',
+ 'la réciprocité stricte : tu ne t\'ouvres pas plus que l\'autre',
+ 'son terrain d\'origine : c\'est un secteur où tu vas naturellement loin',
+ 'le sens : tu partages avec qui élargit ta vue',
+ 'la durée et l\'engagement — tu ne prêtes rien à court terme',
+ 'la liberté : tu refuses les contrats implicites',
+ 'la fusion : les limites se dissolvent vite, et c\'est à surveiller'];
+
 const REL=[
  {n:'conjonction',v:2.5,t:'te ressemble'},{n:'semi-sextile',v:-0.5,t:'te décale légèrement'},
  {n:'sextile',v:2,t:'te stimule'},{n:'carré',v:-2,t:'te frotte'},{n:'trigone',v:3,t:'coule avec toi'},
@@ -2181,7 +2343,35 @@ function renderAmour(){
         : `L'écart va de ${bas.score} à ${top[0].score} : tes placements sont assez concentrés pour que la préférence soit réelle.`)+`</p>
     <ul class="compat">${A.rangs.map(barre).join('')}</ul>
     <p class="note">Classement calculé sur six points de ta carte (Vénus 3, Descendant 3, Lune 2,5, Soleil 2, Mars 2, Ascendant 1,5),
-     pas sur ton seul signe solaire. Ça reste une approximation : la vraie compatibilité se lit entre deux cartes complètes.</p>`;
+     pas sur ton seul signe solaire. Ça reste une approximation : la vraie compatibilité se lit entre deux cartes complètes.</p>`
+    + blocIntime();
+}
+
+/* Registre intime : Mars (l'élan), Vénus (la texture), leur accord, et
+   la maison 8 quand l'heure est connue. Pas de classement — voir le
+   commentaire au-dessus de MARS_X. */
+function blocIntime(){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const im=signIdx(natal.mars.lon), iv=signIdx(natal.venus.lon);
+  const h8=kt?signIdx(hs.cusps[7]):null;
+  return `<p class="ksub">Registre intime</p>
+    <p class="esub">Mars dit comment l'élan se déclenche et se dépense, Vénus ce qui plaît une fois qu'il est là.
+      Les deux ne pointent pas forcément dans la même direction — c'est leur écart qui est informatif, pas leur note.</p>
+    <div class="synth-grid">
+      <div class="sect"><h3>Ton élan</h3><p>Mars en ${signLab(natal.mars.lon)}`+
+        (kt?`, maison ${houseOf(natal.mars.lon,hs.cusps)}`:'')+` — ${MARS_X[im]}.</p></div>
+      <div class="sect"><h3>Ta texture</h3><p>Vénus en ${signLab(natal.venus.lon)} — ce qui te plaît : ${VENUS_X[iv]}.</p></div>
+      <div class="sect"><h3>Le partage</h3><p>`+
+        (kt?`Maison 8 en ${SIGNS[h8]} — ce qui se met en commun se joue sur ${H8_S[h8]}.`
+           :`La maison 8, secteur de l'intimité partagée, dépend de l'heure de naissance : sans elle, ce point manque. Mars et Vénus, eux, restent lisibles.`)+
+        `</p></div>
+    </div>
+    <p class="ed2">${MV_MIX[im%4][iv%4]}</p>
+    <p class="ed2">${MARS_TEMPO[modeOf(natal.mars.lon)]}</p>
+    <p class="note">Mars, Vénus et la maison 8 sont les points que la tradition rattache au désir, au plaisir et à ce qui se met en commun.
+     C'est une lecture symbolique de ta carte, pas une description de ce que tu fais ni un pronostic : rien ici ne se vérifie autrement que par toi.
+     Le classement de signes ci-dessus ne se transpose pas à ce registre — deux personnes très accordées sur le papier peuvent avoir des élans qui ne se croisent pas.</p>`;
 }
 
 
