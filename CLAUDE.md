@@ -39,9 +39,11 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 | 5quinquies. Encodage + synastrie | ~1323 | `encodeProfile`/`decodeProfile`/`checkProfile`, inter-chart aspect scoring, compatibility text, `attraction()`/`blocEros()` |
 | 5quater. Vie amoureuse | ~1666 | Venus/Mars/Moon sign profiles, DC sign, relationship archetype text, `blocIntime()` |
 | 5sexies. Axe karmique | ~2380 | `renderKarma()`, node/Lilith/Chiron copy, `karmaContacts()`, `karmaScan()`, drawn glyphs (`KSVG`) |
+| 5septies. Structure du thème | ~2897 | `renderStruct()` — secte, Part de Fortune, étoiles fixes, quadrants, forme du thème, densité et figures d'aspects, amas, dispositeurs, rétrogrades, décans/duades, degrés anarétiques |
+| 5octies. Progressions secondaires | ~3500 | `renderProg()` — carte progressée, Lune et Soleil progressés, contacts sur le natal |
 | 5ter. Croisement | ~1764 | Element/mode balance, dignities, rulerships, planet strength, `polarite()` |
 | 6. Rendu | ~2052 | `buildChart()`, `renderChart()`, share menu, recents |
-| 7. Lecture du jour | ~2138 | `askClaude()` POSTs to `api.anthropic.com/v1/messages` (model: `claude-sonnet-4-6`) |
+| 7. Lecture du jour | ~2138 | `vocScan()` (Lune hors-course), `askClaude()` POSTs to `api.anthropic.com/v1/messages` (model: `claude-sonnet-4-6`) |
 | 7bis. Moteur local | ~2179 | Offline template reading, used when the API call fails |
 | 8. Amorçage | ~2627 | Startup: URL token → stored profile → setup screen |
 
@@ -75,6 +77,45 @@ Two blocks, deliberately different in kind.
 - `poidsMax += w*0.124` is the expected value of a random pair (26.7 % chance of hitting one of 5 aspects at 6° orb × 0.745 mean quality × 0.625 mean tightness); scaled by 50 it centres a random pair at 50. Measured over 780 pairs: mean 49.6, p10 36, p90 64.
 - `erosDesc()` exists because `pairDesc()` appends "mais en carré : ça accroche" to hard aspects — right for the synastry index, contradictory in a block where the hard aspect is the motor. Same `PAIRTXT` table, own tone strings (`EROS_TON`).
 - `EROS_CORE` uses `asc` only, never a separate `dc` — same axis, counted once, as in `synastrie()`.
+
+### Structure du thème
+
+Section 5septies (`renderStruct()`) reports twelve classic *form* measures over positions already computed. Like `KBODIES`, none of them enters `BODIES` or any weighting — `dominance()`, `polarite()`, the element balance, the aspect table and the synastry index all return the numbers they returned before, and the block says so in its own intro. It renders between karma and `amour`.
+
+- **Sect** (`secteDe()`) — Sun above the horizon means houses 7–12, the same hemisphere convention as `polarite()`, not a separate altitude calculation. Without a birth time it returns `null` and the block says the question has no answer: the Sun crosses the axis twice a day, so a guess would be wrong half the time. `fortuneDe()` takes the sect as an argument and returns `null` with it, which is why the two share a grid.
+- **Part of Fortune** — ASC + Moon − Sun by day, **inverted at night**. The inversion is the ancient form and the only one that keeps the point on the Moon's side of the horizon; the un-inverted "modern" formula is a different point, not a simplification. Needs the time, since the ASC is a term.
+- **Retrogrades** (`retrosDe()`) — the flag was already set per body in `positions()` and never totalled. The denominator is `RETROABLE` (8 bodies): Sun and Moon never retrograde, and the node is a mean point (`NO_RETRO`). `RETRO_BAND` states plainly that two retrogrades is the statistical floor, not a signature — the outer three are retrograde about five months a year each.
+- **Amas** (`amasDe()`) — 3+ of the ten planets in one sign, and in one house when the time is known. The two counts are independent and both are listed: a sign stellium routinely straddles two houses.
+- **Anaretic degrees** (`anaretiques()`) — last degree (≥29°) of a sign, angles included when timed. `MC` is written as the letters, not a glyph, for the reason recorded under Karmic points.
+- **Aspect figures** (`figures()`) — grand cross, grand trine, T-square, yod. It runs its **own** aspect scan rather than reusing `CHART.asp`, for two reasons: figures want tighter orbs than the display table's 8°/6° (`FIG_ANG` uses 6° / 4° on sextiles / 3° on quincunxes), and the yod needs the **quincunx**, which is deliberately absent from `ASPECTS` — adding it there would renumber the natal aspect table and the synastry index. Ten planets, no angles, so figures survive a missing birth time. T-squares wholly contained in a detected grand cross are dropped: same figure, described smaller.
+- **Aspect density** (`densiteDe()`) — counted on `CHART.asp`, so the numbers match the table the user can scroll to. Conjunctions count as neither hard nor soft; their register depends on the two planets, not the angle. The tension percentage is `dur/(dur+doux)`, and the copy states its own limit — it weighs a Moon–Mars square the same as a Uranus–Neptune one.
+- **Chart shape** (`formeDe()`) — Jones patterns from the spread of the ten longitudes alone, no time needed. Order matters: faisceau (≤125°) → seau (a handle with ≥60° on both sides and the remaining nine inside 190°) → bol (≤190°) → locomotive (largest gap ≥110° and no second gap ≥60°) → balançoire (two gaps ≥60°) → éclaboussure. The bucket test must precede the bowl test, or every bucket reads as something else.
+- **Dispositors** (`dispositeurs()`) — each planet walks to the ruler of its sign via `MAITRE` until it reaches a fixed point (a planet in its own domicile) or a cycle. `cpt` counts how many of the ten bodies land on each terminal, cycles included: without it, planets feeding *into* a loop are invisible in the output, and the counts don't sum to ten. `MAITRE` is **modern** rulership, which gives fewer fixed points and more loops than traditional rulership — a `.note` says the chains are a property of the system chosen, not of the chart.
+- **Quadrants and hemispheres** (`quadrants()`) — `polarite()` already computed the above/below split and threw it away undisplayed; the east/west axis (houses 10–3 vs 4–9) existed nowhere. Same weights as `dominance()`, ASC excluded — it sits on a cusp and belongs to no quadrant. Needs the time; the block says this is the measure that loses most without it. Its hemisphere figure and `polarite()`'s are the same number by construction, so a divergence between the two blocks is a bug.
+- **Decans and duads** — decans by **triplicity** (1st = the sign's ruler via `MAITRE`, 2nd and 3rd = the rulers of the other two signs of the same element), duads at 2°30 walking the zodiac from the sign itself. Shown for the same triple point as `#triad`. A `.note` names the Chaldean decan system as the other live convention rather than implying triplicity is the only one; neither changes the sign.
+
+- **Fixed stars** (`STARS`, `starHits()`) — 37 traditional stars, conjunction by **longitude only** at 1°. The catalogue's J2000 longitudes were derived from J2000 RA/Dec and then cross-checked against published tropical positions: 35 of 37 agreed within 1′, worst case 4.2′ (Toliman). Precession to date reuses `precession(T)`, the same function that puts the planets in the of-date frame — a star precessed differently from the planets would make the conjunction meaningless. Proper motion is ignored (under 6′/century for all of them, a tenth of the orb over two centuries). The `.note` states that ecliptic latitude is deliberately not tested, which is why Vega (β +61.7°) can be reported "conjunct" a planet.
+
+Nothing here reaches `buildPrompt()` — the daily reading and its cache keys are untouched. The whole section renders in about 1 ms.
+
+### Secondary progressions
+
+Section 5octies (`renderProg()`), rendered in `#prog` after `#struct`. One day after birth per year of life: `progJD()` divides the elapsed days by `AN_TROP` and feeds the result straight to `positions()`. No new astronomy — only the evaluation date changes.
+
+- **Five bodies only** (`PROG_CORPS`). At a day per year Jupiter advances 0.08° per year of life and Pluto 0.004°: their "progressions" are their natal positions, and showing them would dress a birth aspect up as an event.
+- **No progressed angles.** At least three incompatible conventions exist (ASC recomputed for the place at the progressed date, solar arc, Naibod), and they separate the progressed MC by degrees over a lifetime. Picking one silently would yield a wrong progressed house with the confidence of a right one. The houses shown are the **natal** cusps, which progressed planets travel through.
+- **No "écart" column.** Over 40 years the progressed Moon laps the zodiac more than once, so any displayed difference modulo 360° reads as the planet moving backwards. The natal sign shown alongside says the same thing without lying.
+- Progressed→natal aspects use a **1° orb**: the progressed Moon covers a degree in a year, so a wider orb would smear each contact across three years and stop dating anything. `findAspects`'s `exact` flag means "under 1°" and is therefore useless at this orb — the render tags `orb < 0.1` instead.
+
+### Void-of-course Moon
+
+`vocScan()` (section 7, before `buildPrompt`). The Moon is void when it forms no further major aspect before leaving its sign — the one fact about the day that the reading could not name, since transits say what connects and this says when nothing more will.
+
+- **Classical bodies only** (`VOC_CORPS`, Sun through Saturn). Adding the outers shortens the windows so much the measure stops distinguishing anything. The choice is stated in the page, not hidden in the code.
+- `VOC_ANG` holds **signed** angles (`0, ±60, ±90, ±120, 180`). Testing only the five nominal values misses every aspect formed on the other side — separations of 240°, 270°, 300° — which silently halved the aspect count and reported the Moon void when it was not. The bug shipped in the first draft of this function; the fix is verified by an independent sweep.
+- The scan covers the Moon's **whole stay in the sign**, ingress included, because the void's start is the last aspect — which has usually already happened. A 0.05-day step then bisection; `|g| < 10` guards the `sgn180` discontinuity, which lands on the conjunction when testing the opposition.
+- Costs about 9 ms, so it is computed once in `loadReading()` and passed to both `localReading(tr,hits,voc)` and `buildPrompt(tr,hits,jd,voc)`. It is computed **only for `PERIOD==='jour'`** — over a week or a month the window opens and closes a dozen times and the fact is meaningless.
+- Windows with the classical set are long: median 13 h over a 60-day sample, max 37 h. That maximum was brute-force checked (no separation comes within 0.02° of an aspect anywhere in the claimed window) rather than assumed to be a bug.
 
 ### Precession
 

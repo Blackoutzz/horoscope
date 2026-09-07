@@ -375,6 +375,31 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .karma details{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px}
   .karma details .sub{display:block;font-size:11.5px;color:var(--ink-soft);margin:10px 0;max-width:80ch}
   .karma details td.g{width:1.6em}
+  /* Structure du thème — même gabarit que .karma */
+  .struct{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .struct .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}
+  .struct .snote{font-size:11.5px;color:var(--ink-soft);margin:0 0 16px;max-width:80ch}
+  .struct .ssub{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:400;margin:22px 0 4px}
+  .struct .sect p{max-width:70ch}
+  .struct .vide{color:var(--ink-soft);font-size:13px;margin:6px 0 0;max-width:80ch}
+  .struct .note{font-size:11.5px;color:var(--ink-soft);margin:12px 0 0;max-width:80ch}
+  .struct .synl .sub{color:var(--ink-soft)}
+  .struct table.eph{margin-top:8px}
+  .struct table.eph td.g{width:1.8em;font-family:var(--glyph)}
+  .struct table.eph .sub{color:var(--ink-soft);font-family:var(--data);font-size:9.5px}
+  .struct table.eph tr.hi td{color:var(--ink);font-weight:600}
+  /* Carte progressée — même gabarit que .struct */
+  .prog{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .prog .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}
+  .prog .snote{font-size:11.5px;color:var(--ink-soft);margin:0 0 16px;max-width:80ch}
+  .prog .ssub{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:400;margin:22px 0 4px}
+  .prog p{max-width:80ch}
+  .prog .vide{color:var(--ink-soft);font-size:13px;margin:6px 0 0;max-width:80ch}
+  .prog .note{font-size:11.5px;color:var(--ink-soft);margin:12px 0 0;max-width:80ch}
+  .prog table.eph td.g{width:1.8em;font-family:var(--glyph)}
+  .prog .synl .sub{color:var(--ink-soft)}
   .ksvg{width:1em;height:1em;vertical-align:-.14em;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .amour{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
@@ -453,6 +478,7 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
 
   /* ---------- daily reading ---------- */
   .datestamp{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--verdigris)}
+  .voc{font-size:12px;color:var(--ink-soft);margin:6px 0 0;max-width:80ch;line-height:1.5}
   h2.read-title{font-family:var(--display);font-weight:400;font-style:italic;font-size:clamp(26px,4vw,36px);line-height:1.15;margin:8px 0 14px}
   .sky{font-size:14px;color:var(--ink-soft);border-left:2px solid var(--verdigris);padding-left:14px;margin:0 0 26px}
   .sect{margin:0 0 22px}
@@ -654,6 +680,10 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
 
     <section class="karma" id="karma"></section>
 
+    <section class="struct" id="struct"></section>
+
+    <section class="prog" id="prog"></section>
+
     <section class="amour" id="amour"></section>
 
     <div class="comparebar">
@@ -681,6 +711,7 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
         <button data-p="annee">Année</button>
       </nav>
       <p class="datestamp" id="today"></p>
+      <p class="voc hidden" id="voc"></p>
       <div id="reading"></div>
     </section>
 
@@ -2894,6 +2925,684 @@ function renderKarma(){
 }
 
 /* ========================================================================
+   5septies. Structure du thème
+   Six mesures classiques lues sur des positions déjà calculées. Aucune
+   n'entre dans BODIES ni dans les pondérations : dominance(), polarite(),
+   la table d'aspects et l'indice de synastrie sortent les mêmes nombres
+   qu'avant. La secte et la Part de Fortune exigent l'heure ; les quatre
+   autres non, et la section se réduit d'elle-même sans elle.
+   ======================================================================== */
+const PLANETES=BODIES.filter(b=>b!=='noeud');
+const RETROABLE=PLANETES.filter(b=>b!=='soleil'&&b!=='lune');
+
+/* Secte. Le Soleil au-dessus de l'horizon — maisons 7 à 12 — fait un thème
+   diurne : même convention d'hémisphère que polarite(). Sans heure il n'y a
+   pas de réponse plutôt qu'une réponse floue, le Soleil traversant l'axe en
+   douze heures. */
+function secteDe(natal,hs,kt){
+  if(!kt)return null;
+  const h=houseOf(natal.soleil.lon,hs.cusps);
+  return (h>=7&&h<=12)?'diurne':'nocturne';
+}
+const SECTE_TXT={
+ diurne:'Tu es né le Soleil levé, au-dessus de l\'horizon. La tradition dit alors que le Soleil, Jupiter et Saturne travaillent dans leur registre favorable : ce qui te porte se joue au grand jour, en énonçant les choses, quitte à devoir les tenir ensuite. Le revers habituel : tu supposes que l\'explicite suffit, et tu passes à côté de ce qui ne se dit pas.',
+ nocturne:'Tu es né le Soleil couché, sous l\'horizon. La Lune, Vénus et Mars sont ici dans leur registre favorable : tu avances par le ressenti et le lien direct plutôt que par la déclaration, et tu lis une pièce avant d\'y parler. Le revers habituel : tu attends d\'être deviné, et tu tiens pour dit ce que tu n\'as jamais formulé.'};
+
+/* Part de Fortune. Ascendant + Lune − Soleil de jour ; la formule s'inverse
+   de nuit — c'est la version ancienne, et la seule qui garde le point du
+   même côté de l'horizon que la Lune. Le calcul ne tient qu'avec l'heure :
+   l'Ascendant y entre directement. */
+function fortuneDe(natal,hs,sect){
+  if(!sect)return null;
+  return sect==='diurne'
+    ? n360(hs.asc+natal.lune.lon-natal.soleil.lon)
+    : n360(hs.asc+natal.soleil.lon-natal.lune.lon);
+}
+
+/* Rétrogrades. positions() pose déjà le drapeau corps par corps ; il n'était
+   jamais totalisé. Le pourcentage porte sur les huit corps qui peuvent
+   rétrograder — le Soleil et la Lune n'entrent pas au dénominateur, ils ne
+   rétrogradent jamais, et le nœud est un point moyen (voir NO_RETRO). */
+function retrosDe(natal){
+  const l=RETROABLE.filter(b=>natal[b].retro);
+  return {list:l,n:l.length,pct:Math.round(l.length/RETROABLE.length*100)};
+}
+const RETRO_TXT={
+ mercure:'la parole passe par un détour : tu comprends en réécrivant, et tes premières formulations ne sont pas les bonnes',
+ venus:'le lien ne se déclare pas d\'emblée : tu reviens sur ce que tu aimes avant de l\'assumer',
+ mars:'l\'élan rentre avant de sortir : tu encaisses, puis tu agis d\'un coup, souvent en décalé',
+ jupiter:'la confiance ne vient pas du dehors : ce en quoi tu crois doit t\'avoir coûté quelque chose',
+ saturne:'l\'autorité est un chantier intérieur : tu te juges avant qu\'on te juge, et plus sévèrement',
+ uranus:'la rupture se prépare en silence longtemps avant d\'être visible',
+ neptune:'l\'imaginaire travaille en dedans plutôt qu\'en projection sur les autres',
+ pluton:'la transformation se joue à huis clos, sans témoin et sans récit'};
+const RETRO_BAND=[
+ [0,'Aucune planète rétrograde. Tout ton thème pousse vers l\'avant, sans reprise : c\'est peu fréquent, et cela se paie en révisions manquées. Ce qui est lancé l\'est sans repentir.'],
+ [2,'Un à deux rétrogrades : le cas le plus courant. Uranus, Neptune et Pluton rétrogradent chacune près de cinq mois par an, donc en trouver deux dans une carte ne dit presque rien — c\'est le fond statistique, pas une signature.'],
+ [4,'Trois à quatre rétrogrades : au-dessus de l\'ordinaire. Une part notable de ta carte fonctionne en reprise — les choses te reviennent, tu les refais, et la deuxième version vaut mieux que la première.'],
+ [9,'Cinq rétrogrades ou plus : configuration nettement chargée. L\'essentiel de ta mécanique travaille en marche arrière, hors du regard des autres, et ton rythme n\'est presque jamais celui qu\'on attend de toi.']];
+
+/* Amas. Trois corps ou plus dans un même signe — et dans une même maison
+   quand l'heure est connue. Les deux comptages sont indépendants : un amas
+   de signe peut se répartir sur deux maisons, et inversement. */
+function amasDe(natal,hs,kt){
+  const parS={}, parM={};
+  for(const b of PLANETES){
+    const s=signIdx(natal[b].lon);
+    if(!parS[s])parS[s]=[];
+    parS[s].push(b);
+    if(kt){
+      const m=houseOf(natal[b].lon,hs.cusps);
+      if(!parM[m])parM[m]=[];
+      parM[m].push(b);
+    }
+  }
+  const tri=o=>Object.keys(o).filter(k=>o[k].length>=3)
+    .map(k=>({k:+k,corps:o[k]})).sort((a,b)=>b.corps.length-a.corps.length);
+  return {signes:tri(parS),maisons:kt?tri(parM):[]};
+}
+
+/* Degrés anarétiques : le dernier degré d'un signe, celui où le corps a
+   parcouru tout le registre et s'apprête à en changer. Les angles comptent
+   quand l'heure est connue. */
+function anaretiques(natal,hs,kt){
+  const out=[];
+  for(const b of PLANETES)
+    if(n360(natal[b].lon)%30>=29)out.push({nom:NAMES[b],gl:GLYPH[b],lon:natal[b].lon});
+  if(kt){
+    if(n360(hs.asc)%30>=29)out.push({nom:'Ascendant',gl:'⌖',lon:hs.asc});
+    if(n360(hs.mc)%30>=29)out.push({nom:'Milieu du ciel',gl:'MC',lon:hs.mc});
+  }
+  return out;
+}
+
+/* Décans (10°) par triplicité : le premier revient au maître du signe, les
+   suivants aux maîtres des deux autres signes du même élément. Duades
+   (2°30) : douze subdivisions qui reparcourent le zodiaque depuis le signe
+   lui-même. Ni l'un ni l'autre ne change le signe — ils le nuancent. */
+const decanIdx=l=>Math.floor((n360(l)%30)/10);
+const decanSigne=l=>(signIdx(l)+4*decanIdx(l))%12;
+const duadeIdx=l=>Math.floor((n360(l)%30)/2.5);
+const duadeSigne=l=>(signIdx(l)+duadeIdx(l))%12;
+const DECAN_ORD=['1er','2e','3e'];
+const SREG={
+ soleil:'tenue et visibilité', lune:'sensibilité et mémoire', mercure:'analyse et parole',
+ venus:'goût et accord', mars:'attaque et tranchant', jupiter:'ampleur et confiance',
+ saturne:'structure et durée', uranus:'écart et rupture', neptune:'porosité et rêve',
+ pluton:'intensité et fond'};
+
+/* Figures d'aspects. Scan local plutôt que réutilisation de CHART.asp, pour
+   deux raisons : les figures demandent des orbes plus serrées que la table
+   d'affichage (8°/6°), et le quinconce dont le yod a besoin n'est pas dans
+   ASPECTS — l'y ajouter renumérerait la table natale et l'indice de
+   synastrie, exactement ce que cette section s'interdit. Dix planètes, sans
+   les angles : les figures restent alors lisibles sans heure de naissance. */
+const FIG_ANG=[['Conjonction',0,6],['Sextile',60,4],['Carré',90,6],
+               ['Trigone',120,6],['Quinconce',150,3],['Opposition',180,6]];
+function figAsp(a,b){
+  let d=Math.abs(n360(a-b)); if(d>180)d=360-d;
+  for(const [n,ang,orb] of FIG_ANG){
+    const diff=Math.abs(d-ang);
+    if(diff<=orb)return {n,orb:diff};
+  }
+  return null;
+}
+function figures(natal){
+  const B=PLANETES, A={};
+  const key=(a,b)=>a<b?a+'|'+b:b+'|'+a;
+  for(let i=0;i<B.length;i++)for(let j=i+1;j<B.length;j++){
+    const r=figAsp(natal[B[i]].lon,natal[B[j]].lon);
+    if(r)A[key(B[i],B[j])]=r;
+  }
+  const is=(a,b,n)=>{const r=A[key(a,b)];return !!r&&r.n===n;};
+  const croix=[], trigones=[], tcarres=[], yods=[];
+
+  /* Grande croix : deux oppositions croisées, fermées par quatre carrés. */
+  const PAIRAGES=[[[0,1],[2,3]],[[0,2],[1,3]],[[0,3],[1,2]]];
+  for(let i=0;i<B.length;i++)for(let j=i+1;j<B.length;j++)
+  for(let k=j+1;k<B.length;k++)for(let m=k+1;m<B.length;m++){
+    const q=[B[i],B[j],B[k],B[m]];
+    for(const [p1,p2] of PAIRAGES){
+      if(!is(q[p1[0]],q[p1[1]],'Opposition'))continue;
+      if(!is(q[p2[0]],q[p2[1]],'Opposition'))continue;
+      const cs=[[p1[0],p2[0]],[p1[0],p2[1]],[p1[1],p2[0]],[p1[1],p2[1]]];
+      if(cs.every(c=>is(q[c[0]],q[c[1]],'Carré'))){croix.push(q);break;}
+    }
+  }
+  const dansCroix=t=>croix.some(c=>t.every(x=>c.includes(x)));
+
+  for(let i=0;i<B.length;i++)for(let j=i+1;j<B.length;j++)for(let k=j+1;k<B.length;k++){
+    const t=[B[i],B[j],B[k]];
+    /* Grand trigone : trois trigones mutuels. */
+    if(is(t[0],t[1],'Trigone')&&is(t[1],t[2],'Trigone')&&is(t[0],t[2],'Trigone'))
+      trigones.push(t);
+    /* T-carré : une opposition, un troisième corps au carré des deux. Les
+       triplets déjà contenus dans une grande croix sont écartés — c'est la
+       même figure, décrite en plus petit. */
+    for(let a=0;a<3;a++){
+      const c=t[a], o=[t[(a+1)%3],t[(a+2)%3]];
+      if(is(o[0],o[1],'Opposition')&&is(c,o[0],'Carré')&&is(c,o[1],'Carré')&&!dansCroix(t))
+        tcarres.push({apex:c,base:o});
+      /* Yod : deux corps en sextile, tous deux au quinconce d'un troisième. */
+      if(is(o[0],o[1],'Sextile')&&is(c,o[0],'Quinconce')&&is(c,o[1],'Quinconce'))
+        yods.push({apex:c,base:o});
+    }
+  }
+  return {croix,trigones,tcarres,yods};
+}
+const FIG_TXT={
+ croix:'Quatre corps en carré deux à deux, refermés sur deux oppositions : la figure la plus chargée du répertoire. Rien ne peut bouger sans que les trois autres angles tirent en sens contraire, et la sortie n\'est jamais un compromis — c\'est un choix assumé qui laisse quelque chose sur le carreau.',
+ trigone:'Trois corps en trigone mutuel. C\'est un circuit fermé qui fonctionne tout seul : facilité réelle, et pour cette raison-là rarement exploitée — ce qui ne coûte rien ne se travaille pas.',
+ tcarre:'Une opposition et un troisième corps qui tranche les deux à angle droit. L\'apex est le point de sortie : c\'est par là que la tension de l\'axe se dépense, souvent en excès, et c\'est aussi le seul endroit où elle devient utile.',
+ yod:'Deux corps qui s\'entendent, tous deux mal ajustés à un troisième — 150°, ni harmonie ni conflit franc, l\'angle qu\'on ne sait pas classer. L\'apex demande un ajustement permanent : rien n\'y est jamais tout à fait à sa place, et la figure travaille par corrections successives plutôt que par décision.'};
+const ELEM_TRIG={feu:'l\'action et l\'élan',terre:'le concret et la durée',
+ air:'l\'idée et l\'échange',eau:'l\'affect et la mémoire'};
+
+/* Densité d'aspects. Comptée sur CHART.asp — la table affichée, orbes 8°/6°,
+   nœud exclu — donc sur les mêmes aspects que ceux que tu peux relire plus
+   bas. 45 paires possibles entre dix corps. La conjonction ne compte ni dur
+   ni doux : son registre dépend des deux planètes, pas de l'angle. */
+function densiteDe(asp){
+  const cpt=n=>asp.filter(a=>a.asp.n===n).length;
+  const dur=cpt('Carré')+cpt('Opposition');
+  const doux=cpt('Trigone')+cpt('Sextile');
+  const conj=cpt('Conjonction');
+  return {n:asp.length,dur,doux,conj,tension:(dur+doux)?Math.round(dur/(dur+doux)*100):null};
+}
+const DENS_BAND=[
+ [8,'Carte peu aspectée : les planètes travaillent largement chacune de leur côté. Moins de conflit interne, mais aussi moins de relais — ce qui est acquis dans un domaine ne déteint pas sur les autres.'],
+ [14,'Densité ordinaire : la plupart des cartes tombent ici. Assez de liaisons pour que les registres communiquent, pas assez pour que tout bouge en même temps.'],
+ [40,'Carte très aspectée : presque tout est relié à presque tout. Rien ne se déclenche isolément chez toi — un mouvement dans un domaine en remue trois autres, ce qui fait la richesse et la fatigue de ce type de thème.']];
+const TENS_BAND=[
+ [30,'nettement plus d\'accords que de tensions : le thème avance par facilité et bute quand il faut forcer'],
+ [45,'les accords l\'emportent, sans écraser les tensions'],
+ [55,'équilibre franc entre ce qui tire et ce qui porte'],
+ [70,'les tensions l\'emportent : le thème avance par friction, et l\'aisance lui est suspecte'],
+ [100,'nettement plus de tensions que d\'accords : rien n\'est donné, tout est arraché — et ce qui est arraché tient']];
+
+/* Forme du thème (Marc Edmund Jones). Rien que la répartition des dix
+   longitudes sur le cercle : aucune heure requise. Les seuils sont ceux
+   d'usage, avec la tolérance habituelle — une carte à la frontière entre
+   deux formes est une carte à la frontière, pas une erreur de classement. */
+function formeDe(natal){
+  const pts=PLANETES.map(b=>({b,l:n360(natal[b].lon)})).sort((x,y)=>x.l-y.l);
+  const gaps=pts.map((p,i)=>({apres:p.b,avant:pts[(i+1)%pts.length].b,
+    g:n360(pts[(i+1)%pts.length].l-p.l),i}));
+  const tri=[...gaps].sort((a,b)=>b.g-a.g);
+  const g1=tri[0], g2=tri[1], span=360-g1.g;
+  const tete=pts[(g1.i+1)%pts.length].b;   /* premier corps après le vide */
+  const queue=g1.apres;
+  /* Seau : un corps isolé de part et d'autre, le reste tenant dans un bol. */
+  let anse=null;
+  for(let i=0;i<pts.length;i++){
+    const av=gaps[(i-1+gaps.length)%gaps.length].g, ap=gaps[i].g;
+    if(av<60||ap<60)continue;
+    const reste=pts.filter((_,j)=>j!==i).map(p=>p.l);
+    let large=0;
+    for(let j=0;j<reste.length;j++){
+      const d=n360(reste[(j+1)%reste.length]-reste[j]);
+      if(d>large)large=d;
+    }
+    if(360-large<=190){anse=pts[i].b;break;}
+  }
+  let type;
+  if(span<=125)type='faisceau';
+  else if(anse)type='seau';
+  else if(span<=190)type='bol';
+  else if(g1.g>=110&&g2.g<60)type='locomotive';
+  else if(g1.g>=60&&g2.g>=60)type='balançoire';
+  else type='éclaboussure';
+  return {type,span,vide:g1.g,tete,queue,anse};
+}
+const FORME_TXT={
+ faisceau:'Tout ton thème tient dans moins de quatre signes. Concentration extrême : une seule direction, très peu de dispersion, et un angle mort sur tout le reste du cercle. Ce que tu fais, tu le fais à fond ; ce que tu ne fais pas n\'existe pas.',
+ seau:'Neuf corps groupés d\'un côté, un seul en face : l\'anse. Toute la charge du thème passe par ce corps unique — c\'est ton point de sortie, ta spécialité et ton goulot d\'étranglement, selon le jour.',
+ bol:'Toutes tes planètes tiennent dans une moitié du cercle. Un thème avec un versant plein et un versant vide : tu es outillé pour ce qui tombe du côté occupé, et l\'autre moitié, tu la cherches chez les autres.',
+ locomotive:'Les planètes couvrent les deux tiers du cercle, avec un vide net d\'au moins un trigone. Le corps qui ouvre la marche — juste après le vide — entraîne les autres : c\'est lui qui donne son rythme au thème.',
+ 'balançoire':'Deux groupes de planètes se font face, séparés par deux vides. Le thème fonctionne par bascule : tu vis en négociation permanente entre deux camps qui ne se parlent pas directement.',
+ 'éclaboussure':'Les planètes sont réparties tout autour du cercle, sans concentration ni vide marqué. Curiosité large et intérêts multiples ; la difficulté est de finir plutôt que de commencer.'};
+
+/* Dispositeur final. Chaque planète renvoie au maître de son signe (MAITRE,
+   rulership moderne) ; on suit la chaîne jusqu'à un point fixe — une planète
+   dans son propre domicile — ou jusqu'à une boucle. La rulership moderne
+   donne un seul signe à Uranus, Neptune et Pluton, donc moins de points
+   fixes et plus de boucles que la rulership traditionnelle : la chaîne
+   dépend du système choisi, pas seulement de la carte. */
+function dispositeurs(natal){
+  const r={};
+  for(const b of PLANETES)r[b]=MAITRE[signIdx(natal[b].lon)];
+  const chaine={}, finaux={}, boucles=[], cpt={};
+  const sigDe=c=>c.slice().sort().join('|');
+  for(const b of PLANETES){
+    const vus=[]; let cur=b;
+    for(let g=0;g<24;g++){
+      if(vus.includes(cur)){
+        const cyc=vus.slice(vus.indexOf(cur)), sig=sigDe(cyc);
+        chaine[b]={cible:cyc,sig,path:vus.slice(0)};
+        cpt[sig]=(cpt[sig]||0)+1;
+        if(cyc.length===1)finaux[cyc[0]]=cpt[sig];
+        else if(!boucles.some(x=>x.sig===sig))boucles.push({cyc,sig});
+        break;
+      }
+      vus.push(cur);
+      cur=r[cur];
+    }
+  }
+  /* finaux a pu être écrit avant que la chaîne la plus longue n'y aboutisse :
+     on le resynchronise sur le compte final. */
+  for(const f in finaux)finaux[f]=cpt[f];
+  return {r,chaine,finaux,boucles,cpt};
+}
+
+/* Quadrants et hémisphères. polarite() calculait déjà l'hémisphère haut/bas
+   sans jamais l'afficher ; l'axe est/ouest (maisons 10 à 3 contre 4 à 9)
+   n'existait nulle part. Mêmes poids que dominance(), Ascendant exclu — il
+   est sur une cuspide, il ne tombe dans aucun quadrant. */
+function quadrants(natal,hs,kt){
+  if(!kt)return null;
+  const W={soleil:3,lune:3,mercure:2,venus:2,mars:2,jupiter:1.5,saturne:1.5,uranus:1,neptune:1,pluton:1};
+  const q=[0,0,0,0], det=[[],[],[],[]];
+  let haut=0,bas=0,est=0,ouest=0,t=0;
+  for(const b in W){
+    const h=houseOf(natal[b].lon,hs.cusps), w=W[b], qi=Math.floor((h-1)/3);
+    t+=w; q[qi]+=w; det[qi].push(b);
+    if(h>=7)haut+=w; else bas+=w;
+    if(h>=10||h<=3)est+=w; else ouest+=w;
+  }
+  const pc=v=>Math.round(v/t*100);
+  return {q:q.map(pc),det,haut:pc(haut),bas:pc(bas),est:pc(est),ouest:pc(ouest),
+          dom:q.indexOf(Math.max.apply(null,q))};
+}
+const QUAD_NOM=['1er — maisons 1 à 3','2e — maisons 4 à 6','3e — maisons 7 à 9','4e — maisons 10 à 12'];
+const QUAD_TXT=[
+ 'la construction de soi : ce que tu mets en place avant de tenir compte de qui que ce soit',
+ 'les fondations privées : la maison, le lien du sang, ce qui se joue à l\'abri des regards',
+ 'la relation : tu te définis en face de quelqu\'un, et tu as besoin du renvoi pour te voir',
+ 'l\'espace collectif : ta trajectoire publique, ce que tu construis devant témoins'];
+const HEMI_TXT=(h,b)=>h>b
+ ? 'Majorité au-dessus de l\'horizon : ta vie se joue plutôt au dehors, dans ce qui est visible et partagé.'
+ : 'Majorité sous l\'horizon : ta vie se joue plutôt en dedans, dans ce qui se construit sans témoin.';
+const EO_TXT=(e,o)=>e>o
+ ? 'Majorité à l\'est : tu es le point de départ de tes situations, tu inities plus que tu ne réponds.'
+ : 'Majorité à l\'ouest : tes situations se construisent en réponse aux autres, et tu avances par ce qui t\'est proposé.';
+
+/* Étoiles fixes. Longitudes écliptiques J2000 dérivées des ascensions
+   droites et déclinaisons J2000, puis recoupées contre les positions
+   tropicales publiées : 35 des 37 concordent à moins d'une minute d'arc,
+   le pire écart faisant 4,2′ (Toliman). Bien en deçà de l'orbe de 1°.
+
+   La précession en longitude s'applique uniformément : λ(date) = λ2000 +
+   precession(T), la latitude ne bougeant pas. C'est la même fonction que
+   celle qui recale les planètes en section 1, donc étoiles et planètes
+   restent dans le même repère de la date — condition sine qua non pour que
+   la conjonction ait un sens.
+
+   Le mouvement propre est ignoré : il vaut moins de 4′ par siècle pour
+   toutes ces étoiles sauf Toliman et Arcturus, qui atteignent 6′ — un
+   dixième de l'orbe sur deux siècles.
+
+   Colonnes : longitude J2000, latitude écliptique, magnitude, mot-clé. */
+const STARS=[
+ ['Alpheratz',14.308,25.68,2.06,'l\'élan qui va droit au but, sans détour ni préparation'],
+ ['Mirach',30.405,25.94,2.07,'la beauté qui attire sans effort et les liens qui en découlent'],
+ ['Hamal',37.662,9.96,2.00,'la force qui pousse en avant, patiente puis brutale'],
+ ['Menkar',44.320,-12.59,2.53,'ce qui remonte du fond commun : héritage, foule, chaîne dont on hérite'],
+ ['Algol',56.168,22.43,2.12,'l\'intensité qu\'on ne maîtrise pas — la tradition en fait la plus dure du ciel, ce qui en dit plus long sur la tradition que sur toi'],
+ ['Alcyone',59.992,4.05,2.87,'le regard qui voit trop et le chagrin qui va avec'],
+ ['Aldebaran',69.789,-5.47,0.85,'l\'honneur gagné de haute lutte, à tenir sans compromission'],
+ ['Rigel',76.829,-31.12,0.13,'l\'enseignement et la transmission d\'un savoir concret'],
+ ['Bellatrix',80.947,-16.82,1.64,'le succès rapide et le risque de le retourner contre soi'],
+ ['Capella',81.858,22.86,0.08,'la curiosité qui ne se pose pas, l\'inventivité mobile'],
+ ['Alnilam',83.463,-24.51,1.69,'la renommée brève, la fortune de passage'],
+ ['Betelgeuse',88.755,-16.03,0.50,'la réussite qui dure, obtenue sans forcer'],
+ ['Sirius',104.081,-39.61,-1.46,'la garde et l\'ardeur : l\'étoile la plus brillante du ciel, celle qui rend visible'],
+ ['Canopus',104.961,-75.82,-0.74,'le pilote et le long voyage, la traversée qu\'on mène à bien'],
+ ['Castor',110.241,10.10,1.58,'l\'esprit vif, la parole et le double tranchant qui va avec'],
+ ['Pollux',113.216,6.68,1.14,'la fermeté combative, le courage qui n\'esquive pas'],
+ ['Procyon',115.785,-16.02,0.34,'l\'élan soudain qui ouvre les portes puis retombe'],
+ ['Alphard',147.280,-22.38,1.98,'la passion entière, sans mesure ni frein'],
+ ['Regulus',149.829,0.46,1.40,'le pouvoir et la position — accordés à condition de rester droit'],
+ ['Denebola',171.618,12.27,2.14,'l\'écart avec le groupe, l\'audace qui isole'],
+ ['Vindemiatrix',189.940,16.20,2.83,'la lucidité qui coûte cher, la clairvoyance solitaire'],
+ ['Spica',203.841,-2.05,1.04,'le don et la protection — l\'étoile la mieux réputée du zodiaque'],
+ ['Arcturus',204.233,30.74,-0.05,'l\'ouverture d\'un chemin par ses propres moyens'],
+ ['Acrux',221.870,-52.88,0.76,'la quête de sens, la ténacité dans la recherche'],
+ ['Zubenelgenubi',225.083,0.33,2.75,'le prix à payer, la balance qui penche du côté du coût'],
+ ['Zubeneschamali',229.372,8.50,2.61,'la récompense méritée, la balance qui penche du bon côté'],
+ ['Toliman',239.479,-42.59,-0.27,'l\'amitié et l\'entraide, la position qui vient des autres'],
+ ['Antares',249.762,-4.57,1.09,'l\'intensité obstinée, la lutte qu\'on choisit'],
+ ['Ras Alhague',262.449,35.84,2.08,'la guérison et le savoir qui touche au vivant'],
+ ['Vega',285.315,61.73,0.03,'le charme et l\'art, la grâce qui ouvre les portes'],
+ ['Altair',301.777,29.30,0.77,'l\'audace directe, la prise de hauteur assumée'],
+ ['Deneb Algedi',323.542,-2.60,2.85,'l\'autorité juste, celle qui tranche puis répare'],
+ ['Fomalhaut',333.861,-21.14,1.16,'l\'idéal — magnifique ou dévorant, selon ce qu\'on en fait'],
+ ['Deneb',335.329,59.91,1.25,'l\'intelligence patiente, le talent qui met du temps'],
+ ['Achernar',345.311,-59.38,0.46,'la fin de course, la récompense au bout du fleuve'],
+ ['Markab',353.485,19.41,2.48,'la traversée dangereuse et l\'énergie qu\'elle exige'],
+ ['Scheat',359.375,31.14,2.42,'l\'imagination sans garde-fou, la pensée qui déborde']];
+const STAR_ORB=1;
+function starHits(natal,hs,kt,jd){
+  const T=(jd-2451545)/36525, p=precession(T);
+  const cibles=PLANETES.map(b=>({k:b,nom:NAMES[b],gl:GLYPH[b],lon:natal[b].lon}));
+  if(kt){
+    cibles.push({k:'asc',nom:'Ascendant',gl:'⌖',lon:hs.asc});
+    cibles.push({k:'mc',nom:'Milieu du ciel',gl:'MC',lon:hs.mc});
+  }
+  const out=[];
+  for(const [nom,l2000,lat,mag,txt] of STARS){
+    const lon=n360(l2000+p);
+    for(const c of cibles){
+      let d=Math.abs(n360(lon-c.lon)); if(d>180)d=360-d;
+      if(d<=STAR_ORB)out.push({etoile:nom,lon,lat,mag,txt,cible:c,orb:d});
+    }
+  }
+  return out.sort((a,b)=>a.orb-b.orb);
+}
+
+function renderStruct(){
+  const {natal,hs,asp,profile}=CHART;
+  const kt=profile.knownTime;
+  const sect=secteDe(natal,hs,kt);
+  const fort=fortuneDe(natal,hs,sect);
+  const ret=retrosDe(natal);
+  const am=amasDe(natal,hs,kt);
+  const ana=anaretiques(natal,hs,kt);
+  const fig=figures(natal);
+  const den=densiteDe(asp);
+  const frm=formeDe(natal);
+  const dsp=dispositeurs(natal);
+  const qd=quadrants(natal,hs,kt);
+  const eto=starHits(natal,hs,kt,CHART.jd);
+
+  const blocSecte=sect
+    ? `<div class="sect"><h3>Secte — thème ${sect}</h3><p>${SECTE_TXT[sect]}</p></div>`
+    : `<div class="sect"><h3>Secte</h3><p class="vide">Sans heure de naissance, impossible de savoir si le Soleil était levé : il traverse l'horizon deux fois par jour. La secte reste indéterminée, et la Part de Fortune avec elle.</p></div>`;
+
+  const fh=fort===null?0:houseOf(fort,hs.cusps);
+  const blocFort=fort===null?''
+    : `<div class="sect"><h3>Part de Fortune</h3><p><b>${signLab(fort)}</b> ${degStr(fort)}, maison ${fh} — ${HOUSE_THEME[fh-1]}.<br>`+
+      `Ce point ne mesure pas la chance mais l'endroit où le corps se pose : le domaine où ce que tu vises et ce que tu ressens tombent d'accord, et où l'effort cesse d'être en côte. C'est un point calculé, pas un astre — ni vitesse, ni rétrogradation, et ses aspects ne comptent pas comme ceux d'une planète.</p></div>`;
+
+  /* --- quadrants --- */
+  const quadHtml=qd
+    ? `<table class="eph"><tr><th>Quadrant</th><th>Poids</th><th>Terrain</th></tr>`+
+      qd.q.map((v,i)=>`<tr${i===qd.dom?' class="hi"':''}><td>${QUAD_NOM[i]}</td><td>${v} %</td>`+
+        `<td>${QUAD_TXT[i]}<span class="sub">${qd.det[i].length?' · '+qd.det[i].map(b=>GLYPH[b]).join(' '):' · vide'}</span></td></tr>`).join('')+
+      `</table>`+
+      `<p>Hémisphères : <b>${qd.haut} %</b> au-dessus de l'horizon contre <b>${qd.bas} %</b> en dessous, `+
+      `<b>${qd.est} %</b> à l'est contre <b>${qd.ouest} %</b> à l'ouest.<br>`+
+      `${HEMI_TXT(qd.haut,qd.bas)} ${EO_TXT(qd.est,qd.ouest)}</p>`
+    : `<p class="vide">Les quadrants sont découpés par les maisons : sans heure de naissance, ils n'existent pas. C'est la mesure qui perd le plus à l'heure manquante.</p>`;
+
+  /* --- forme --- */
+  const formeHtml=`<p><b>${frm.type.charAt(0).toUpperCase()+frm.type.slice(1)}</b> — `+
+    `les dix corps occupent ${Math.round(frm.span)}° du cercle, le plus grand vide en fait ${Math.round(frm.vide)}°.<br>`+
+    `${FORME_TXT[frm.type]}`+
+    (frm.type==='seau'?`<br>Ton anse : <b>${GLYPH[frm.anse]} ${NAMES[frm.anse]}</b> en ${signOf(natal[frm.anse].lon)}.`:'')+
+    (frm.type==='locomotive'?`<br>Ta meneuse : <b>${GLYPH[frm.tete]} ${NAMES[frm.tete]}</b> en ${signOf(natal[frm.tete].lon)}.`:'')+
+    (frm.type==='bol'?`<br>Le bord du bol : de <b>${GLYPH[frm.tete]} ${NAMES[frm.tete]}</b> à <b>${GLYPH[frm.queue]} ${NAMES[frm.queue]}</b>.`:'')+
+    `</p>`;
+
+  /* --- densité --- */
+  const dband=DENS_BAND.find(b=>den.n<=b[0])[1];
+  const tband=den.tension===null?null:TENS_BAND.find(b=>den.tension<=b[0])[1];
+  const pl=(n,mot,suf)=>`${n} ${mot}${n>1?(suf||'s'):''}`;
+  const densHtml=`<p><b>${pl(den.n,'aspect')} sur 45 paires possibles</b> — ${pl(den.dur,'dur')} (carrés, oppositions), `+
+    `${den.doux} doux (trigones, sextiles), ${pl(den.conj,'conjonction')}.<br>${dband}`+
+    (tband?`<br><b>Indice de tension ${den.tension} %</b> — ${tband}. Cet indice compte les aspects, pas leur exactitude ni les planètes concernées : un carré Lune–Mars et un carré Uranus–Neptune y pèsent pareil, alors qu\'ils ne se vivent pas du tout de la même façon.`:'')+`</p>`;
+
+  /* --- figures --- */
+  const nomsDe=l=>l.map(b=>`${GLYPH[b]} ${NAMES[b]}`).join(', ');
+  const figLi=[];
+  for(const c of fig.croix)
+    figLi.push(`<li><span class="lg">✚</span><span class="lt"><b>Grande croix</b>`+
+      `<span class="sub"> · ${nomsDe(c)}</span><br>${FIG_TXT.croix}</span></li>`);
+  for(const t of fig.trigones){
+    const els=t.map(b=>elemOf(natal[b].lon));
+    const pur=els.every(e=>e===els[0]);
+    figLi.push(`<li><span class="lg">△</span><span class="lt"><b>Grand trigone${pur?' de '+els[0]:' dissocié'}</b>`+
+      `<span class="sub"> · ${nomsDe(t)}</span><br>${FIG_TXT.trigone}`+
+      (pur?` Chez toi il porte sur ${ELEM_TRIG[els[0]]}.`:' Les trois corps ne partagent pas le même élément — la figure existe par l\'angle, pas par le registre, et tient moins bien.')+
+      `</span></li>`);
+  }
+  for(const t of fig.tcarres)
+    figLi.push(`<li><span class="lg">⊥</span><span class="lt"><b>T-carré, apex ${NAMES[t.apex]}</b>`+
+      `<span class="sub"> · axe ${nomsDe(t.base)}</span><br>${FIG_TXT.tcarre} `+
+      `Ici l'apex est ${GLYPH[t.apex]} ${NAMES[t.apex]} en ${signOf(natal[t.apex].lon)}`+
+      `${kt?`, maison ${houseOf(natal[t.apex].lon,hs.cusps)}`:''}.</span></li>`);
+  for(const y of fig.yods)
+    figLi.push(`<li><span class="lg">⅄</span><span class="lt"><b>Yod, apex ${NAMES[y.apex]}</b>`+
+      `<span class="sub"> · base ${nomsDe(y.base)}</span><br>${FIG_TXT.yod}</span></li>`);
+  const figHtml=figLi.length
+    ? `<ul class="synl">${figLi.join('')}</ul>`
+    : `<p class="vide">Aucune figure fermée dans les orbes retenues. La plupart des cartes n'en portent pas : ces configurations demandent que trois ou quatre corps tombent juste, ce qui n'a rien de courant.</p>`;
+
+  /* --- amas --- */
+  const listeCorps=l=>l.map(b=>`${GLYPH[b]} ${NAMES[b]}`).join(', ');
+  const amasHtml=(am.signes.length||am.maisons.length)
+    ? `<ul class="synl">`+
+      am.signes.map(a=>`<li><span class="lg">${SIGN_GL[a.k]}</span><span class="lt">`+
+        `<b>${a.corps.length} corps en ${SIGNS[a.k]}</b><span class="sub"> · ${listeCorps(a.corps)}</span><br>`+
+        `Une part inhabituelle de ta carte parle le même langage : ${SIGN_TONE[a.k]}. C'est une force tant que la situation le demande, et un angle mort dès qu'elle demande autre chose.</span></li>`).join('')+
+      am.maisons.map(a=>`<li><span class="lg">M${a.k}</span><span class="lt">`+
+        `<b>${a.corps.length} corps en maison ${a.k}</b><span class="sub"> · ${listeCorps(a.corps)}</span><br>`+
+        `Le poids se concentre sur ${HOUSE_THEME[a.k-1]} — ce secteur prend chez toi une place que les autres n'ont pas.</span></li>`).join('')+
+      `</ul>`
+    : `<p class="vide">Aucun amas : jamais trois corps dans le même signe${kt?' ni dans la même maison':''}. Ta carte est répartie, sans zone qui domine les autres par le nombre.</p>`;
+
+  /* --- dispositeurs --- */
+  const finList=Object.keys(dsp.finaux).sort((a,b)=>dsp.finaux[b]-dsp.finaux[a]);
+  const dspHtml=
+    (finList.length
+      ? `<ul class="synl">${finList.map(f=>
+          `<li><span class="lg">${GLYPH[f]}</span><span class="lt"><b>${NAMES[f]}, dispositeur final</b>`+
+          `<span class="sub"> · en ${signOf(natal[f].lon)}, son propre domicile · ${dsp.finaux[f]} corps sur ${PLANETES.length} y aboutissent</span><br>`+
+          `Toutes ces planètes lui renvoient la décision de proche en proche : c'est le point où la carte s'arrête de déléguer. Ce que ${NAMES[f]} demande finit par l'emporter sur le reste, y compris sur ce que tu crois vouloir.</span></li>`).join('')}</ul>`
+      : '')+
+    (dsp.boucles.length
+      ? `<ul class="synl">${dsp.boucles.map(x=>
+          `<li><span class="lg">↻</span><span class="lt"><b>Boucle de ${x.cyc.length}</b>`+
+          `<span class="sub"> · ${x.cyc.map(b=>GLYPH[b]+' '+NAMES[b]).join(' → ')} → ${NAMES[x.cyc[0]]} · ${dsp.cpt[x.sig]} corps sur ${PLANETES.length} y aboutissent</span><br>`+
+          `Ces planètes se renvoient l'autorité en cercle, sans qu'aucune tranche : chacune dépend du signe de la suivante. En pratique, une part de ta carte n'a pas d'arbitre — la décision y tourne au lieu de se prendre.</span></li>`).join('')}</ul>`
+      : '')+
+    (!finList.length&&!dsp.boucles.length?`<p class="vide">Aucune chaîne ne se referme.</p>`:'');
+
+  /* --- rétrogrades --- */
+  const band=RETRO_BAND.find(b=>ret.n<=b[0])[1];
+  const retHtml=`<p><b>${ret.n} sur ${RETROABLE.length} · ${ret.pct} %</b><br>${band}</p>`+
+    (ret.n
+      ? `<ul class="synl">${ret.list.map(b=>
+          `<li><span class="lg">${GLYPH[b]} ℞</span><span class="lt"><b>${NAMES[b]} rétrograde</b>`+
+          `<span class="sub"> · ${signOf(natal[b].lon)}</span><br>${RETRO_TXT[b]}.</span></li>`).join('')}</ul>`
+      : '');
+
+  /* --- décans --- */
+  const triade=[['soleil',natal.soleil.lon],['lune',natal.lune.lon],
+    kt?['asc',hs.asc]:['noeud',natal.noeud.lon]];
+  const NOMT=k=>k==='asc'?'Ascendant':NAMES[k];
+  const GLT=k=>k==='asc'?'⌖':GLYPH[k];
+  const decHtml=`<table class="eph"><tr><th colspan="2">Point</th><th>Décan</th><th>Duade</th></tr>`+
+    triade.map(([k,lon])=>{
+      const ds=decanSigne(lon), reg=MAITRE[ds];
+      return `<tr><td class="g">${GLT(k)}</td><td>${NOMT(k)}</td>`+
+        `<td>${DECAN_ORD[decanIdx(lon)]} décan · ${SIGNS[ds]} · ${NAMES[reg]} <span class="sub">(${SREG[reg]})</span></td>`+
+        `<td>${SIGNS[duadeSigne(lon)]}</td></tr>`;
+    }).join('')+`</table>`;
+
+  const etoHtml=eto.length
+    ? `<ul class="synl">${eto.map(e=>
+        `<li><span class="lg">✦ ${e.cible.gl}</span><span class="lt"><b>${e.etoile} sur ${e.cible.nom}</b>`+
+        `<span class="sub"> · ${degStr(e.lon)} ${signOf(e.lon)} · orbe ${e.orb.toFixed(2).replace('.',',')}° · magnitude ${String(e.mag).replace('.',',')}</span><br>`+
+        `${e.txt.charAt(0).toUpperCase()+e.txt.slice(1)}.</span></li>`).join('')}</ul>`
+    : `<p class="vide">Aucune de ces trente-sept étoiles ne tombe à moins de 1° d'une de tes planètes${kt?' ou de tes angles':''}. C'est le cas le plus fréquent : elles n'occupent qu'une fraction du cercle.</p>`;
+
+  const anaHtml=ana.length
+    ? `<ul class="synl">${ana.map(a=>
+        `<li><span class="lg">${a.gl}</span><span class="lt"><b>${a.nom} à ${degStr(a.lon)} ${signOf(a.lon)}</b><br>`+
+        `Dernier degré du signe : le registre est parcouru jusqu'au bout et pousse déjà vers le suivant. En pratique, une urgence sur ce terrain-là — tu y joues en fin de course, rarement posément.</span></li>`).join('')}</ul>`
+    : `<p class="vide">Aucun point au dernier degré d'un signe.</p>`;
+
+  $('struct').innerHTML=
+   `<p class="k">Structure du thème</p>
+    <p class="snote">Douze mesures de forme, pas de contenu : elles disent comment ta carte est bâtie, pas ce qu'elle raconte. Aucune n'entre dans les pourcentages d'éléments, l'indice d'attraction ou la synastrie — ces nombres-là sont inchangés.</p>
+    <div class="synth-grid">
+      ${blocSecte}
+      ${blocFort}
+    </div>
+    <h3 class="ssub">Quadrants et hémisphères</h3>
+    ${quadHtml}
+    <h3 class="ssub">Forme du thème</h3>
+    ${formeHtml}
+    <h3 class="ssub">Densité d'aspects</h3>
+    ${densHtml}
+    <h3 class="ssub">Figures d'aspects</h3>
+    ${figHtml}
+    <p class="note">Orbes resserrées pour les figures : 6° sur les conjonctions, carrés, trigones et oppositions, 4° sur les sextiles, 3° sur les quinconces du yod — plus strictes que la table d'aspects plus bas, qui travaille à 8°/6° pour l'affichage. Dix planètes, sans les angles : ces figures restent donc valables sans heure de naissance.</p>
+    <h3 class="ssub">Amas</h3>
+    ${amasHtml}
+    <h3 class="ssub">Dispositeurs</h3>
+    ${dspHtml}
+    <p class="note">Chaînes calculées en rulership moderne : Uranus pour le Verseau, Neptune pour les Poissons, Pluton pour le Scorpion. La rulership traditionnelle — Saturne, Jupiter et Mars pour ces trois signes — donne d'autres chaînes et souvent d'autres dispositeurs finaux. C'est un choix de système, pas un fait de ta carte.</p>
+    <h3 class="ssub">Rétrogrades</h3>
+    ${retHtml}
+    <h3 class="ssub">Décans et duades</h3>
+    ${decHtml}
+    <p class="note">Décans par triplicité : le 1er revient au maître du signe, le 2e et le 3e aux maîtres des deux autres signes du même élément. L'autre système répandu, l'ordre chaldéen, distribue les décans dans la suite Mars–Soleil–Vénus–Mercure–Lune–Saturne–Jupiter à partir du Bélier et donne d'autres sous-régents. Aucun des deux ne change le signe.</p>
+    <h3 class="ssub">Étoiles fixes</h3>
+    ${etoHtml}
+    <p class="note">Trente-sept étoiles de la tradition, conjonction par longitude à 1° — la latitude écliptique n'entre pas dans le test, comme il est d'usage, alors que certaines de ces étoiles sont à plus de 40° du plan du zodiaque. Longitudes J2000 précessées à la date par la même fonction que les planètes ; le mouvement propre, sous 6′ par siècle, est négligé. Ces étoiles ne sont pas des astres du thème : elles colorent le point qu'elles touchent, elles n'agissent pas seules et n'entrent dans aucun décompte de cette page.</p>
+    <h3 class="ssub">Degrés anarétiques</h3>
+    ${anaHtml}
+    ${kt?'':'<p class="note">Heure de naissance inconnue : la secte, la Part de Fortune et les quadrants sont hors de portée, et les amas ne sont comptés que par signe. La forme du thème, les figures, la densité, les dispositeurs, les rétrogrades, les décans et les degrés anarétiques ne dépendent que de la date et restent exacts.</p>'}`;
+}
+
+/* ========================================================================
+   5octies. Progressions secondaires
+   Un jour après la naissance vaut une année de vie. La carte progressée
+   n'est donc pas un transit : elle ne décrit pas le ciel d'aujourd'hui mais
+   la maturation de la carte de naissance. Elle passe par positions(), sans
+   nouvelle astronomie — seule la date d'évaluation change.
+
+   Seules les cinq planètes rapides sont retenues. Au rythme d'un jour par
+   an, Jupiter avance de 0,08° par année de vie et Pluton de 0,004° : leurs
+   « progressions » ne sont que leurs positions natales, et les afficher
+   ferait passer un aspect natal pour un événement.
+
+   Les angles progressés sont volontairement absents. Il en existe au moins
+   trois conventions incompatibles — ascendant recalculé pour le lieu à la
+   date progressée, arc solaire, mesure de Naibod — qui écartent le MC de
+   plusieurs degrés sur une vie. En choisir une sans le dire donnerait une
+   maison progressée fausse avec l'aplomb d'une maison juste.
+   ======================================================================== */
+const AN_TROP=365.242190;
+const PROG_CORPS=['soleil','lune','mercure','venus','mars'];
+const sgn180=x=>((x+540)%360)-180;
+function progJD(jdN,jdNow){return jdN+(jdNow-jdN)/AN_TROP;}
+function progVersReel(jdN,jdP){return jdN+(jdP-jdN)*AN_TROP;}
+/* Prochain changement de signe d'une fonction de longitude, cherché sur une
+   fenêtre assez courte pour ne contenir qu'une seule frontière. */
+function prochainSigne(fn,jdP,fen){
+  const c=(Math.floor(n360(fn(jdP))/30)+1)*30;
+  if(sgn180(fn(jdP+fen)-c)<0)return null;
+  let a=jdP,b=jdP+fen;
+  for(let i=0;i<50;i++){const m=(a+b)/2; if(sgn180(fn(m)-c)<0)a=m;else b=m;}
+  return {jd:(a+b)/2,signe:Math.round(n360(c)/30)%12};
+}
+/* Lunaison progressée : le cycle Soleil–Lune progressés dure environ 29 ans
+   et demi de vie. On rend la prochaine des deux phases cardinales. */
+function prochaineLunaisonProg(jdP){
+  const f=t=>sgn180(moonLon(t)-sunLon(t));
+  let prev=f(jdP);
+  for(let t=jdP+0.05;t<jdP+31;t+=0.05){
+    const cur=f(t);
+    const nouvelle=(prev<0)!==(cur<0)&&Math.abs(prev)<20&&Math.abs(cur)<20;
+    const pleine=Math.abs(prev)>160&&Math.abs(cur)>160&&(prev>0)!==(cur>0);
+    if(nouvelle||pleine){
+      let a=t-0.05,b=t;
+      for(let i=0;i<40;i++){
+        const m=(a+b)/2, g=f(m);
+        const memeCote=nouvelle?((g<0)===(prev<0)):((g>0)===(prev>0));
+        if(memeCote)a=m;else b=m;
+      }
+      return {jd:(a+b)/2,quoi:nouvelle?'nouvelle lune progressée':'pleine lune progressée'};
+    }
+    prev=cur;
+  }
+  return null;
+}
+const dElide=t=>('aeiouyhàâéèêîïôûAEIOUY'.indexOf(t[0])>=0?"d'":'de ')+t;
+const PROG_LUNE_S=['te lancer et ouvrir des fronts','consolider et t\'ancrer dans le concret',
+ 'apprendre, circuler, multiplier les contacts','revenir au foyer et aux liens du fond',
+ 'te montrer et créer pour de vrai','trier, régler, remettre en ordre',
+ 'négocier et te définir face à quelqu\'un','aller au fond, quitte à ce que ça remue',
+ 'élargir le cadre et chercher du sens','construire du solide et prendre la charge',
+ 'sortir du rang et rejoindre un collectif','laisser reposer, digérer, refermer un cycle'];
+const PROG_PHASE=[
+ 'Ta lunaison progressée est en phase montante : ce que tu as semé au dernier cycle prend forme et demande à être montré.',
+ 'Ta lunaison progressée est en phase descendante : le cycle se referme, c\'est un temps de récolte et de tri plutôt que de lancement.'];
+
+function renderProg(){
+  const {natal,hs,profile,jd}=CHART;
+  const kt=profile.knownTime;
+  const now=new Date(), jdNow=jdFromUTC(now);
+  const jdP=progJD(jd,jdNow);
+  const prog=positions(jdP);
+  const age=(jdNow-jd)/AN_TROP;
+  const dateP=jdToDate(jdP).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
+  const dt=j=>jdToDate(progVersReel(jd,j)).toLocaleDateString('fr-CA',{month:'long',year:'numeric'});
+
+  /* Pas de colonne « écart » : sur quarante ans la Lune progressée boucle
+     plus d'un tour et demi, et tout écart affiché modulo 360° se lirait
+     comme un recul. Le signe natal en regard dit la même chose sans mentir. */
+  const lig=b=>
+    `<tr><td class="g">${GLYPH[b]}</td><td>${NAMES[b]}</td>`+
+    `<td>${degStr(prog[b].lon)} ${signLab(prog[b].lon)}${prog[b].retro?' <span class="rx">℞</span>':''}</td>`+
+    (kt?`<td>${houseOf(prog[b].lon,hs.cusps)}</td>`:'')+
+    `<td>${signLab(natal[b].lon)}</td></tr>`;
+  const tbl=`<table class="eph"><tr><th colspan="2">Progressé</th><th>Position</th>`+
+    (kt?'<th>M. natale</th>':'')+`<th>Signe natal</th></tr>`+
+    PROG_CORPS.map(lig).join('')+`</table>`;
+
+  const sL=signIdx(prog.lune.lon), sS=signIdx(prog.soleil.lon);
+  const inL=prochainSigne(moonLon,jdP,3.2), inS=prochainSigne(sunLon,jdP,32);
+  const lun=prochaineLunaisonProg(jdP);
+  const ecart=n360(prog.lune.lon-prog.soleil.lon);
+
+  /* Aspects de la carte progressée à la carte natale. Orbe de 1° : à ce
+     rythme la Lune progressée franchit un degré en un an, donc un orbe plus
+     large étalerait chaque contact sur trois ans et ne daterait plus rien. */
+  const src={}; for(const b of PROG_CORPS)src[b]=prog[b];
+  const asp=findAspects(src,natal,1.5,1,false).filter(a=>a.q!=='noeud');
+  const aspHtml=asp.length
+    ? `<ul class="synl">${asp.slice(0,8).map(a=>
+        `<li><span class="lg">${GLYPH[a.p]} ${a.asp.g} ${GLYPH[a.q]}</span><span class="lt">`+
+        `<b>${NAMES[a.p]} progressé ${a.asp.n.toLowerCase()} ${NAMES[a.q]} natal</b>`+
+        /* Pas le drapeau `exact` de findAspects : il vaut « moins de 1° », or
+           l'orbe entière vaut ici 1°, donc tout serait exact. */
+        `<span class="sub"> · orbe ${a.orb.toFixed(2).replace('.',',')}°${a.orb<0.1?' · au plus serré':''}</span><br>`+
+        `${SUJ[a.p]} en version mûrie ${ASP_VERB[a.asp.n]} ${NATAL_PART[a.q]} — un chapitre, pas une journée.</span></li>`).join('')}</ul>`
+    : `<p class="vide">Aucun aspect à moins de 1° entre ta carte progressée et ta carte natale en ce moment. Les progressions marchent par paliers de plusieurs années : les intervalles vides sont la règle, pas l'exception.</p>`;
+
+  $('prog').innerHTML=
+   `<p class="k">Carte progressée</p>
+    <p class="snote">Un jour après ta naissance vaut une année de vie : à ${Math.floor(age)} ans, ta carte progressée est le ciel du ${dateP}. Ce n'est pas le ciel d'aujourd'hui — c'est ta carte de naissance en train de mûrir, et elle se lit en chapitres de plusieurs années, jamais en journées.</p>
+    ${tbl}
+    <h3 class="ssub">Lune progressée</h3>
+    <p><b>${signLab(prog.lune.lon)}</b> — la période demande ${dElide(PROG_LUNE_S[sL])}.`+
+    (inL?` Elle passe en ${SIGNS[inL.signe]} vers ${dt(inL.jd)}.`:'')+
+    `<br>${ecart<180?PROG_PHASE[0]:PROG_PHASE[1]}`+
+    (lun?` Prochaine étape : ${lun.quoi} vers ${dt(lun.jd)}.`:'')+
+    `</p>
+    <h3 class="ssub">Soleil progressé</h3>
+    <p><b>${signLab(prog.soleil.lon)}</b>${sS===signIdx(natal.soleil.lon)?' — encore ton signe natal':' — ton Soleil a changé de signe depuis ta naissance, ce qui arrive une à deux fois par vie et se sent sur des décennies'}.`+
+    (inS?` Passage en ${SIGNS[inS.signe]} vers ${dt(inS.jd)}.`:' Aucun changement de signe dans les trente prochaines années.')+
+    `</p>
+    <h3 class="ssub">Contacts progressés sur ta carte natale</h3>
+    ${aspHtml}
+    <p class="note">Cinq corps seulement : au rythme d'un jour par an, Jupiter avance de 0,08° par année de vie et Pluton de 0,004° — leurs progressions sont leurs positions natales, et les afficher ferait passer un aspect de naissance pour un événement. Les angles progressés sont absents faute de convention unique : ascendant recalculé, arc solaire et mesure de Naibod donnent des milieux du ciel écartés de plusieurs degrés sur une vie. Les maisons indiquées sont les maisons natales, traversées par les planètes progressées.</p>`;
+}
+
+/* ========================================================================
    6. Rendu
    ======================================================================== */
 const $=id=>document.getElementById(id);
@@ -2959,7 +3668,7 @@ function renderChart(){
     for(let i=0;i<12;i++)h+=`<tr><td>${i+1}</td><td>${degStr(hs.cusps[i])} ${signLab(hs.cusps[i])}</td></tr>`;
     $('house-tbl').innerHTML=h;
   }
-  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderAmour();
+  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderStruct(); renderProg(); renderAmour();
 }
 
 function renderTransits(tr,hits){
@@ -2988,7 +3697,91 @@ function todayKey(){
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-function buildPrompt(tr,hits,jd){
+/* Lune hors-course (vide de cours). La Lune est hors-course quand elle ne
+   forme plus aucun aspect majeur avant de quitter son signe. C'est le seul
+   fait du jour que la lecture ne pouvait pas nommer : les transits disent ce
+   qui se branche, celui-ci dit quand plus rien ne se branche.
+
+   Corps retenus : Soleil à Saturne, l'ensemble classique. Inclure Uranus,
+   Neptune et Pluton — la variante moderne — raccourcit fortement les
+   fenêtres, au point que la mesure ne distingue plus grand-chose. Le choix
+   est dit dans la page plutôt que caché ici.
+
+   Le balayage couvre tout le séjour de la Lune dans son signe, entrée
+   comprise : il faut le dernier aspect, y compris s'il est déjà passé. Un
+   pas de 0,05 jour suffit — la Lune s'éloigne d'une planète d'au plus 15°
+   par jour, donc de 0,75° par pas, et l'encadrement est ensuite resserré
+   par dichotomie. */
+const VOC_CORPS=['soleil','mercure','venus','mars','jupiter','saturne'];
+/* Les angles signés, pas seulement les cinq valeurs nominales : la Lune
+   peut être à 60° d'une planète d'un côté comme de l'autre, et ne tester que
+   +60 laisse passer la moitié des aspects — l'écart séparant du fait de
+   l'écart appliquant. Avec sgn180, −60 et +300 sont le même angle. */
+const VOC_ANG=[0,60,-60,90,-90,120,-120,180];
+function moonFrontiere(jd,dir){
+  const cible=dir>0?(Math.floor(n360(moonLon(jd))/30)+1)*30
+                   :Math.floor(n360(moonLon(jd))/30)*30;
+  let a=dir>0?jd:jd-3, b=dir>0?jd+3:jd;
+  for(let i=0;i<50;i++){
+    const m=(a+b)/2;
+    if(sgn180(moonLon(m)-cible)<0)a=m;else b=m;
+  }
+  return (a+b)/2;
+}
+function vocScan(jd){
+  const entree=moonFrontiere(jd,-1), sortie=moonFrontiere(jd,1), pas=0.05;
+  const ev=[];
+  let tp=entree, mp=moonLon(entree), pp={};
+  for(const p of VOC_CORPS)pp[p]=bodyLon(p,entree);
+  for(let t=entree+pas;t<=sortie+pas;t+=pas){
+    const tt=Math.min(t,sortie), m=moonLon(tt), cur={};
+    for(const p of VOC_CORPS)cur[p]=bodyLon(p,tt);
+    for(const p of VOC_CORPS)for(const A of VOC_ANG){
+      const g0=sgn180(mp-pp[p]-A), g1=sgn180(m-cur[p]-A);
+      /* Le garde sur l'amplitude écarte la discontinuité de sgn180, qui
+         tombe sur la conjonction quand on teste l'opposition. */
+      if((g0<0)!==(g1<0)&&Math.abs(g0)<10&&Math.abs(g1)<10){
+        let a=tp,b=tt;
+        for(let i=0;i<32;i++){
+          const mm=(a+b)/2, gm=sgn180(moonLon(mm)-bodyLon(p,mm)-A);
+          if((gm<0)===(g0<0))a=mm;else b=mm;
+        }
+        ev.push({jd:(a+b)/2,p,A});
+      }
+    }
+    tp=tt;mp=m;pp=cur;
+    if(tt>=sortie)break;
+  }
+  ev.sort((x,y)=>x.jd-y.jd);
+  const dernier=ev.length?ev[ev.length-1]:null;
+  const debut=dernier?dernier.jd:entree;
+  return {entree,sortie,debut,dernier,ev,voc:jd>=debut,signe:signIdx(moonLon(jd)),
+          suivant:signIdx(moonLon(sortie+0.01))};
+}
+const heureDe=j=>jdToDate(j).toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'});
+/* Rend « à 14 h 20 », « demain à 3 h 12 », « le 8 septembre à 3 h 12 » :
+   la préposition est incluse, les trois formes ne la prenant pas au même
+   endroit. */
+function momentDe(j){
+  const d=jdToDate(j), n=new Date();
+  const jour=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+  const demain=new Date(n.getTime()+86400000), hier=new Date(n.getTime()-86400000);
+  if(jour(d,n))return 'à '+heureDe(j);
+  if(jour(d,demain))return 'demain à '+heureDe(j);
+  if(jour(d,hier))return 'hier à '+heureDe(j);
+  return 'le '+dLong(j)+' à '+heureDe(j);
+}
+function vocTexte(v){
+  const nomAsp=A=>ASPECTS.find(x=>x.a===Math.abs(A)).n.toLowerCase();
+  const der=v.dernier?`Lune ${nomAsp(v.dernier.A)} ${NAMES[v.dernier.p]}`:null;
+  const fin=`jusqu'à son entrée en ${SIGNS[v.suivant]} ${momentDe(v.sortie)}`;
+  return v.voc
+    ? `Lune hors-course depuis son dernier aspect`+(der?` — ${der} ${momentDe(v.debut)}`:` du signe`)+`, ${fin}. `+
+      `La tradition déconseille d'y lancer ce qui doit tenir : à prendre comme une permission de lever le pied, pas comme un interdit.`
+    : `Lune active en ${SIGNS[v.signe]}. Prochaine fenêtre hors-course`+(der?` après ${der}`:'')+`, ${momentDe(v.debut)}, ${fin}.`;
+}
+
+function buildPrompt(tr,hits,jd,voc){
   const {natal,hs,profile}=CHART;
   const kt=profile.knownTime;
   const natalTxt=BODIES.map(b=>`${NAMES[b]} ${degStr(natal[b].lon)} ${signOf(natal[b].lon)}${natal[b].retro&&b!=='noeud'?' rétrograde':''}${kt?` (maison ${houseOf(natal[b].lon,hs.cusps)})`:''}`).join('; ');
@@ -3013,6 +3806,7 @@ Points karmiques (repères, pas des planètes — n'en parle que s'ils éclairen
 CIEL DU ${dateTxt.toUpperCase()}
 ${trTxt}
 Phase lunaire : ${phase}
+${voc?'Lune hors-course : '+vocTexte(voc):''}
 Transits actifs sur le thème : ${hitTxt}
 
 Écris la lecture du jour. Contraintes :
@@ -3371,7 +4165,7 @@ function spanReading(period,win){
   };
 }
 
-function localReading(tr,hits){
+function localReading(tr,hits,voc){
   const {natal,hs,profile}=CHART;
   const kt=profile.knownTime;
   const r=rng(seedFrom(todayKey()+profile.date+(profile.nom||'')));
@@ -3405,7 +4199,8 @@ function localReading(tr,hits){
   const ciel=`${phase.charAt(0).toUpperCase()+phase.slice(1)}, Lune en ${signEmo(tr.lune.lon)} ${signOf(tr.lune.lon)}`+
     (kt?` dans ta maison ${houseOf(tr.lune.lon,hs.cusps)}`:'')+`. `+
     (dom?`Le fait dominant du jour : ${low(SUJ[dom.p])} en transit, ${dom.asp.n.toLowerCase()} à ${poss(dom.q)}${orbTxt(dom)}.`
-        :`Aucun transit serré sur ta carte — journée sans forçage, le ciel te laisse la main.`);
+        :`Aucun transit serré sur ta carte — journée sans forçage, le ciel te laisse la main.`)+
+    (voc&&voc.voc?` La Lune est hors-course jusqu'à son entrée en ${SIGNS[voc.suivant]} ${momentDe(voc.sortie)} : rien de neuf ne prend vraiment appui d'ici là.`:'');
 
   const cat=dom?HARD[dom.asp.n]:'doux';
   const key=dom?dom.p:'lune';
@@ -3484,6 +4279,12 @@ async function loadReading(force){
   const hits=findAspects(tr,CHART.natal,5,3,false).filter(x=>x.p!=='noeud');
   renderTransits(tr,hits);
 
+  /* La Lune hors-course ne concerne que la journée : sur une semaine ou un
+     mois, elle se referme et se rouvre une douzaine de fois. */
+  const voc=PERIOD==='jour'?vocScan(jd):null;
+  $('voc').textContent=voc?vocTexte(voc):'';
+  $('voc').classList.toggle('hidden',!voc);
+
   if(!force){
     const cached=await store.get(key);
     if(cached){paintReading(cached);setSource(cached.src);return;}
@@ -3492,7 +4293,7 @@ async function loadReading(force){
   if(PERIOD!=='jour')$('reading').innerHTML='<p class="loading">Balayage de la période</p>';
 
   // 1. lecture locale, immédiate et sans réseau
-  const local=PERIOD==='jour'?localReading(tr,hits):spanReading(PERIOD,win);
+  const local=PERIOD==='jour'?localReading(tr,hits,voc):spanReading(PERIOD,win);
   local.src='local';
   paintReading(local);
   setSource('local');
@@ -3502,7 +4303,7 @@ async function loadReading(force){
   // 2. si l'API est joignable, on remplace la lecture du jour par une version rédigée
   if(apiDown||PERIOD!=='jour')return;
   try{
-    const o=await askClaude(buildPrompt(tr,hits,jd));
+    const o=await askClaude(buildPrompt(tr,hits,jd,voc));
     o.src='claude';
     await store.set(key,o);
     paintReading(o);
