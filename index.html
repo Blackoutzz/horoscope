@@ -24,6 +24,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>
+/* Appliqué avant le rendu : lu ici plutôt que dans le script de fin de page,
+   sinon la palette claire s'affiche une fraction de seconde avant de basculer.
+   Sans préférence enregistrée, on laisse prefers-color-scheme décider. */
+try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch(e){}
+</script>
 <style>
   :root{
     --vellum:#EFE9DA;
@@ -37,14 +43,73 @@
     --body:"Avenir Next",Avenir,"Segoe UI",system-ui,-apple-system,sans-serif;
     --data:ui-monospace,"SF Mono","Roboto Mono","Courier New",monospace;
     --glyph:"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols 2",serif;
+    --halo-a:rgba(62,124,110,.07);
+    --halo-b:rgba(27,42,68,.08);
+    --disc:0.035;
+    /* Triplets bruts : les teintes se composent en rgb(... / alpha) pour
+       qu'un changement de thème les emporte aussi. Une valeur en dur ici
+       survivrait au basculement et jurerait sur fond sombre. */
+    --v-rgb:62 124 110;
+    --m-rgb:166 67 47;
+    --shadow:rgba(27,42,68,.16);
+    --ring:rgba(27,42,68,.22);
   }
+  /* Thème sombre. Les tokens sont redéfinis, jamais les règles : toute couleur
+     doit passer par une variable, sinon elle survit au basculement. Encre et
+     vélin ne s'inversent pas bêtement — un #EFE9DA sur #1B2A44 vibre. Le vert-
+     de-gris et le minium sont éclaircis pour tenir le contraste sur fond sombre. */
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --vellum:#141A28;
+      --vellum-deep:#1C2434;
+      --ink:#DCD5C4;
+      --ink-soft:#9AA3B4;
+      --verdigris:#6FB3A1;
+      --minium:#D9755C;
+      --rule:rgba(220,213,196,.20);
+      --halo-a:rgba(111,179,161,.10);
+      --halo-b:rgba(220,213,196,.06);
+      --disc:0.10;
+      --v-rgb:111 179 161;
+      --m-rgb:217 117 92;
+      --shadow:rgba(0,0,0,.45);
+      --ring:rgba(220,213,196,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --vellum:#141A28;
+    --vellum-deep:#1C2434;
+    --ink:#DCD5C4;
+    --ink-soft:#9AA3B4;
+    --verdigris:#6FB3A1;
+    --minium:#D9755C;
+    --rule:rgba(220,213,196,.20);
+    --halo-a:rgba(111,179,161,.10);
+    --halo-b:rgba(220,213,196,.06);
+    --disc:0.10;
+    --v-rgb:111 179 161;
+    --m-rgb:217 117 92;
+    --shadow:rgba(0,0,0,.45);
+    --ring:rgba(220,213,196,.28);
+  }
+  html{background:var(--vellum)}
   *{box-sizing:border-box}
+  .topbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:6px}
+  .tbtn{
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);background:transparent;border:1px solid var(--rule);
+    border-radius:2px;width:30px;height:30px;padding:0;cursor:pointer;
+  }
+  .tico{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;
+    stroke-linecap:round;stroke-linejoin:round}
+  .tbtn:hover{color:var(--ink);border-color:var(--ink-soft)}
+  .tbtn:focus-visible{outline:2px solid var(--verdigris);outline-offset:2px}
   .wrap{
     font-family:var(--body);
     color:var(--ink);
     background:
-      radial-gradient(ellipse at 20% 0%,rgba(62,124,110,.07),transparent 60%),
-      radial-gradient(ellipse at 100% 100%,rgba(27,42,68,.08),transparent 55%),
+      radial-gradient(ellipse at 20% 0%,var(--halo-a),transparent 60%),
+      radial-gradient(ellipse at 100% 100%,var(--halo-b),transparent 55%),
       var(--vellum);
     padding:clamp(20px,4vw,48px);
     border-radius:2px;
@@ -127,7 +192,7 @@
     #numblock{order:2}
   }
   .reveal{margin-top:34px;border:1px solid var(--rule);border-left:2px solid var(--verdigris);
-    background:rgba(62,124,110,.045);padding:18px clamp(16px,2.5vw,26px) 4px}
+    background:rgb(var(--v-rgb) / .045);padding:18px clamp(16px,2.5vw,26px) 4px}
   .reveal .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
     color:var(--ink-soft);margin:0 0 14px}
   .reveal b{font-weight:600}
@@ -145,7 +210,7 @@
   .recents{max-width:420px}
   .recents .sk{display:none}
   .recbox{border:1px solid var(--rule);border-left:2px solid var(--verdigris);
-    background:rgba(62,124,110,.045);padding:4px 14px}
+    background:rgb(var(--v-rgb) / .045);padding:4px 14px}
   ul.reclist{list-style:none;margin:0;padding:0}
   ul.reclist li{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule)}
   ul.reclist li:last-child{border-bottom:0}
@@ -198,7 +263,7 @@
   .erow .ech{flex:0 0 auto;font-size:10px;color:var(--ink-soft);transition:transform .15s}
   button.erow.on .ech{transform:rotate(90deg);color:var(--verdigris)}
   .edraw{margin:2px 0 14px;padding:14px 18px;border-left:2px solid var(--verdigris);
-    background:rgba(62,124,110,.05)}
+    background:rgb(var(--v-rgb) / .05)}
   .edraw .ed1{font-size:12.5px;color:var(--ink-soft);margin:0 0 7px;max-width:88ch}
   .edraw .ed1 b{color:var(--ink)}
   .edraw .ed2{font-size:14px;margin:0 0 12px;max-width:80ch}
@@ -214,20 +279,21 @@
   .apphead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
   .apphead .eyebrow{flex:1 1 auto}
   .shmenu{position:relative;flex:0 0 auto}
-  button.shtog{background:transparent;border:1px solid var(--rule);border-radius:1px;padding:8px;
-    cursor:pointer;color:var(--ink-soft);line-height:0;transition:color .18s,border-color .18s}
+  /* La boite vient de .tbtn : les deux commandes de la barre doivent faire
+     exactement le meme carre, sinon l'alignement se voit. */
+  button.shtog{transition:color .18s,border-color .18s}
   button.shtog:hover{color:var(--verdigris);border-color:var(--verdigris)}
-  button.shtog svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;
+  button.shtog svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   ul.shlist{position:absolute;z-index:30;top:calc(100% + 5px);right:0;margin:0;padding:0;list-style:none;
     min-width:210px;background:var(--vellum);border:1px solid var(--ink);
-    box-shadow:0 8px 22px rgba(27,42,68,.16)}
+    box-shadow:0 8px 22px var(--shadow)}
   ul.shlist li{border-bottom:1px solid var(--rule)}
   ul.shlist li:last-child{border-bottom:0}
   ul.shlist button{display:block;width:100%;text-align:left;background:transparent;border:0;cursor:pointer;
     font-family:var(--data);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--ink);padding:11px 14px}
-  ul.shlist button:hover{background:rgba(62,124,110,.13);color:var(--verdigris)}
+  ul.shlist button:hover{background:rgb(var(--v-rgb) / .13);color:var(--verdigris)}
   .comparebar{margin-top:24px;border-top:1px solid var(--rule);padding-top:18px}
   .comparebar .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;max-width:82ch}
   .comparebar .err{margin-top:12px}
@@ -247,11 +313,11 @@
   button.combotog:hover{color:var(--verdigris)}
   ul.combolist{position:absolute;z-index:20;top:100%;left:0;right:0;margin:2px 0 0;padding:0;list-style:none;
     background:var(--vellum);border:1px solid var(--ink);max-height:264px;overflow:auto;
-    box-shadow:0 8px 22px rgba(27,42,68,.16)}
+    box-shadow:0 8px 22px var(--shadow)}
   ul.combolist li{display:flex;align-items:baseline;gap:10px;padding:9px 12px;cursor:pointer;
     border-bottom:1px solid var(--rule)}
   ul.combolist li:last-child{border-bottom:0}
-  ul.combolist li:hover,ul.combolist li.hi{background:rgba(62,124,110,.13)}
+  ul.combolist li:hover,ul.combolist li.hi{background:rgb(var(--v-rgb) / .13)}
   .combolist .ce{flex:0 0 auto;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:14px}
   .combolist .cn{flex:0 1 auto;font-family:var(--display);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .combolist .cd{flex:0 0 auto;margin-left:auto;font-family:var(--data);font-size:9.5px;
@@ -280,8 +346,8 @@
   .tcv{flex:0 0 3.4em;text-align:right;font-family:var(--data);font-size:10px;color:var(--ink-soft);line-height:1.45}
   .tg{flex:0 0 auto;font-family:var(--data);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
     padding:4px 8px;border:1px solid var(--rule);border-radius:2px;white-space:nowrap}
-  .tg.cp{border-color:rgba(62,124,110,.5);background:rgba(62,124,110,.09);color:var(--verdigris)}
-  .tg.am{border-color:rgba(166,67,47,.4);background:rgba(166,67,47,.06);color:var(--minium)}
+  .tg.cp{border-color:rgb(var(--v-rgb) / .5);background:rgb(var(--v-rgb) / .09);color:var(--verdigris)}
+  .tg.am{border-color:rgb(var(--m-rgb) / .4);background:rgb(var(--m-rgb) / .06);color:var(--minium)}
   .tg.ph{color:var(--ink-soft)}
   .lg1,.lg2{font-family:var(--data);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
     padding-left:15px;position:relative;margin-left:10px}
@@ -296,6 +362,21 @@
   ul.synl .lg{flex:0 0 3.6em;font-family:var(--glyph);font-size:13px;letter-spacing:.08em}
   ul.synl .lt{flex:1 1 auto}
   ul.synl .sub{color:var(--ink-soft);font-family:var(--data);font-size:10px}
+  /* Axe karmique — même gabarit que .amour, glyphes tracés plutôt qu'écrits */
+  .karma{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .karma .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}
+  .karma .knote{font-size:11.5px;color:var(--ink-soft);margin:0 0 16px;max-width:80ch}
+  .karma .ksub{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:400;margin:22px 0 4px}
+  .karma .sect h3{display:flex;align-items:center;gap:6px}
+  .karma .axe p{max-width:60ch}
+  .karma .vide{color:var(--ink-soft);font-size:13px;margin:6px 0 0;max-width:80ch}
+  .karma .note{font-size:11.5px;color:var(--ink-soft);margin:16px 0 0;max-width:80ch}
+  .karma details{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px}
+  .karma details .sub{display:block;font-size:11.5px;color:var(--ink-soft);margin:10px 0;max-width:80ch}
+  .karma details td.g{width:1.6em}
+  .ksvg{width:1em;height:1em;vertical-align:-.14em;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .amour{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
   .amour .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px}
   .amour .lead{font-size:15px;max-width:78ch;margin:6px 0 20px}
@@ -345,11 +426,14 @@
   .wheel .ring{fill:none;stroke:var(--ink);stroke-width:1;opacity:.85}
   .wheel .hair{stroke:var(--ink);stroke-width:.5;opacity:.35;fill:none}
   /* cœur assombri : teinte franche, pas le noir plein qu'un fill manquant produisait */
-  .wheel .disc{stroke:none;fill:var(--ink);fill-opacity:.035}
+  .wheel .disc{stroke:none;fill:var(--ink);fill-opacity:var(--disc)}
   .wheel .spoke{stroke:var(--ink);stroke-width:.6;opacity:.3;stroke-dasharray:2 3}
   .wheel .axis{stroke:var(--ink);stroke-width:1.2;opacity:.8}
   .wheel .asp{stroke-width:.7;fill:none;opacity:.5}
   .wheel .signglyph{font-family:var(--glyph);font-size:15px;fill:var(--ink);opacity:.55;text-anchor:middle;dominant-baseline:central}
+  .wheel .kaxis{stroke:var(--ink);stroke-width:.8;opacity:.45;stroke-dasharray:5 4}
+  .wheel .kmark{fill:none;stroke:var(--ink);stroke-width:2;opacity:.55;stroke-linecap:round;stroke-linejoin:round}
+  .wheel .karm{opacity:.55}
   .wheel .plglyph{font-family:var(--glyph);font-size:17px;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
   .wheel .pldeg{font-family:var(--data);font-size:7px;fill:var(--ink-soft);text-anchor:middle;dominant-baseline:central}
   .wheel .axlabel{font-family:var(--data);font-size:8.5px;letter-spacing:.12em;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
@@ -400,7 +484,7 @@
     flex:0 0 76px;height:76px;border:1px solid var(--ink);border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     font-family:var(--display);font-size:34px;line-height:1;
-    box-shadow:0 0 0 3px var(--vellum),0 0 0 4px rgba(27,42,68,.22);
+    box-shadow:0 0 0 3px var(--vellum),0 0 0 4px var(--ring);
   }
   .numero .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
   .numero .nm{font-family:var(--display);font-size:23px;line-height:1.15;margin:5px 0 4px}
@@ -410,8 +494,8 @@
     color:var(--ink-soft);margin:0 0 8px}
   ul.tags{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px;padding:0}
   ul.tags li{font-size:12.5px;line-height:1;padding:6px 10px;border:1px solid var(--rule);border-radius:2px}
-  ul.tags li.tf{border-color:rgba(62,124,110,.45);background:rgba(62,124,110,.07);color:var(--ink)}
-  ul.tags li.tl{border-color:rgba(166,67,47,.35);background:rgba(166,67,47,.05);color:var(--ink)}
+  ul.tags li.tf{border-color:rgb(var(--v-rgb) / .45);background:rgb(var(--v-rgb) / .07);color:var(--ink)}
+  ul.tags li.tl{border-color:rgb(var(--m-rgb) / .35);background:rgb(var(--m-rgb) / .05);color:var(--ink)}
   .numero .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0}
   .emo{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:.95em;line-height:1}
   .loading{font-family:var(--data);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
@@ -446,6 +530,24 @@
 <body>
 
 <div class="wrap">
+  <div class="topbar">
+    <button class="tbtn" id="themebtn" type="button" aria-live="polite"></button>
+    <div class="shmenu hidden" id="shmenu">
+      <button class="tbtn shtog" id="shtog" type="button" aria-label="Partager cette carte"
+              aria-haspopup="true" aria-expanded="false" aria-controls="shlist">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="18" cy="5" r="2.7"/><circle cx="6" cy="12" r="2.7"/><circle cx="18" cy="19" r="2.7"/>
+          <path d="M8.4 10.7 15.6 6.5M8.4 13.3l7.2 4.2"/>
+        </svg>
+      </button>
+      <ul class="shlist hidden" id="shlist" role="menu" aria-label="Partager">
+        <li role="none"><button role="menuitem" type="button" tabindex="-1" id="mcode">Copier mon code</button></li>
+        <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" tabindex="-1" id="mlink">Copier le lien</button></li>
+        <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" tabindex="-1" id="mshare">Partager le lien…</button></li>
+      </ul>
+    </div>
+  </div>
+
   <!-- ============ SETUP ============ -->
   <section id="setup">
     <p class="eyebrow">Registre de naissance</p>
@@ -523,20 +625,6 @@
   <section id="app" class="hidden">
     <div class="apphead">
       <p class="eyebrow" id="birthline"></p>
-      <div class="shmenu" id="shmenu">
-        <button class="shtog" id="shtog" type="button" aria-label="Partager cette carte"
-                aria-haspopup="true" aria-expanded="false" aria-controls="shlist">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="18" cy="5" r="2.7"/><circle cx="6" cy="12" r="2.7"/><circle cx="18" cy="19" r="2.7"/>
-            <path d="M8.4 10.7 15.6 6.5M8.4 13.3l7.2 4.2"/>
-          </svg>
-        </button>
-        <ul class="shlist hidden" id="shlist" role="menu" aria-label="Partager">
-          <li role="none"><button role="menuitem" type="button" tabindex="-1" id="mcode">Copier mon code</button></li>
-          <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" tabindex="-1" id="mlink">Copier le lien</button></li>
-          <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" tabindex="-1" id="mshare">Partager le lien…</button></li>
-        </ul>
-      </div>
     </div>
     <h1 class="title" id="whoami"></h1>
     <p class="intro" id="intro"></p>
@@ -559,6 +647,8 @@
     <section class="reveal" id="reveal"></section>
 
     <section class="synth" id="synth"></section>
+
+    <section class="karma" id="karma"></section>
 
     <section class="amour" id="amour"></section>
 
@@ -717,7 +807,7 @@ const PL={
           -0.00031596,0.00005170,0.00004818,145.20780515,-0.04062942,-0.01183482]
 };
 function helio(name,T){
-  const e0=PL[name];
+  const e0=Array.isArray(name)?name:PL[name];
   const a=e0[0]+e0[6]*T, ec=e0[1]+e0[7]*T, I=e0[2]+e0[8]*T,
         L=e0[3]+e0[9]*T, wb=e0[4]+e0[10]*T, om=e0[5]+e0[11]*T;
   const w=wb-om;
@@ -736,25 +826,119 @@ function helio(name,T){
     z:(sw*si)*xp+(cw*si)*yp
   };
 }
+/* Précession générale depuis J2000, en degrés (Lieske) : les éléments de
+   Standish sont rapportés à l'écliptique J2000, le zodiaque tropical à
+   l'équinoxe de la date. Sans ce terme, les planètes dérivent de 1,4° en
+   1900 — assez pour afficher un signe faux près d'une cuspide. */
+const precession=T=>1.3969713*T+0.0003086*T*T;
 function planetLon(name,jd){
   const T=centuries(jd);
   const p=helio(name,T), e=helio('terre',T);
-  return n360(atan2(p.y-e.y,p.x-e.x));
+  return n360(atan2(p.y-e.y,p.x-e.x)+precession(T));
+}
+
+/* --- Points karmiques ---------------------------------------------------
+   Le nœud sud est le nœud nord à 180°, jamais autre chose : aucun calcul.
+   La Lune noire est l'apogée *moyen* de la Lune (même famille de polynômes
+   que moonNode). L'apogée osculateur — la « vraie » Lune noire — oscille de
+   ±26° autour, mesuré sur les vecteurs lunaires JPL : ce n'est pas un
+   raffinement de celui-ci mais un autre point, et il demanderait la distance
+   et la latitude lunaires, que moonLon() ne calcule pas. Voir CLAUDE.md. */
+function moonApogee(jd){
+  const T=centuries(jd);
+  return n360(263.3530513+4069.0137287*T-0.0103200*T*T-T*T*T/80053);
+}
+
+/* Chiron : absent des éléments de Standish. Le keplerien seul dérive de 0,7°
+   sur 1900–2100 (perturbations de Saturne et d'Uranus), assez pour afficher
+   un signe faux. On ajuste donc trois polynômes de Tchebychev — longitude,
+   latitude, rayon héliocentriques — sur l'éphéméride JPL Horizons. Erreur
+   maximale résultante : 0,04° sur 1900–2100, soit mieux que Jupiter.
+   Les coefficients sont des données, comme PL et MOON_T : rien à compiler. */
+const CHIRON_EL=[13.65143588,0.38056063,6.9256604,216.32651154,188.666729,209.3880686,
+                 0.00829574,0.00086055,0.01719721,713.95693354,0.47329873,-0.29419348];
+const CHIRON_T0=-1.005, CHIRON_T1=1.010;
+const CHIRON_C={
+ LON:[
+  -0.08761369,0.0962903,-0.2722948,0.1775541,0.04362625,
+  -0.0428389,-0.05118413,0.03196362,-0.07252356,0.03963395,
+  0.01158535,-0.01562984,0.01870719,0.009926155,-0.01750196,
+  0.03157895,0.02419105,-0.007904071,-0.005641115,-0.01202048,
+  0.001945796,0.01050204,-0.002309111,-0.006659346,0.002383695,
+  -0.005345876,-0.005609587,0.01531877,0.006430611,-0.006945832,
+  -0.008744237,-0.004800604,0.008801747,0.008372004,-0.002206006,
+  0.003889389,-0.00219782,-0.006191054,0.0002628505,0.0108808],
+ LAT:[
+  0.0006196497,0.01247162,-0.0003698586,0.01393158,-0.02029506,
+  0.01483251,-0.01262399,0.001982542,0.005138914,0.01025416,
+  -0.008384975,0.001740207,0.002531915,-0.001449279,-0.006811292,
+  0.005020149,0.003826777,-0.00401924,-0.002872674,0.0004946184,
+  0.001487205,0.003060002,-0.001548666,-0.0008440548,0.002521926,
+  -0.001352523,-0.002176245,0.003563757,0.001482956,-0.002803341,
+  -0.0008352444,0.0003713239,0.0008723211,0.000951135,-0.00126999,
+  0.0001540654,0.001219446,-0.0006046559,-0.0004333163,0.001854255],
+ RAY:[
+  -0.005841016,0.005603881,-0.01651878,0.006182655,0.001089834,
+  0.005805084,-0.003045132,-0.000688277,-0.004561683,-0.003484664,
+  0.002373408,-0.001617187,-0.002058994,0.001413414,-0.0009202797,
+  -0.001119893,-0.0006606214,0.001641453,7.07568e-05,-0.0003375646,
+  -0.0001339629,0.0008041142,0.0008012287,-8.173671e-06,0.001133524,
+  -0.0007810565,0.0002116732,-0.0003542135,-0.002021521,0.001168617,
+  0.0002715271,-0.0008719943,0.001709388,0.0003480216,-3.891895e-05,
+  -0.0001811362,-0.001176271,-0.0002664645,0.001727108,-0.0002252206]
+};
+function chebSum(coef,t){
+  let b0=1, b1=t, s=coef[0]+coef[1]*t;
+  for(let k=2;k<coef.length;k++){
+    const b2=2*t*b1-b0;
+    s+=coef[k]*b2; b0=b1; b1=b2;
+  }
+  return s;
+}
+function chironLon(jd){
+  const T=centuries(jd);
+  const t=(2*T-(CHIRON_T0+CHIRON_T1))/(CHIRON_T1-CHIRON_T0);
+  const h=helio(CHIRON_EL,T);
+  const r=Math.sqrt(h.x*h.x+h.y*h.y+h.z*h.z);
+  const lon=atan2(h.y,h.x)+chebSum(CHIRON_C.LON,t);
+  const lat=asin(h.z/r)+chebSum(CHIRON_C.LAT,t);
+  const ray=r+chebSum(CHIRON_C.RAY,t);
+  const x=ray*cos(lat)*cos(lon), y=ray*cos(lat)*sin(lon);
+  const e=helio('terre',T);
+  return n360(atan2(y-e.y,x-e.x)+precession(T));
 }
 
 const BODIES=['soleil','lune','mercure','venus','mars','jupiter','saturne','uranus','neptune','pluton','noeud'];
+/* Points karmiques : calculés comme les autres, mais tenus hors de BODIES —
+   ils ne sont ni des acteurs de la roue, ni des partenaires d'aspect. */
+const KBODIES=['noeud','noeudsud','lilith','chiron'];
+/* Le ℞ ne veut rien dire pour un point moyen : sa vitesse est constante par
+   construction. Chiron, lui, rétrograde pour de bon cinq mois par an. */
+const NO_RETRO=new Set(['noeud','noeudsud','lilith']);
 function bodyLon(b,jd){
   if(b==='soleil')return sunLon(jd);
   if(b==='lune')return moonLon(jd);
   if(b==='noeud')return moonNode(jd);
+  if(b==='noeudsud')return n360(moonNode(jd)+180);
+  if(b==='lilith')return moonApogee(jd);
+  if(b==='chiron')return chironLon(jd);
   return planetLon(b,jd);
+}
+function kpositions(jd){
+  const out={};
+  for(const b of KBODIES){
+    const l=bodyLon(b,jd), l2=bodyLon(b,jd+1);
+    let d=l2-l; if(d>180)d-=360; if(d<-180)d+=360;
+    out[b]={lon:l,retro:!NO_RETRO.has(b)&&d<0,speed:d};
+  }
+  return out;
 }
 function positions(jd){
   const out={};
   for(const b of BODIES){
     const l=bodyLon(b,jd), l2=bodyLon(b,jd+1);
     let d=l2-l; if(d>180)d-=360; if(d<-180)d+=360;
-    out[b]={lon:l,retro:d<0,speed:d};
+    out[b]={lon:l,retro:!NO_RETRO.has(b)&&d<0,speed:d};
   }
   return out;
 }
@@ -833,9 +1017,9 @@ const SIGN_GL=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒'
 const SIGN_EMO=['♈️','♉️','♊️','♋️','♌️','♍️','♎️','♏️','♐️','♑️','♒️','♓️'];
 const NAMES={soleil:'Soleil',lune:'Lune',mercure:'Mercure',venus:'Vénus',mars:'Mars',jupiter:'Jupiter',saturne:'Saturne',uranus:'Uranus',neptune:'Neptune',pluton:'Pluton',noeud:'Nœud lunaire'};
 const GLYPH={soleil:'☉',lune:'☽',mercure:'☿',venus:'♀',mars:'♂',jupiter:'♃',saturne:'♄',uranus:'♅',neptune:'♆',pluton:'♇',noeud:'☊'};
-const ASPECTS=[{n:'Conjonction',a:0,g:'☌',c:'#3E7C6E'},{n:'Sextile',a:60,g:'⚹',c:'#3E7C6E'},
-               {n:'Carré',a:90,g:'□',c:'#A6432F'},{n:'Trigone',a:120,g:'△',c:'#3E7C6E'},
-               {n:'Opposition',a:180,g:'☍',c:'#A6432F'}];
+const ASPECTS=[{n:'Conjonction',a:0,g:'☌',c:'var(--verdigris)'},{n:'Sextile',a:60,g:'⚹',c:'var(--verdigris)'},
+               {n:'Carré',a:90,g:'□',c:'var(--minium)'},{n:'Trigone',a:120,g:'△',c:'var(--verdigris)'},
+               {n:'Opposition',a:180,g:'☍',c:'var(--minium)'}];
 const signIdx=l=>Math.floor(n360(l)/30);
 const signOf=l=>SIGNS[signIdx(l)];
 const signEmo=l=>SIGN_EMO[signIdx(l)];
@@ -991,13 +1175,21 @@ const store={
     delete mem[k];
     if(LS){try{LS.removeItem(k);}catch(e){}}
     try{await window.storage.delete(k);}catch(e){}
+  },
+  /* Énumération : localStorage la donne, window.storage non. Sert uniquement
+     au ménage des lectures périmées — un échec partiel laisse des clés
+     mortes, jamais une lecture fausse. */
+  keys(){
+    const out=new Set(Object.keys(mem));
+    if(LS){try{for(let i=0;i<LS.length;i++)out.add(LS.key(i));}catch(e){}}
+    return [...out];
   }
 };
 
 /* ========================================================================
    5. Roue gravée
    ======================================================================== */
-function drawWheel(natal,hs,knownTime,aspects){
+function drawWheel(natal,hs,knownTime,aspects,karma){
   const S=440,c=S/2;
   const R1=c-6, R2=c-34, R3=c-46, R4=c-118, R5=c-132;
   const rot = knownTime? hs.asc : 0;
@@ -1047,10 +1239,20 @@ function drawWheel(natal,hs,knownTime,aspects){
     const [x1,y1]=pt(natal[a.p].lon,R5), [x2,y2]=pt(natal[a.q].lon,R5);
     s+=`<line class="asp" stroke="${a.asp.c}" ${a.asp.a===0?'stroke-dasharray="2 2"':''} x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
   }
-  // planètes, avec anti-collision simple
+  // axe des nœuds : un seul trait, le nœud sud étant le nœud nord à 180°
+  if(karma){
+    const [ax1,ay1]=pt(karma.noeud.lon,R5), [ax2,ay2]=pt(karma.noeudsud.lon,R5);
+    s+=`<line class="kaxis" x1="${ax1.toFixed(1)}" y1="${ay1.toFixed(1)}" x2="${ax2.toFixed(1)}" y2="${ay2.toFixed(1)}"/>`;
+  }
+  // planètes, puis points karmiques : mêmes anneaux, tracé plus discret —
+  // ce sont des repères, pas des acteurs.
   const placed=[];
-  for(const b of BODIES){
-    let lon=natal[b].lon, r=R3-16;
+  const ring=karma?BODIES.concat(KBODIES.map(b=>'k:'+b)):BODIES;
+  for(const key of ring){
+    const kar=key.startsWith('k:'), b=kar?key.slice(2):key;
+    if(kar&&b==='noeud')continue;   // déjà tracé avec les planètes
+    const src=kar?karma:natal;
+    let lon=src[b].lon, r=R3-16;
     for(let k=0;k<40;k++){
       const clash=placed.some(p=>{let d=Math.abs(n360(p.lon-lon));if(d>180)d=360-d;return d<7.5&&Math.abs(p.r-r)<12;});
       if(!clash)break;
@@ -1060,10 +1262,14 @@ function drawWheel(natal,hs,knownTime,aspects){
     placed.push({lon,r});
     const [x,y]=pt(lon,r);
     const [tx,ty]=pt(lon,r-14);
-    const [lx,ly]=pt(natal[b].lon,R3), [mx,my]=pt(natal[b].lon,R3-4);
-    s+=`<line class="hair" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}"/>`;
-    s+=`<text class="plglyph" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${GLYPH[b]}</text>`;
-    s+=`<text class="pldeg" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}">${Math.floor(n360(natal[b].lon)%30)}°${natal[b].retro?' ℞':''}</text>`;
+    const [lx,ly]=pt(src[b].lon,R3), [mx,my]=pt(src[b].lon,R3-4);
+    // le nœud nord vient de BODIES mais reste un point karmique : même discrétion
+    const cl=(kar||(karma&&b==='noeud'))?' karm':'';
+    s+=`<line class="hair${cl}" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${mx.toFixed(1)}" y2="${my.toFixed(1)}"/>`;
+    s+= kar&&KSVG[b]
+      ? `<g class="kmark" transform="translate(${(x-9).toFixed(1)},${(y-9).toFixed(1)}) scale(.75)">${KSVG[b]}</g>`
+      : `<text class="plglyph${cl}" x="${x.toFixed(1)}" y="${y.toFixed(1)}">${kar?KGLYPH[b]:GLYPH[b]}</text>`;
+    s+=`<text class="pldeg${cl}" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}">${Math.floor(n360(src[b].lon)%30)}°${src[b].retro?' ℞':''}</text>`;
   }
   s+=`</g></svg>`;
   return s;
@@ -1760,7 +1966,8 @@ function renderSyn(A,B){
       <div class="sect"><h3>Ce qui frotte</h3><ul class="synl">${neg.length?neg.map(ligne).join(''):'<li><span class="lg">—</span><span class="lt"><b>Aucun aspect dur notable</b><br>C\'est rare, et pas forcément une bonne nouvelle : sans friction, un lien manque souvent de moteur.</span></li>'}</ul></div>
     </div>
     <p class="note">Croisement de tous les corps des deux cartes, pondéré par l'importance relationnelle de chaque planète et par la précision de l'orbe. Les contacts à l'Ascendant valent aussi pour le Descendant : c'est un seul axe, compté une fois. Les aspects durs comptent négativement dans l'indice mais font souvent la longévité d'un couple : lis la colonne de droite comme un mode d'emploi, pas comme un verdict.</p>`
-    + blocSuperposition(A,B,nom,deNom) + blocTemperaments(A,B,nom) + blocComposite(A,B) + blocNumero(A,B,nom);
+    + blocSuperposition(A,B,nom,deNom) + blocTemperaments(A,B,nom) + blocKarma(A,B,nom,deNom)
+    + blocComposite(A,B) + blocNumero(A,B,nom);
 }
 
 function blocSuperposition(A,B,nom,deNom){
@@ -1817,6 +2024,53 @@ function blocComposite(A,B){
      Lune composite en ${SIGNS[li]} : le climat émotionnel du couple est ${COMP_LUN[li]}.</p>`+
     (kt?'':`<p class="ed2 vide">Ascendant composite indisponible — il faudrait les deux heures de naissance.</p>`);
 }
+/* --- 5. liens karmiques entre les deux cartes ---
+   Volontairement hors de l'indice sur 100 : ajouter ces points à synastrie()
+   changerait poidsMax, donc tous les scores déjà affichés et partagés. Ils ont
+   aussi droit à une orbe plus serrée que les planètes. */
+const KSYN_MIEN={
+ noeud:'Ta direction de croissance passe par là : ce lien tire vers où tu dois aller, ce qui est rarement confortable',
+ noeudsud:'C\'est ton terrain le plus ancien qui se branche ici : familiarité immédiate, et la tentation d\'y rester parce que c\'est facile',
+ lilith:'Ce qui ne se plie pas chez toi tombe exactement là : attirance nette, rien de tiède',
+ chiron:'Ta blessure se pose là : ce lien la soigne ou appuie dessus, souvent les deux'};
+const KSYN_SIEN={
+ noeud:'Sa direction de croissance vient chercher cette part de toi — tu l\'aides à avancer, parfois sans le vouloir',
+ noeudsud:'Son réflexe d\'origine se pose là : tu lui es familier tout de suite, et c\'est aussi ce qui peut l\'endormir',
+ lilith:'Son refus non négociable touche cette part de toi : rien ne restera poli entre vous sur ce terrain',
+ chiron:'Sa blessure se pose là : tu la réveilles sans le faire exprès, et tu peux aussi l\'apaiser'};
+function liensKarmiques(A,B){
+  const out=[];
+  const scan=(src,cible,sens)=>{
+    for(const p of KSCAN)for(const q of PERSO){
+      let d=Math.abs(n360(src.karma[p].lon-cible.natal[q].lon)); if(d>180)d=360-d;
+      for(const a of [0,180]){
+        const diff=Math.abs(d-a);
+        if(diff<=3)out.push({p:kFace(p,a),q,a:p==='noeud'?0:a,orb:diff,sens});
+      }
+    }
+  };
+  scan(A,B,'mien');
+  scan(B,A,'sien');
+  return out.sort((x,y)=>x.orb-y.orb).slice(0,6);
+}
+function blocKarma(A,B,nom,deNom){
+  const L=liensKarmiques(A,B);
+  const ligne=l=>`<li><span class="lg">${kglyph(l.p)} ${l.a===0?'☌':'☍'} ${GLYPH[l.q]}</span>`+
+    `<span class="lt"><b>${l.sens==='mien'
+      ? `${KNOM[l.p]} (toi) ${l.a===0?'sur':'face à'} ${low(SUJ[l.q])} ${deNom}`
+      : `${KNOM[l.p]} ${deNom} ${l.a===0?'sur':'face à'} ${low(SUJ[l.q])} (toi)`}</b>`+
+    `<span class="sub"> · orbe ${l.orb.toFixed(1).replace('.',',')}°</span><br>`+
+    (l.sens==='mien'
+      ? `${KSYN_MIEN[l.p]} — chez ${nom}, sur ${low(ROLE[l.q])}.`
+      : `${KSYN_SIEN[l.p]} — chez toi, ${low(ROLE[l.q])}.`)+
+    `</span></li>`;
+  return `<p class="k" style="margin-top:26px">Liens karmiques</p>`+
+    `<p class="sub" style="margin:0 0 10px">Nœuds, Lune noire et Chiron d'une carte sur les planètes personnelles de l'autre, conjonction ou opposition à 3°. Ces contacts ne comptent pas dans l'indice ci-dessus : ce sont des repères, pas des planètes.</p>`+
+    (L.length
+      ? `<ul class="synl">${L.map(ligne).join('')}</ul>`
+      : `<p class="ed2 vide">Aucun contact karmique serré entre vos deux cartes. Le lien se joue sur les planètes, pas sur ces axes-là.</p>`);
+}
+
 function blocNumero(A,B,nom){
   const N=numeroCouple(A,B);
   const meme=N.pya===N.pyb;
@@ -2282,6 +2536,174 @@ function renderSynthese(lp){
 }
 
 /* ========================================================================
+   5sexies. Axe karmique — nœuds, Lune noire, Chiron
+   ======================================================================== */
+/* Glyphes dessinés plutôt qu'écrits : ☊ et ☋ (U+260A/260B) existent partout,
+   mais ⚷ et ⚸ (U+26B7/26B8) manquent à Apple Symbols — sur iPhone, l'app
+   afficherait un carré vide. Un tracé inline ne dépend d'aucune police et ne
+   demande pas d'élargir la CSP. */
+const KSVG={
+  chiron:'<circle cx="12" cy="17" r="4.6"/><path d="M12 12.4V2M12 6.6 16.4 2M12 6.6 7.6 2"/>',
+  lilith:'<path d="M12 22V9M8 19h8"/><path d="M15.6 2.4a5.2 5.2 0 1 0 0 8.6 6.4 6.4 0 0 1 0-8.6Z"/>'
+};
+const kglyph=(b,cls)=>KSVG[b]
+  ? `<svg class="ksvg ${cls||''}" viewBox="0 0 24 24" aria-hidden="true">${KSVG[b]}</svg>`
+  : `<span class="${cls||''}" aria-hidden="true">${KGLYPH[b]}</span>`;
+const KGLYPH={noeud:'☊',noeudsud:'☋',lilith:'⚸',chiron:'⚷'};
+const KNOM={noeud:'Nœud nord',noeudsud:'Nœud sud',lilith:'Lune noire',chiron:'Chiron'};
+
+/* L'axe : un texte par signe du nœud nord, qui nomme les deux bouts — le nœud
+   sud est toujours le signe opposé, deux tableaux se contrediraient. */
+const AXE_S=[
+ 'un réflexe d\'accord — t\'ajuster, arrondir, attendre que l\'autre se prononce. Ce qui te fait avancer est plus abrupt : décider seul, dire non, partir le premier',
+ 'l\'intensité et les liens qui engagent tout. Ce qui te fait avancer est plus simple : la durée, le calme, ce qui t\'appartient vraiment et ne dépend de personne',
+ 'les grandes convictions et les vues d\'ensemble. Ce qui te fait avancer tient dans le détail : écouter, questionner, accepter que le vrai se trouve dans la conversation',
+ 'le devoir, le contrôle, la réussite qui se prouve. Ce qui te fait avancer est moins glorieux : le foyer, l\'attachement, admettre que tu as besoin des autres',
+ 'le groupe, le collectif, la juste distance. Ce qui te fait avancer demande de sortir du rang : assumer ton nom, ton goût, ta place devant',
+ 'le flou, la porosité, le grand tout. Ce qui te fait avancer est terre à terre : le geste utile, la méthode, l\'ordre que tu poses toi-même',
+ 'l\'élan solitaire et le passage en force. Ce qui te fait avancer suppose quelqu\'un en face : négocier, tenir compte, faire à deux',
+ 'le confort, la lenteur, ce qui ne bouge pas. Ce qui te fait avancer est plus risqué : lâcher, laisser mourir ce qui doit mourir, partager pour de vrai',
+ 'la curiosité rapide et les mille informations. Ce qui te fait avancer demande de trancher : une direction, une conviction, un engagement qui coûte',
+ 'la famille, le nid, ce qui protège. Ce qui te fait avancer est plus exposé : construire dehors, tenir un rôle, assumer une autorité',
+ 'le besoin d\'être vu et reconnu personnellement. Ce qui te fait avancer passe par le nombre : servir une idée plus grande que toi, sans y mettre ton visage',
+ 'la correction, le tri, l\'inquiétude utile. Ce qui te fait avancer se contrôle moins : faire confiance, créer, accepter le flou'];
+
+const LILITH_S=[
+ 'l\'endroit où tu refuses d\'attendre ton tour. Ta colère est nette, elle sort vite, et on te l\'a fait payer assez tôt pour que tu hésites encore à la montrer',
+ 'ton rapport au corps et à ce qui t\'appartient. Tu ne cèdes ni sur ton confort ni sur ta valeur, et cette fermeté a souvent été lue comme de l\'avidité',
+ 'ta parole. Tu dis la chose que personne ne dit, au mauvais moment, et tu refuses de la reprendre',
+ 'ton besoin d\'un chez-toi, et ta rage quand on y touche. La famille est l\'endroit où tu ne fais aucun compromis, ni dans l\'attachement ni dans la rupture',
+ 'ton droit d\'être remarqué. Tu ne joues pas la modestie, et ça dérange plus que ça ne le devrait',
+ 'ton exigence. Tu ne fais pas semblant que c\'est bien quand c\'est bâclé, et ça t\'a coûté des places',
+ 'ton refus de la fausse harmonie. Tu préfères la scène franche au sourire tenu, et on te trouve difficile pour ça',
+ 'ce que tu ne dis à personne. Ton intensité et ton désir n\'ont jamais été négociables, et tu as appris à les cacher plutôt qu\'à les réduire',
+ 'ta liberté de penser autrement. Tu n\'entres pas dans la croyance du groupe, même quand ce serait plus simple',
+ 'ton rapport à l\'autorité. Tu ne t\'inclines pas devant un rôle, seulement devant ce qui se prouve — et ça se paie dans les structures',
+ 'ton écart. Tu ne rejoins pas le rang pour avoir la paix, et l\'appartenance t\'a toujours demandé un effort que d\'autres ne font pas',
+ 'ce que tu ressens et que personne ne valide. Ton monde intérieur ne se justifie pas, et on t\'a trop souvent demandé d\'en sortir'];
+
+const CHIRON_S=[
+ 'l\'existence même de ton élan : le droit de vouloir, de foncer, d\'exister sans permission. Là où tu as douté, tu sais aujourd\'hui remettre les autres en mouvement',
+ 'ta valeur et ta sécurité — ce que tu vaux, ce que tu possèdes, ce qui tient. De cette insécurité-là tu as tiré une capacité rare à rassurer concrètement',
+ 'ta parole et ton intelligence : on t\'a laissé croire que tu ne comprenais pas, ou que tu parlais mal. Tu expliques aujourd\'hui mieux que ceux qui n\'ont jamais douté',
+ 'l\'appartenance et le soin reçu : la famille a manqué quelque part. Tu sais accueillir des gens que personne n\'accueille',
+ 'le droit de briller : quelque chose a éteint ton envie d\'être vu. Tu donnes de la place aux autres avec une justesse que peu ont',
+ 'ton utilité et ton corps — jamais assez bien, jamais assez efficace. Tu répares, tu ajustes, tu prends soin, et ce n\'est pas une posture',
+ 'le lien à deux : quelque chose s\'est cassé dans l\'idée même d\'être choisi. Tu sais faire de la place à l\'autre sans t\'effacer, et c\'est rare',
+ 'la confiance et l\'abandon : on t\'a trahi, ou tu l\'as cru. Tu tiens debout dans des situations qui écrasent les autres',
+ 'le sens : ce en quoi tu croyais s\'est effondré une fois. Tu ne vends de certitude à personne, et c\'est exactement pour ça qu\'on t\'écoute',
+ 'la légitimité — ta place, ton autorité, ton droit de tenir un rôle. Tu construis lentement, et ce que tu construis tient',
+ 'l\'appartenance au groupe : dehors, à côté, jamais tout à fait dedans. Tu vois ce que les groupes font aux gens, et tu protèges ceux qu\'ils excluent',
+ 'la frontière entre toi et le reste : trop poreux, trop touché, trop tôt. Tu comprends la douleur des autres sans qu\'on te l\'explique'];
+
+/* Contacts serrés (3°, conjonction et opposition seulement) aux points
+   personnels. Les orbes larges n'ont pas de sens sur des points abstraits ;
+   le balayage complet, plus bas, sert la curiosité, pas la lecture. */
+const KROLE={noeud:'ta direction de croissance',noeudsud:'ton réflexe d\'origine',
+ lilith:'ton refus non négociable',chiron:'ta blessure fondatrice'};
+const KCIBLE={soleil:'ton identité',lune:'ta vie intérieure',asc:'ton abord'};
+const KCIBLE_NOM={soleil:'ton Soleil',lune:'ta Lune',asc:'ton Ascendant'};
+const KFEM={lilith:1};   /* « la Lune noire conjointe », les trois autres au masculin */
+const KCONT={
+ noeud:['ce que tu dois développer n\'est pas à côté de toi : c\'est au centre, et ça se voit dans tout ce que tu fais',
+        'ta direction tire à l\'inverse de ce point — grandir te demandera de contrarier ton propre naturel'],
+ noeudsud:['ton réflexe le plus ancien occupe la place centrale : c\'est ta facilité, et c\'est aussi ce qui te retient',
+           'ce que tu fuis par habitude se tient exactement en face — impossible de l\'éviter longtemps'],
+ lilith:['ton refus est au milieu de ce que tu es : aucun moyen de le rendre discret',
+         'ce qui ne se plie pas chez toi s\'oppose frontalement à cette part de ta vie'],
+ chiron:['la blessure touche le centre : elle colore tout, et c\'est aussi de là que vient ta compétence',
+         'la blessure se joue dans le face-à-face : elle se réveille au contact des autres plutôt qu\'en solitaire']};
+
+/* L'axe ne se balaie qu'une fois : le nœud sud étant le nœud nord à 180°,
+   scanner les deux donnerait « nœud nord opposé au Soleil » et « nœud sud
+   conjoint au Soleil » — un seul fait, énoncé deux fois. L'opposition du nœud
+   nord est donc rendue comme ce qu'elle est : une conjonction au nœud sud. */
+const KSCAN=KBODIES.filter(b=>b!=='noeudsud');
+const kFace=(p,a)=>(p==='noeud'&&a===180)?'noeudsud':p;
+function karmaContacts(k,natal,hs,kt){
+  const cibles={soleil:natal.soleil.lon,lune:natal.lune.lon};
+  if(kt)cibles.asc=hs.asc;
+  const out=[];
+  for(const p of KSCAN)for(const c in cibles){
+    let d=Math.abs(n360(k[p].lon-cibles[c])); if(d>180)d=360-d;
+    for(const a of [0,180]){
+      const diff=Math.abs(d-a);
+      if(diff<=3)out.push({p:kFace(p,a),c,a:p==='noeud'?0:a,orb:diff});
+    }
+  }
+  return out.sort((x,y)=>x.orb-y.orb);
+}
+
+/* Balayage complet : des lignes, pas des phrases. Une opposition nœud nord /
+   nœud sud est vraie par construction — l'afficher serait annoncer une
+   trouvaille à chaque carte. */
+const NODE_PAIR=new Set(['noeud','noeudsud']);
+function karmaScan(k,natal){
+  const res=[];
+  for(const p of KBODIES)for(const q of BODIES){
+    if(p===q||(NODE_PAIR.has(p)&&NODE_PAIR.has(q)))continue;
+    let d=Math.abs(n360(k[p].lon-natal[q].lon)); if(d>180)d=360-d;
+    for(const asp of ASPECTS){
+      const o=['soleil','lune'].includes(q)?8:6;
+      const diff=Math.abs(d-asp.a);
+      if(diff<=o){res.push({p,q,asp,orb:diff});break;}
+    }
+  }
+  return res.sort((x,y)=>x.orb-y.orb);
+}
+
+function renderKarma(){
+  const {natal,hs,profile}=CHART;
+  const kt=profile.knownTime;
+  const k=CHART.karma;
+  const maison=lon=>kt?`, maison ${houseOf(lon,hs.cusps)} — ${HOUSE_THEME[houseOf(lon,hs.cusps)-1]}`:'';
+  const ligne=(b,lon,txt)=>
+    `<div class="sect"><h3>${kglyph(b)} ${KNOM[b]}</h3>`+
+    `<p><b>${signLab(lon)}</b> ${degStr(lon)}${maison(lon)}.<br>${txt}</p></div>`;
+
+  const ns=signIdx(k.noeud.lon);
+  const axe=
+   `<div class="sect axe"><h3>${kglyph('noeud')} L'axe des nœuds</h3>`+
+   `<p><b>Nœud nord ${signLab(k.noeud.lon)} ${degStr(k.noeud.lon)}${maison(k.noeud.lon)}</b> — `+
+   `<b>nœud sud ${signLab(k.noeudsud.lon)}</b>${kt?`, maison ${houseOf(k.noeudsud.lon,hs.cusps)}`:''}.<br>`+
+   `Ce que tu ramènes : ${AXE_S[ns]}.</p></div>`;
+
+  const cont=karmaContacts(k,natal,hs,kt);
+  const contHtml=cont.length
+    ? `<ul class="synl">${cont.map(c=>
+        `<li><span class="lg">${kglyph(c.p)} ${c.a===0?'☌':'☍'} ${c.c==='asc'?'⌖':GLYPH[c.c]}</span>`+
+        `<span class="lt"><b>${KNOM[c.p]} ${c.a===0?'conjoint':'opposé'}${KFEM[c.p]?'e':''} à ${KCIBLE_NOM[c.c]}</b>`+
+        `<span class="sub"> · orbe ${c.orb.toFixed(1).replace('.',',')}°</span><br>`+
+        `${KROLE[c.p]} rencontre ${KCIBLE[c.c]} — ${KCONT[c.p][c.a===0?0:1]}.</span></li>`).join('')}</ul>`
+    : `<p class="vide">Aucun de ces quatre points ne touche ton Soleil, ta Lune${kt?' ou ton Ascendant':''} à moins de 3°. Ils travaillent alors par leur signe et leur maison, sans se brancher sur tes points personnels.</p>`;
+
+  const scan=karmaScan(k,natal);
+  const scanHtml=scan.length
+    ? `<table class="eph"><tr><th colspan="2">Point</th><th>Aspect</th><th>Planète</th><th>Orbe</th></tr>`+
+      scan.map(a=>`<tr><td class="g">${kglyph(a.p)}</td><td>${KNOM[a.p]}</td>`+
+        `<td>${a.asp.g} ${a.asp.n}</td><td>${GLYPH[a.q]} ${NAMES[a.q]}</td>`+
+        `<td>${a.orb.toFixed(2).replace('.',',')}°</td></tr>`).join('')+`</table>`
+    : `<p class="vide">Aucun aspect dans les orbes retenues.</p>`;
+
+  $('karma').innerHTML=
+   `<p class="k">L'axe karmique</p>
+    <p class="sub knote">Ces quatre points viennent du ciel de ta naissance, pas de ta date réduite en chiffres : ils n'ont rien à voir avec les « défis karmiques » de la numérologie, plus haut.</p>
+    <div class="synth-grid">
+      ${axe}
+      ${ligne('lilith',k.lilith.lon,`Ce qui ne se négocie pas chez toi : ${LILITH_S[signIdx(k.lilith.lon)]}.`)}
+      ${ligne('chiron',k.chiron.lon,`Ta blessure porte sur ${CHIRON_S[signIdx(k.chiron.lon)]}.`)}
+    </div>
+    <h3 class="ksub">Ce qui touche tes points personnels</h3>
+    ${contHtml}
+    ${kt?'':'<p class="note">Heure de naissance inconnue : les signes ci-dessus sont sûrs — ces quatre points bougent de moins de 0,2° par jour — mais les maisons, elles, demandent l\'heure. Il manque donc la moitié de la lecture : le domaine de vie où chaque point se joue.</p>'}
+    <details class="kscan"><summary>Balayage complet des aspects karmiques</summary>
+      <p class="sub">Orbes larges, comme dans la table des aspects natals : 8° sur les luminaires, 6° ailleurs. Sur des points abstraits, la tradition retient des orbes bien plus serrées — c'est pourquoi la lecture ci-dessus s'en tient à 3°. Ce tableau est là pour la curiosité, pas pour l'interprétation.</p>
+      ${scanHtml}
+    </details>
+    <p class="note">Lune noire : apogée <i>moyen</i> de la Lune, la convention la plus répandue. Il existe une Lune noire « vraie » (l'apogée osculateur) qui s'en écarte de plus de 25° et peut tomber dans un autre signe — ce n'est pas un calcul plus fin, c'est un autre point. Chiron est calculé à 0,04° près sur 1900–2100.</p>`;
+}
+
+/* ========================================================================
    6. Rendu
    ======================================================================== */
 const $=id=>document.getElementById(id);
@@ -2293,9 +2715,10 @@ function buildChart(profile){
   const utc=localToUTC(y,mo,d,h,mi,profile.tz);
   const jd=jdFromUTC(utc);
   const natal=positions(jd);
+  const karma=kpositions(jd);
   const hs=houses(jd,profile.lat,profile.lon,'placidus');
   const asp=findAspects(natal,natal,8,6,true).filter(a=>a.p!=='noeud'&&a.q!=='noeud');
-  return {jd,utc,natal,hs,asp,profile};
+  return {jd,utc,natal,karma,hs,asp,profile};
 }
 
 function renderChart(){
@@ -2303,6 +2726,7 @@ function renderChart(){
   const kt=profile.knownTime;
   $('setup').classList.add('hidden');
   $('app').classList.remove('hidden');
+  $('shmenu').classList.remove('hidden');
 
   const dl=new Date(profile.date+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
   $('birthline').textContent=`${dl}${kt?' · '+profile.time:''} · ${profile.place} · ${ageDe(profile.date)} ans`;
@@ -2319,7 +2743,7 @@ function renderChart(){
     `<div><div class="k">${k}</div><div class="g">${g} <span class="emo">${signEmo(lon)}</span></div>`+
     `<div class="v">${signOf(lon)}</div><div class="d">${degStr(lon)} · ${d}</div></div>`).join('');
 
-  mountWheel($('wheelbox'),drawWheel(natal,hs,kt,asp));
+  mountWheel($('wheelbox'),drawWheel(natal,hs,kt,asp,CHART.karma));
   $('wheelcap').textContent=kt?'Maisons Placidus · ascendant à gauche':'Heure inconnue · roue alignée sur 0° Bélier';
   if(!kt)$('houses-block').classList.add('hidden');
 
@@ -2345,7 +2769,7 @@ function renderChart(){
     for(let i=0;i<12;i++)h+=`<tr><td>${i+1}</td><td>${degStr(hs.cusps[i])} ${signLab(hs.cusps[i])}</td></tr>`;
     $('house-tbl').innerHTML=h;
   }
-  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderAmour();
+  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderAmour();
 }
 
 function renderTransits(tr,hits){
@@ -2379,6 +2803,10 @@ function buildPrompt(tr,hits,jd){
   const kt=profile.knownTime;
   const natalTxt=BODIES.map(b=>`${NAMES[b]} ${degStr(natal[b].lon)} ${signOf(natal[b].lon)}${natal[b].retro&&b!=='noeud'?' rétrograde':''}${kt?` (maison ${houseOf(natal[b].lon,hs.cusps)})`:''}`).join('; ');
   const aspTxt=CHART.asp.slice(0,8).map(x=>`${NAMES[x.p]} ${x.asp.n.toLowerCase()} ${NAMES[x.q]} (orbe ${x.orb.toFixed(1)}°)`).join('; ');
+  /* Les points karmiques sont fournis à part, avec leur statut : sans ça la
+     lecture du jour ignorerait ce que la page vient d'expliquer en détail. */
+  const k=CHART.karma;
+  const karmaTxt=KBODIES.map(bb=>`${KNOM[bb]} ${degStr(k[bb].lon)} ${signOf(k[bb].lon)}${kt?` (maison ${houseOf(k[bb].lon,hs.cusps)})`:''}`).join('; ');
   const trTxt=BODIES.map(b=>`${NAMES[b]} ${degStr(tr[b].lon)} ${signOf(tr[b].lon)}${tr[b].retro&&b!=='noeud'?' ℞':''}${kt?` en maison ${houseOf(tr[b].lon,hs.cusps)}`:''}`).join('; ');
   const hitTxt=hits.length?hits.slice(0,8).map(x=>`${NAMES[x.p]} en transit ${x.asp.n.toLowerCase()} ${NAMES[x.q]} natal (orbe ${x.orb.toFixed(1)}°${x.exact?', exact':''})`).join('; '):'aucun aspect serré aujourd\'hui';
   const phase=moonPhase(tr.soleil.lon,tr.lune.lon);
@@ -2390,6 +2818,7 @@ THÈME NATAL${profile.nom?' DE '+profile.nom.toUpperCase():''}
 ${natalTxt}
 ${kt?`Ascendant ${degStr(hs.asc)} ${signOf(hs.asc)} · Milieu du Ciel ${degStr(hs.mc)} ${signOf(hs.mc)}`:'Heure de naissance inconnue : ne parle jamais d\'ascendant ni de maisons.'}
 Aspects natals dominants : ${aspTxt}
+Points karmiques (repères, pas des planètes — n'en parle que s'ils éclairent vraiment le jour) : ${karmaTxt}
 
 CIEL DU ${dateTxt.toUpperCase()}
 ${trTxt}
@@ -2581,6 +3010,27 @@ function scanEvents(jd0,jd1,bodies,natal,step){
   }
   return ev.sort((x,y)=>x.jd-y.jd);
 }
+/* Retours karmiques : le seul événement de ces points qui vaille une ligne
+   d'agenda. Chiron revient une fois vers 50 ans, l'axe des nœuds tous les
+   18,6 ans. Ils restent hors du moteur des quatre thèmes — un carré de la
+   Lune noire à Neptune n'a rien à dire sur « Travail et projets ». */
+const KRETOUR={
+  chiron:['☌','Retour de Chiron — la blessure d\'origine revient pour être regardée en face, pas pour se rouvrir'],
+  noeud:['☊','Retour des nœuds — le même carrefour qu\'à 18 et 37 ans, avec ce que tu as appris depuis']};
+function karmaEvents(jd0,jd1,karma){
+  const ev=[], step=2;
+  for(const p in KRETOUR){
+    const nl=karma[p].lon, g=t=>n180(bodyLon(p,t)-nl);
+    for(let t=jd0;t<jd1;t+=step){
+      const hi0=Math.min(t+step,jd1), a=g(t), c=g(hi0);
+      if(a*c>=0||Math.abs(a)>45||Math.abs(c)>45)continue;
+      let lo=t,hi=hi0;
+      for(let k=0;k<32;k++){const m=(lo+hi)/2; if(g(lo)*g(m)<=0)hi=m; else lo=m;}
+      ev.push({jd:(lo+hi)/2,g:KRETOUR[p][0],t:KRETOUR[p][1]});
+    }
+  }
+  return ev;
+}
 function lunations(jd0,jd1){
   const ev=[], step=0.25;
   const e=t=>n180(moonLon(t)-sunLon(t));
@@ -2670,13 +3120,15 @@ function spanReading(period,win){
 
   let agenda=ev.map(e=>({jd:e.jd,pri:SIGNIF[e.p]+1,g:`${GLYPH[e.p]} ${e.asp.g} ${GLYPH[e.q]}`,
     t:`${SUJ[e.p]} ${e.asp.n.toLowerCase()} ${poss(e.q)}`,c:e.asp.c}));
+  for(const e of karmaEvents(win.jd0,win.jd1,CHART.karma))
+    agenda.push({jd:e.jd,pri:0,g:e.g,t:e.t,c:'var(--ink-soft)'});
   if(period!=='annee')for(const l of lunations(win.jd0,win.jd1))
-    agenda.push({jd:l.jd,pri:0,g:'☽',t:l.lune+' en '+signEmo(moonLon(l.jd))+' '+signOf(moonLon(l.jd)),c:'#5D6B82'});
+    agenda.push({jd:l.jd,pri:0,g:'☽',t:l.lune+' en '+signEmo(moonLon(l.jd))+' '+signOf(moonLon(l.jd)),c:'var(--ink-soft)'});
   if(period==='annee'){
     const sr=solarReturn(natal.soleil.lon,win.jd0);
     if(sr!==null){
       const a=angles(sr,profile.lat,profile.lon);
-      agenda.push({jd:sr,pri:0,g:'☉',t:`Révolution solaire — ascendant ${degStr(a.asc)} ${signEmo(a.asc)} ${signOf(a.asc)}`,c:'#3E7C6E'});
+      agenda.push({jd:sr,pri:0,g:'☉',t:`Révolution solaire — ascendant ${degStr(a.asc)} ${signEmo(a.asc)} ${signOf(a.asc)}`,c:'var(--verdigris)'});
     }
   }
   const cap=period==='semaine'?14:18;
@@ -2799,7 +3251,7 @@ function paintReading(o){
     (o.agenda&&o.agenda.length?
       `<p class="agenda-h">${esc(o.agendaTitre||'Dates')}</p><ol class="agenda">`+
       o.agenda.map(a=>`<li><span class="ag-d">${esc(a.d)}</span>`+
-        `<span class="ag-g" style="color:${esc(a.c||'#1B2A44')}">${esc(a.g)}</span>`+
+        `<span class="ag-g" style="color:${esc(a.c||'var(--ink)')}">${esc(a.g)}</span>`+
         `<span class="ag-t">${esc(a.t)}</span></li>`).join('')+`</ol>`:'')+
     `<div class="sect-grid">`+(o.sections||[]).map(s=>
       `<div class="sect"><h3>${esc(s.titre)}</h3><p>${esc(s.texte)}</p></div>`).join('')+`</div>`+
@@ -2813,10 +3265,28 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,
 
 let apiDown=false, PERIOD='jour';
 
+/* La clé de lecture doit porter *quelle carte* : sans ça, ouvrir une deuxième
+   carte le même jour rejouait la lecture de la première — révolution solaire
+   et agenda de transits compris. L'empreinte se prend sur le code de carte,
+   qui contient déjà tout ce qui distingue deux cartes. */
+const chartKey=p=>seedFrom(encodeProfile(p)).toString(36);
+const readKey=(period,winKey,p)=>'astro:lecture:'+period+':'+winKey+':'+chartKey(p);
+
+/* Les lectures d'hier ne resservent jamais, et il y en a désormais une par
+   carte consultée : sans ménage, le stock ne fait que grossir. On efface tout
+   ce qui ne porte pas la fenêtre du jour, ancien format compris. */
+async function pruneReadings(keep){
+  for(const k of store.keys()){
+    if(!k.startsWith('astro:lecture:')||k===keep)continue;
+    const parts=k.split(':');
+    if(parts.length<5||parts[3]!==todayKey())await store.del(k);
+  }
+}
+
 async function loadReading(force){
   const now=new Date();
   const win=windowFor(PERIOD,now);
-  const key='astro:lecture:'+PERIOD+':'+win.key;
+  const key=readKey(PERIOD,win.key,CHART.profile);
   $('today').textContent=win.label;
 
   const jd=jdFromUTC(now);
@@ -2837,6 +3307,7 @@ async function loadReading(force){
   paintReading(local);
   setSource('local');
   await store.set(key,local);
+  await pruneReadings(key);
 
   // 2. si l'API est joignable, on remplace la lecture du jour par une version rédigée
   if(apiDown||PERIOD!=='jour')return;
@@ -2859,6 +3330,38 @@ function setSource(src){
 /* ========================================================================
    8. Amorçage
    ======================================================================== */
+/* --- thème ---
+   Deux états. Au premier chargement, aucune préférence n'est enregistrée et
+   c'est prefers-color-scheme qui tranche — le bouton part donc du réglage
+   système ; le premier clic fige un choix explicite.
+   Le soleil et le croissant de lune sont tracés, pas écrits : ☀ et ☾ existent dans
+   la plupart des polices, mais l'app a déjà été mordue par U+26B7 absent
+   d'Apple Symbols, et une icône seule n'a aucun texte pour rattraper un carré
+   vide. Le bouton annonce ce vers quoi il bascule, pas l'état courant. */
+const TICO={
+  dark:'<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/>',
+  light:'<circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>'};
+function applyTheme(mode){
+  document.documentElement.dataset.theme=mode;
+  const vers=mode==='dark'?'light':'dark';
+  const b=$('themebtn');
+  b.innerHTML=`<svg class="tico" viewBox="0 0 24 24" aria-hidden="true">${TICO[vers]}</svg>`;
+  b.setAttribute('aria-label',vers==='dark'?'Passer au thème sombre':'Passer au thème clair');
+  try{localStorage.setItem('astro:theme',mode);}catch(e){}
+}
+let themeMode=(()=>{
+  try{const t=localStorage.getItem('astro:theme'); if(t==='dark'||t==='light')return t;}catch(e){}
+  return matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+})();
+applyTheme(themeMode);
+$('themebtn').onclick=()=>{
+  themeMode=themeMode==='dark'?'light':'dark';
+  applyTheme(themeMode);
+  /* La roue est un SVG déjà écrit : ses couleurs sont des var(), donc elles
+     suivent, mais wzApply() se recale au cas où la barre de contrôle bouge. */
+  if(typeof wzApply==='function')wzApply();
+};
+
 const sel=$('f-ville');
 CITIES.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c[0];sel.appendChild(o);});
 const other=document.createElement('option');other.value='x';other.textContent='Autre lieu — coordonnées manuelles';sel.appendChild(other);
@@ -2907,9 +3410,15 @@ $('periods').addEventListener('click',e=>{
 $('regen').onclick=()=>loadReading(true);
 $('reset').onclick=async()=>{
   await store.del('astro:profil');
-  await store.del('astro:lecture:'+todayKey());
+  /* Les lectures de cette carte n'ont plus de porteur affiché ; on les retire
+     plutôt que de laisser une clé morte, ce que faisait l'ancienne ligne :
+     elle effaçait « astro:lecture:<date> », un format qui n'a jamais existé. */
+  const id=':'+chartKey(CHART.profile);
+  for(const k of store.keys())
+    if(k.startsWith('astro:lecture:')&&k.endsWith(id))await store.del(k);
   $('app').classList.add('hidden');
   $('setup').classList.remove('hidden');
+  $('shmenu').classList.add('hidden');
   renderRecents();
   window.scrollTo({top:0});
 };

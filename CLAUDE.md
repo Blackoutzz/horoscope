@@ -16,6 +16,8 @@ Everything lives in a single file: `index.html`. CSS, HTML, and JS are all inlin
 
 ### HTML structure
 
+A `.topbar` at the top of `.wrap` sits above both views and holds the two square controls — theme and share — at the same 30x30 box (`.tbtn`). `#shmenu` lives there rather than in `.apphead` so the pair line up; it carries `.hidden` on the setup screen and both view switches toggle it, since sharing a chart that does not exist yet is meaningless. Its dropdown still positions against `.shmenu`, which stays `position:relative`.
+
 Two mutually exclusive views toggled via `.hidden`:
 - `#setup` — birth data form (name, date, time, city or lat/lon/tz), recent profiles, chart-code loader
 - `#app` — full chart display (triad, wheel, numerology, readings, ephemeris tables, synastry)
@@ -28,7 +30,7 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 
 | Section | Line | Purpose |
 |---|---|---|
-| 1. Astronomie | ~596 | Custom geocentric ecliptic planet positions — pure math, no library. Sun, Moon, 9 planets + lunar node. Polynomials are only valid roughly 1900–2100 |
+| 1. Astronomie | ~596 | Custom geocentric ecliptic planet positions — pure math, no library. Sun, Moon, 9 planets, lunar node, plus the karmic points (`moonApogee`, `chironLon`). Polynomials are only valid roughly 1900–2100 |
 | 2. Vocabulaire | ~797 | Sign/glyph/aspect constants, Placidus house system, aspect orbs |
 | 3. Lieux et fuseaux | ~850 | City table (lat/lon/tz) |
 | 4. Stockage | ~935 | `store` — see Data persistence below |
@@ -36,6 +38,7 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 | 5bis. Numérologie | ~1038 | Life path, master numbers (11/22/33), personal year/month cycles, traits, challenges, talents |
 | 5quinquies. Encodage + synastrie | ~1323 | `encodeProfile`/`decodeProfile`/`checkProfile`, inter-chart aspect scoring, compatibility text |
 | 5quater. Vie amoureuse | ~1666 | Venus/Mars/Moon sign profiles, DC sign, relationship archetype text |
+| 5sexies. Axe karmique | ~2380 | `renderKarma()`, node/Lilith/Chiron copy, `karmaContacts()`, `karmaScan()`, drawn glyphs (`KSVG`) |
 | 5ter. Croisement | ~1764 | Element/mode balance, dignities, rulerships, planet strength, `polarite()` |
 | 6. Rendu | ~2052 | `buildChart()`, `renderChart()`, share menu, recents |
 | 7. Lecture du jour | ~2138 | `askClaude()` POSTs to `api.anthropic.com/v1/messages` (model: `claude-sonnet-4-6`) |
@@ -51,6 +54,21 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 - « Plein écran » is a CSS overlay (`.fsmode`, `position:fixed`), **not** `requestFullscreen()`. The native API is silently useless in embedded webviews — the promise never settles, `fullscreenElement` stays `null`, nothing throws — and `Element.requestFullscreen` doesn't exist on iPhone at all. The overlay also fixes the control bar to the bottom, locks body scroll, and exits on Escape; `mountWheel()` clears both on re-mount so a re-render can't leave the page locked.
 - `.wheelview` is `background:transparent`. `.wrap` paints a radial gradient; a flat `var(--vellum)` panel on top of it reads as a brighter rectangle around the wheel.
 - The darkened core is two `.disc` circles (R3, R4) at `fill-opacity:.035`, stacked so the centre sits deepest — a deliberate tint. It replaces an accidental one: `.wheel .hair` had no `fill`, so those same circles filled **black** at 35 % opacity and drowned the aspect lines. Every SVG `circle` needs an explicit `fill`.
+
+### Karmic points
+
+`KBODIES` (`noeud`, `noeudsud`, `lilith`, `chiron`) is deliberately **not** part of `BODIES`. These are markers, not actors: keeping them out means `dominance()`, `polarite()`, the element balance, the planet-to-planet aspect table and the synastry index all keep producing the numbers they always produced. Adding them would silently renumber output users have already seen and shared. `kpositions()` computes them; `CHART.karma` carries them.
+
+- **South node** is the north node at 180°, never a separate calculation. It follows that scanning both ends of the axis reports one fact twice — `KSCAN`/`kFace()` scan the north node only and render its opposition as a south-node conjunction. The `NODE_PAIR` guard keeps the definitional 180° out of the full scan table for the same reason.
+- **Lilith is the mean apogee.** The osculating ("true") apogee swings **±26°** around it — measured against JPL lunar vectors, not assumed — so it is a different point, not a finer one, and can sit a whole sign away. It would also need the lunar distance and latitude that `moonLon()` does not compute. A `.note` in the section says so; don't quietly upgrade it, and don't offer a mean/true selector without reckoning with the fact that "true" has at least three published definitions.
+- **Chiron** has no Standish elements. A plain Kepler fit drifts 0.7° over 1900–2100 under Saturn/Uranus perturbation — enough to name the wrong sign. `CHIRON_EL` plus three Chebyshev polynomials (`CHIRON_C`: heliocentric longitude, latitude, radius) fitted against JPL Horizons hold max error to **0.045°** over 14 726 test epochs. The coefficients are data, like `PL` and `MOON_T`; refitting needs the scripts, not a build step.
+- **`NO_RETRO`** replaced a hardcoded `b!=='noeud'`. ℞ is meaningless for any mean point (constant speed by construction) but Chiron genuinely retrogrades.
+- Chiron and Lilith are **drawn** (`KSVG`), never written as U+26B7/U+26B8. Apple Symbols does not reliably carry that range, so on iOS the characters render as empty boxes, and a webfont would mean widening the CSP. ☊/☋ (U+260A/260B) are ancient and safe as characters.
+- Without a birth time the section still renders: these points move under 0.2°/day so the signs are never in doubt, only the houses are lost, and a note says so rather than hiding the section or omitting the houses silently.
+
+### Precession
+
+`planetLon()` adds `precession(T)`. Standish's elements are referred to the **J2000** ecliptic; `sunLon()`, `moonLon()` and `moonNode()` are all of-date, and the tropical zodiac is of-date. Without the term the nine planets were off by exactly general precession — 1.4° in 1900, 0.7° in 1950, 0 in 2000, −0.7° in 2050 — so roughly one 1950 chart in five had at least one planet in the wrong sign. Verified against JPL Horizons: worst case fell from 1.399° to 0.017° (Mercury), 1.386° to 0.011° (Pluto). Any new body added to section 1 must land in the same of-date frame.
 
 ### Polarity (intro/extraversion)
 
@@ -73,6 +91,10 @@ Sharing:
 - Parsing accepts `#c=`, `?c=`, or a bare pasted code, so links shared before the fragment switch still work. Keep it that way.
 - **Build the chart before writing to storage.** Both `chargerCode()` and the setup form do this, and startup drops a stored profile it can no longer compute. Reversing that order lets one bad code poison `astro:profil` and leave the app on a blank chart every visit.
 
+Reading cache keys are `astro:lecture:<period>:<date>:<chartKey>`, where `chartKey()` is a 32-bit FNV hash of `encodeProfile()` in base 36. The chart segment is not optional: without it, opening a second chart the same day replayed the first one's reading — solar return and transit agenda included. Two charts colliding on the hash would resurrect that bug, but at ~1 in 4 billion per pair it is not worth a longer key.
+
+`pruneReadings()` runs after each write and drops every `astro:lecture:` key whose window segment isn't today's, legacy four-segment keys included — there is now one entry per chart per period, so nothing would ever be reclaimed otherwise. It needs `store.keys()`, which enumerates localStorage and `mem`; `window.storage` has no listing API, so in the sandbox stale keys simply survive. Ménage failing is harmless; serving a wrong reading is not.
+
 `askClaude()` has **no `x-api-key` header** — an API key must be injected if direct browser calls are intended, or a proxy must be used.
 
 ## Security
@@ -91,6 +113,15 @@ A chart token is untrusted input: it arrives from a link or a paste. Three invar
 - `connect-src` does **not** include `'self'`. Nothing fetches same-origin today; code that does will be blocked until `'self'` is added.
 - A hash-based `script-src` would block inline handlers outright, but the hash needs recomputing on every edit to `index.html`, and a stale hash means a silently blank app. Rejected: it breaks the no-build-step property.
 - `frame-ancestors` is ignored in a `<meta>` CSP; it would need a real response header.
+
+### Theme
+
+Two states, toggled by `#themebtn` and stored in `astro:theme`. With nothing stored — a first visit — `prefers-color-scheme` decides, so the toggle starts from the system setting and the first click pins an explicit choice.
+
+- The button shows the theme it switches **to**, not the current one: a crescent means "go dark". The icons are drawn inline (`TICO`), not ☀/☾, for the reason recorded under Karmic points — and an icon-only button has no text to fall back on if the glyph turns into an empty box. A crescent beats a half-disc at 15 px: the terminator of a half moon is a straight line that reads as a plain bisected circle once the rim stroke thickens against it.
+- The preference is applied by a **second inline `<script>` in `<head>`**, read from `localStorage` directly rather than through `store`: the main script runs at the end of the body, so going through it would show the light palette for a frame before switching. That is the only reason the app has two script tags. It sets nothing when no preference is stored, which is what lets the media query paint the right palette on a first visit.
+- **Every colour must be a token.** A literal anywhere outside `:root` survives the switch and will be wrong in one theme. Tints compose as `rgb(var(--v-rgb) / .13)` from raw triplets, and `--shadow` / `--ring` are separate tokens because a shadow built from `--ink` glows once the ink turns pale. `--disc` is the wheel's core tint, raised in dark where 3.5 % is invisible. The JS colours in `ASPECTS`, the agenda and the gauge are `var(--…)` strings for the same reason — inline SVG resolves them.
+- The dark palette is not an inversion: `#EFE9DA` on `#1B2A44` vibrates, so ink and vellum are re-picked, and verdigris and minium are lightened to hold contrast.
 
 ### Accessibility
 
