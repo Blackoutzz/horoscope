@@ -36,8 +36,8 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 | 4. Stockage | ~935 | `store` — see Data persistence below |
 | 5. Roue gravée | ~966 | `drawWheel()`, inline SVG ; `mountWheel()` + `wzZoom/wzApply` — zoom et panoramique |
 | 5bis. Numérologie | ~1038 | Life path, master numbers (11/22/33), personal year/month cycles, traits, challenges, talents |
-| 5quinquies. Encodage + synastrie | ~1323 | `encodeProfile`/`decodeProfile`/`checkProfile`, inter-chart aspect scoring, compatibility text |
-| 5quater. Vie amoureuse | ~1666 | Venus/Mars/Moon sign profiles, DC sign, relationship archetype text |
+| 5quinquies. Encodage + synastrie | ~1323 | `encodeProfile`/`decodeProfile`/`checkProfile`, inter-chart aspect scoring, compatibility text, `attraction()`/`blocEros()` |
+| 5quater. Vie amoureuse | ~1666 | Venus/Mars/Moon sign profiles, DC sign, relationship archetype text, `blocIntime()` |
 | 5sexies. Axe karmique | ~2380 | `renderKarma()`, node/Lilith/Chiron copy, `karmaContacts()`, `karmaScan()`, drawn glyphs (`KSVG`) |
 | 5ter. Croisement | ~1764 | Element/mode balance, dignities, rulerships, planet strength, `polarite()` |
 | 6. Rendu | ~2052 | `buildChart()`, `renderChart()`, share menu, recents |
@@ -65,6 +65,16 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 - **`NO_RETRO`** replaced a hardcoded `b!=='noeud'`. ℞ is meaningless for any mean point (constant speed by construction) but Chiron genuinely retrogrades.
 - Chiron and Lilith are **drawn** (`KSVG`), never written as U+26B7/U+26B8. Apple Symbols does not reliably carry that range, so on iOS the characters render as empty boxes, and a webfont would mean widening the CSP. ☊/☋ (U+260A/260B) are ancient and safe as characters.
 - Without a birth time the section still renders: these points move under 0.2°/day so the signs are never in doubt, only the houses are lost, and a note says so rather than hiding the section or omitting the houses silently.
+
+### Intimate register & attraction index
+
+Two blocks, deliberately different in kind.
+
+- **Solo (`blocIntime()`, section 5quater)** is qualitative — Mars sign (élan), Venus sign (texture), their element pair (`MV_MIX`, 4×4), Mars mode (tempo), house 8 sign when the birth time is known. **Not** a second 12-sign ranking: a Mars/Venus-weighted ranking reuses the same points as `amour()` with other weights, so the two bar lists come out near-identical and read as padding. Without a birth time the house-8 column says so and the rest still renders.
+- **Synastry (`attraction()`, section 5quinquies)** rescans the same inter-chart grid as `synastrie()` but keeps only contacts touching Mars, Venus, Pluto or the ASC, and **counts hard aspects positively** — a Mars/Venus square is the most ordinary attraction contact there is, and the synastry index's penalty gives exactly the wrong sign there. Tension is reported as a separate percentage so "strong" is not read as "comfortable". The two indices therefore diverge on purpose.
+- `poidsMax += w*0.124` is the expected value of a random pair (26.7 % chance of hitting one of 5 aspects at 6° orb × 0.745 mean quality × 0.625 mean tightness); scaled by 50 it centres a random pair at 50. Measured over 780 pairs: mean 49.6, p10 36, p90 64.
+- `erosDesc()` exists because `pairDesc()` appends "mais en carré : ça accroche" to hard aspects — right for the synastry index, contradictory in a block where the hard aspect is the motor. Same `PAIRTXT` table, own tone strings (`EROS_TON`).
+- `EROS_CORE` uses `asc` only, never a separate `dc` — same axis, counted once, as in `synastrie()`.
 
 ### Precession
 
