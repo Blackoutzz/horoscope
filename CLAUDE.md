@@ -22,6 +22,8 @@ Two mutually exclusive views toggled via `.hidden`:
 - `#setup` — birth data form (name, date, time, city or lat/lon/tz), recent profiles, chart-code loader
 - `#app` — full chart display (triad, wheel, numerology, readings, ephemeris tables, synastry)
 
+`.synth-grid` is three columns, collapsing to one under 820px. Column-count variants are **classes** (`.synth-grid.two`), never an inline `style` — an inline style beats the media query, which is how the synastry grid ("Ce qui vous lie" / "Ce qui frotte") stayed two columns on a 375px phone. The media query lists every variant explicitly, since `.synth-grid.two` outranks a bare `.synth-grid` inside it.
+
 `#setup` shows one panel at a time via `#setuptabs`, driven by `data-tab` on `#setupcols` — **at every width**, not only on mobile. Keep those rules out of a media query: they lived inside one once, so on desktop the tabs rendered but did nothing while both panels showed at once. Note `.periods` sets `display:flex` further down the sheet and will override an earlier `.setuptabs{display:none}`.
 
 ### JS sections (in order, within `<script>`)
@@ -41,6 +43,7 @@ Sections carry numbered banner comments. Line numbers drift with every edit — 
 | 5sexies. Axe karmique | ~2380 | `renderKarma()`, node/Lilith/Chiron copy, `karmaContacts()`, `karmaScan()`, drawn glyphs (`KSVG`) |
 | 5septies. Structure du thème | ~2897 | `renderStruct()` — secte, Part de Fortune, étoiles fixes, quadrants, forme du thème, densité et figures d'aspects, amas, dispositeurs, rétrogrades, décans/duades, degrés anarétiques |
 | 5octies. Progressions secondaires | ~3500 | `renderProg()` — carte progressée, Lune et Soleil progressés, contacts sur le natal |
+| 5nonies. Bazi | ~3607 | `renderBazi()` — four pillars, solar terms, lunar new year, five movements, hidden stems, branch relations |
 | 5ter. Croisement | ~1764 | Element/mode balance, dignities, rulerships, planet strength, `polarite()` |
 | 6. Rendu | ~2052 | `buildChart()`, `renderChart()`, share menu, recents |
 | 7. Lecture du jour | ~2138 | `vocScan()` (Lune hors-course), `askClaude()` POSTs to `api.anthropic.com/v1/messages` (model: `claude-sonnet-4-6`) |
@@ -106,6 +109,24 @@ Section 5octies (`renderProg()`), rendered in `#prog` after `#struct`. One day a
 - **No progressed angles.** At least three incompatible conventions exist (ASC recomputed for the place at the progressed date, solar arc, Naibod), and they separate the progressed MC by degrees over a lifetime. Picking one silently would yield a wrong progressed house with the confidence of a right one. The houses shown are the **natal** cusps, which progressed planets travel through.
 - **No "écart" column.** Over 40 years the progressed Moon laps the zodiac more than once, so any displayed difference modulo 360° reads as the planet moving backwards. The natal sign shown alongside says the same thing without lying.
 - Progressed→natal aspects use a **1° orb**: the progressed Moon covers a degree in a year, so a wider orb would smear each contact across three years and stop dating anything. `findAspects`'s `exact` flag means "under 1°" and is therefore useless at this orb — the render tags `orb < 0.1` instead.
+
+### Bazi (four pillars)
+
+Section 5nonies (`renderBazi()`), rendered in `#bazi` between `#prog` and `#amour`. A **different tradition**, not another measure of the same thing — so like `KBODIES` and `renderStruct()`, nothing here enters `BODIES`, `dominance()`, `polarite()`, the element balance, the aspect table or the synastry index, and nothing reaches `buildPrompt()`. The block says so in its own intro.
+
+No new astronomy. Bazi boundaries are **solar terms** — the Sun at a multiple of 15° apparent longitude — and `sunLon()` already gives that; the day pillar is a modulo on the Julian day. Only the lunar new year, shown for comparison, needs `moonLon()`.
+
+- **Two live year conventions, both displayed.** The bazi year turns at **Lichun** (Sun = 315°, Feb 3–5); the popular zodiac turns at the **lunar new year** (Jan 21 – Feb 21). They disagree for any birth between the two dates, which is why the page shows both and names which one the rest of the block uses. Picking one silently would hand out a wrong animal for a month of every year. The Lichun and new-year dates cited are the ones that **opened the subject's year**, not those of the Gregorian birth year — a January birth belongs to the previous Lichun.
+- **The lunar calendar reasons in Chinese civil days (UTC+8), not instants.** Month 11 is the month containing the **day** of the winter solstice. Comparing instants picks the wrong month whenever solstice and new moon land on the same CST day — that alone put 1985 and 2015 a full lunation early. `jourCN()`/`minuitCN()` exist for this.
+- The leap-month rule is implemented in full (first month with no major solar term; if it lands in position 11 or 12, month 1 slides one lunation later) rather than approximated as "always the second new moon". The exception is rare but moves the date by a month. Verified: **35/35** against known new-year dates 1985–2033 including the leap-11 case 2033, and 1900–2100 all land in the Jan 21 – Feb 21 window.
+- **Day pillar anchor**: `(JDN + 49) mod 60`, i.e. JD 2451545 (2000-01-01) = 戊午, index 54. The whole day column rests on that one constant — change it and every chart is wrong by a fixed offset, silently.
+- **No hour pillar without a birth time.** One column in four would be invented with the confidence of the other three. When the time is missing *and* the birth falls within 12 h of a solar term, a `.note` says the month (and possibly the year) pillar turns during that day.
+- **Chinese characters are written, not drawn** — unlike Chiron and Lilith. CJK is carried by system fonts on every target platform, so `.han` names a fallback stack and adds no webfont, hence no CSP widening.
+- **Hidden stems** (`CACHES`) are weighted 1 / 0.35 / 0.2. That is one convention among several — others count them equally or not at all — and the `<details>` says so, because the five-movement percentages move with it.
+- The ten gods are shown as **five families** (peers / expression / resources / authority / support) relative to the day master's element. The yin/yang split inside each family needs a seasonal-strength analysis this block does not do, so it is left out rather than half-done.
+- **No luck pillars (大運)**: their direction depends on sex, which the form does not collect. **No true solar time**: pillars sit on the birth zone's clock, while traditional practice uses local apparent time — it moves the hour pillar only near a double-hour boundary. The day turns at **midnight**, not 23:00; schools differ and the note says which one is used.
+- Solar-term instants ignore ΔT and are good to a few minutes (Lichun 2024 computed 16:21 CST vs 16:27 actual) — visible only for a birth sitting exactly on a boundary. Stated in the note.
+- French copy needs **gendered articles per element**: `LE_WX`/`AUCUN_WX` exist because `WX[i].toLowerCase()` behind a fixed article writes « le terre » and « le eau ».
 
 ### Void-of-course Moon
 

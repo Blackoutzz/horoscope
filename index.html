@@ -349,6 +349,14 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .tg.cp{border-color:rgb(var(--v-rgb) / .5);background:rgb(var(--v-rgb) / .09);color:var(--verdigris)}
   .tg.am{border-color:rgb(var(--m-rgb) / .4);background:rgb(var(--m-rgb) / .06);color:var(--minium)}
   .tg.ph{color:var(--ink-soft)}
+  /* L'étiquette est en white-space:nowrap et « angle mort commun » ne rentre
+     pas à côté des barres sous 560 px : elle passe à la ligne plutôt que de
+     pousser la rangée hors de l'écran. */
+  @media (max-width:560px){
+    li.tcx{flex-wrap:wrap;gap:10px}
+    li.tcx .tcn{flex:0 0 6.4em}
+    li.tcx .tg{margin-left:calc(6.4em + 10px)}
+  }
   .lg1,.lg2{font-family:var(--data);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
     padding-left:15px;position:relative;margin-left:10px}
   .lg1::before,.lg2::before{content:"";position:absolute;left:0;top:.35em;width:10px;height:8px;border:1px solid var(--rule)}
@@ -400,6 +408,47 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .prog .note{font-size:11.5px;color:var(--ink-soft);margin:12px 0 0;max-width:80ch}
   .prog table.eph td.g{width:1.8em;font-family:var(--glyph)}
   .prog .synl .sub{color:var(--ink-soft)}
+  /* Bazi — même gabarit que .struct. Les caractères chinois passent par les
+     polices système : aucune police distante, donc aucune CSP à élargir. */
+  .bazi{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .bazi .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}
+  .bazi .snote{font-size:11.5px;color:var(--ink-soft);margin:0 0 16px;max-width:80ch}
+  .bazi .ssub{font-family:var(--data);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:400;margin:22px 0 4px}
+  .bazi p{max-width:80ch}
+  .bazi .note{font-size:11.5px;color:var(--ink-soft);margin:12px 0 0;max-width:80ch}
+  .bazi .vide{color:var(--ink-soft);font-size:13px;margin:6px 0 0;max-width:80ch}
+  .han{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC",system-ui,serif}
+  .bzgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px;margin:10px 0 4px}
+  .bzcard{border:1px solid var(--rule);padding:12px 13px 11px}
+  .bzcard.dm{border-color:var(--verdigris);background:rgb(var(--v-rgb) / .06)}
+  .bzcard .bzt{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
+  .bzcard .bzh{font-size:31px;line-height:1.15;margin:5px 0 3px;letter-spacing:.05em}
+  .bzcard .bzn{font-size:12.5px}
+  .bzcard .bzs{font-family:var(--data);font-size:9.5px;color:var(--ink-soft);margin-top:4px;line-height:1.6}
+  ul.wxl{list-style:none;margin:8px 0 12px;padding:0}
+  ul.wxl li{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13.5px}
+  ul.wxl .wn{flex:0 0 8.6em}
+  ul.wxl .wb{flex:1 1 auto;height:9px;border:1px solid var(--rule);position:relative}
+  ul.wxl .wb i{position:absolute;inset:0 auto 0 0;background:var(--ink);opacity:.28}
+  ul.wxl .wb i.hi{background:var(--verdigris);opacity:1}
+  ul.wxl .wb i.lo{background:var(--minium);opacity:.45}
+  ul.wxl .wv{flex:0 0 3em;text-align:right;font-family:var(--data);font-size:11px;color:var(--ink-soft)}
+  ul.wxl .wf{flex:0 0 8.4em;font-family:var(--data);font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);text-align:right}
+  ul.bzrel{list-style:none;margin:6px 0 0;padding:0}
+  ul.bzrel li{display:flex;gap:11px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
+  ul.bzrel .rg{flex:0 0 4.2em;font-size:15px;letter-spacing:.06em}
+  ul.bzrel .rt{flex:1 1 auto}
+  ul.bzrel .rt .sub{display:block;color:var(--ink-soft);font-size:11.5px}
+  .bazi details{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px}
+  /* Fils direct seulement : le même .sub sert de légende dans la table des
+     troncs cachés, où un display:block casse la cellule en deux lignes. */
+  .bazi details>.sub{display:block;font-size:11.5px;color:var(--ink-soft);margin:10px 0;max-width:80ch}
+  .bazi table.eph{margin-top:8px}
+  .bazi table.eph .sub{color:var(--ink-soft);font-family:var(--data);font-size:9.5px}
+  .bazi table.eph td.han{font-size:15px;letter-spacing:.08em}
+  @media (max-width:560px){ul.wxl .wf{display:none}}
   .ksvg{width:1em;height:1em;vertical-align:-.14em;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .amour{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
@@ -428,7 +477,11 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
     letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-top:2px}
   .gaugelab span:nth-child(2){color:var(--verdigris)}
   .synth-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 clamp(22px,3vw,46px)}
-  @media (max-width:820px){.synth-grid{grid-template-columns:1fr}}
+  /* Deux colonnes plutôt que trois — en classe et pas en style inline : un
+     style inline bat la requête média et laissait la grille à deux colonnes
+     sur téléphone, où chaque colonne tombait sous 150 px. */
+  .synth-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  @media (max-width:820px){.synth-grid,.synth-grid.two{grid-template-columns:1fr}}
   .readfull{margin-top:34px;border-top:2px solid var(--ink);padding-top:20px}
   .readfull .sky{max-width:72ch}
   .sect-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 clamp(26px,4vw,52px)}
@@ -683,6 +736,8 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
     <section class="struct" id="struct"></section>
 
     <section class="prog" id="prog"></section>
+
+    <section class="bazi" id="bazi"></section>
 
     <section class="amour" id="amour"></section>
 
@@ -2050,7 +2105,7 @@ function renderSyn(A,B){
       </div>
       <div class="sub">${esc(B.profile.nom||'Carte B')} — ${new Date(B.profile.date+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'})}${B.profile.knownTime?', '+B.profile.time:' (heure inconnue)'} · ${esc(B.profile.place)}</div>
     </div>
-    <div class="synth-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+    <div class="synth-grid two">
       <div class="sect"><h3>Ce qui vous lie</h3><ul class="synl">${pos.length?pos.map(ligne).join(''):'<li><span class="lg">—</span><span class="lt"><b>Aucun contact harmonique serré</b><br>Vos planètes ne se rencontrent pas dans les orbes retenues : le lien se jouera ailleurs que dans l\'évidence immédiate.</span></li>'}</ul></div>
       <div class="sect"><h3>Ce qui frotte</h3><ul class="synl">${neg.length?neg.map(ligne).join(''):'<li><span class="lg">—</span><span class="lt"><b>Aucun aspect dur notable</b><br>C\'est rare, et pas forcément une bonne nouvelle : sans friction, un lien manque souvent de moteur.</span></li>'}</ul></div>
     </div>
@@ -3603,6 +3658,312 @@ function renderProg(){
 }
 
 /* ========================================================================
+   5nonies. Bazi — les quatre piliers (八字)
+   Système chinois, distinct de tout ce qui précède. Rien ici n'entre dans
+   BODIES, dominance(), polarite(), l'équilibre des éléments, la table
+   d'aspects ni l'indice de synastrie : ce sont deux traditions, pas deux
+   mesures de la même chose, et les mêler renuméroterait en silence des
+   résultats déjà lus et partagés.
+
+   Aucune astronomie nouvelle. Les frontières du bazi sont les termes
+   solaires — le Soleil à un multiple de 15° de longitude apparente — et
+   sunLon() les donne déjà. Le pilier du jour est un modulo sur le jour
+   julien. Seul le Nouvel An lunaire, affiché à titre de comparaison,
+   demande les nouvelles lunes, que moonLon() fournit.
+   ======================================================================== */
+const TRONCS=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const BRANCHES=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const ANIMAUX=['Rat','Bœuf','Tigre','Lapin','Dragon','Serpent','Cheval','Chèvre','Singe','Coq','Chien','Cochon'];
+const ANIMAL_EMO=['🐀','🐂','🐅','🐇','🐉','🐍','🐎','🐐','🐒','🐓','🐕','🐖'];
+const WX=['Bois','Feu','Terre','Métal','Eau'];
+const WX_EMO=['🌲','🔥','⛰️','⚔️','💧'];
+const TRONC_WX=[0,0,1,1,2,2,3,3,4,4];
+const BRANCHE_WX=[4,2,0,0,2,1,1,2,3,3,2,4];
+/* Troncs cachés (藏干) : principal, intermédiaire, résiduel. */
+const CACHES=[[9],[5,9,7],[0,2,4],[1],[4,1,9],[2,4,6],[3,5],[5,3,1],[6,8,4],[7],[4,7,3],[8,0]];
+const POIDS_CACHE=[1,0.35,0.2];
+const NM_MOY=29.530588853;
+const wxGen=e=>(e+1)%5;    // engendre : bois → feu → terre → métal → eau → bois
+const wxCtrl=e=>(e+2)%5;   // contrôle : bois → terre → eau → feu → métal → bois
+const estYang=i=>i%2===0;
+const polMot=i=>estYang(i)?'yang':'yin';
+
+/* --- Solveurs. Un terme solaire est un instant : il ne dépend d'aucun
+   fuseau, donc comparer l'instant de naissance à celui du terme suffit. --- */
+function termeJD(cible,jdEst){
+  const g=t=>((sunLon(t)-cible+540)%360)-180;
+  let a=jdEst;
+  for(let i=0;i<80&&g(a)>0;i++)a-=5;
+  let b=a+1;
+  for(let i=0;i<80&&g(b)<0;i++)b+=1;
+  a=b-1;
+  for(let i=0;i<60;i++){const m=(a+b)/2; if(g(m)<0)a=m; else b=m;}
+  return (a+b)/2;
+}
+/* Nouvelle lune n° k comptée depuis celle du 6 janvier 2000. */
+function nouvelleLune(k){
+  const moy=2451550.09766+NM_MOY*k;
+  const g=t=>((moonLon(t)-sunLon(t)+540)%360)-180;
+  let a=moy-2.5,b=moy+2.5;
+  for(let i=0;i<60;i++){const m=(a+b)/2; if(g(m)<0)a=m; else b=m;}
+  return (a+b)/2;
+}
+/* Le calendrier chinois raisonne en jours civils de Chine (UTC+8), pas en
+   instants : un mois commence le jour de la nouvelle lune et le mois 11 est
+   celui qui contient le jour du solstice. Comparer des instants donne le
+   mauvais mois chaque fois que les deux tombent le même jour — c'est
+   exactement ce qui décalait 1985 et 2015 d'une lunaison entière. */
+const jourCN=jd=>Math.floor(jd+8/24+0.5);
+const minuitCN=j=>j-0.5-8/24;
+function kAvant(jd){
+  const d=jourCN(jd);
+  let k=Math.round((jd-2451550.09766)/NM_MOY);
+  for(let i=0;i<4&&jourCN(nouvelleLune(k))>d;i++)k--;
+  for(let i=0;i<4&&jourCN(nouvelleLune(k+1))<=d;i++)k++;
+  return k;
+}
+const jdCivil=(y,mo,d)=>jdFromUTC(new Date(Date.UTC(y,mo-1,d,0,0,0)));
+/* Lichun (立春) : Soleil à 315°, début de l'année solaire chinoise. */
+const lichunJD=y=>termeJD(315,jdCivil(y,2,1));
+/* Nouvel An lunaire — deuxième nouvelle lune après le solstice d'hiver, sauf
+   mois intercalaire glissé avant le mois 1. On applique la règle complète du
+   mois sans terme majeur plutôt que l'approximation : l'exception est rare
+   (1985, 2015, 2033…) mais elle décale la date d'un mois entier. */
+function nouvelAnJD(y){
+  const k1=kAvant(termeJD(270,jdCivil(y-1,12,15)));
+  const k2=kAvant(termeJD(270,jdCivil(y,12,15)));
+  if(k2-k1===12)return nouvelleLune(k1+2);
+  const sect30=k=>Math.floor(n360(sunLon(minuitCN(jourCN(nouvelleLune(k)))))/30);
+  let fuite=-1;
+  for(let i=1;i<=12;i++)if(sect30(k1+i)===sect30(k1+i+1)){fuite=i;break;}
+  return nouvelleLune(k1+(fuite>=1&&fuite<=2?3:2));
+}
+const dateCN=jd=>new Date((jd-2440587.5+8/24)*86400000);
+const dateCNStr=jd=>{const d=dateCN(jd);
+  return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),12))
+    .toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});};
+
+/* --- Les quatre piliers --- */
+function quatrePiliers(y,mo,d,h,jdUTC){
+  /* Année : elle bascule à Lichun — ni au 1er janvier, ni au Nouvel An. */
+  const lc=lichunJD(y);
+  const anSol=jdUTC<lc?y-1:y;
+  const ta=((anSol-4)%10+10)%10, ba=((anSol-4)%12+12)%12;
+  /* Mois : douze secteurs de 30° depuis 315° (Lichun ouvre le mois du
+     Tigre). Tronc du mois par la règle des cinq tigres (五虎遁). */
+  const sect=Math.floor(n360(sunLon(jdUTC)-315)/30);
+  const bm=(2+sect)%12, tm=(((ta%5)*2+2)+sect)%10;
+  /* Jour : cycle sexagésimal continu, posé sur le jour julien de la date
+     civile locale. Ancrage : JJ 2451545, le 1er janvier 2000, vaut 戊午,
+     soit l'indice 54 — d'où le +49. */
+  const jdn=Math.floor(jdFromUTC(new Date(Date.UTC(y,mo-1,d,12,0,0))));
+  const ij=((jdn+49)%60+60)%60, tj=ij%10, bj=ij%12;
+  /* Heure : douze doubles-heures, celle du Rat à cheval sur minuit. Tronc
+     par la règle des cinq rats (五鼠遁). */
+  const bh=Math.floor(((h+1)%24)/2)%12, th=(((tj%5)*2)+bh)%10;
+  /* Distance à la frontière de mois la plus proche : sert à prévenir quand
+     l'heure manque et que la naissance tombe le jour d'un terme. */
+  const t0=termeJD(n360(315+sect*30),jdUTC), t1=termeJD(n360(315+(sect+1)*30),jdUTC);
+  return {lichun:lc,anSol,sect,
+    bord:Math.min(jdUTC-t0,t1-jdUTC),
+    piliers:[{t:ta,b:ba,n:'Année'},{t:tm,b:bm,n:'Mois'},{t:tj,b:bj,n:'Jour'},{t:th,b:bh,n:'Heure'}]};
+}
+
+/* --- Équilibre des cinq mouvements. Troncs apparents à 1, troncs cachés
+   pondérés 1 / 0,35 / 0,2. Cette pondération est une convention parmi
+   plusieurs : d'autres écoles comptent les cachés à parts égales, ou ne les
+   comptent pas du tout. Le note le dit. --- */
+function wuxing(piliers){
+  const v=[0,0,0,0,0]; let tot=0;
+  for(const p of piliers){
+    v[TRONC_WX[p.t]]+=1; tot+=1;
+    CACHES[p.b].forEach((s,i)=>{const w=POIDS_CACHE[i]; v[TRONC_WX[s]]+=w; tot+=w;});
+  }
+  return {v,pct:v.map(x=>Math.round(x/tot*100)),tot};
+}
+/* Cinq familles — les dix dieux ramenés à leur relation à l'élément du
+   maître du jour, qui est la seule chose que la structure permet d'affirmer. */
+function familleWX(dm,e){
+  if(e===dm)return 0;
+  if(e===wxGen(dm))return 1;
+  if(e===wxCtrl(dm))return 2;
+  if(wxCtrl(e)===dm)return 3;
+  return 4;
+}
+const FAM_NOM=['Pairs','Expression','Ressources','Autorité','Soutien'];
+const FAM_HAN=['比劫','食傷','財','官殺','印'];
+const FAM_TXT=[
+ 'tes semblables : les alliés, les rivaux, et ta capacité à tenir seul',
+ 'ce que tu produis : la parole, la création, les enfants — la part de toi qui sort',
+ 'ce que tu maîtrises : l\'argent, le concret, l\'objet du désir',
+ 'ce qui te contraint : la règle, la charge, le cadre — et le statut qui vient avec',
+ 'ce qui te nourrit : l\'étude, l\'appui, la mère, ce qui te refait'];
+
+/* --- Relations entre branches et entre troncs --- */
+const SANHE=[[8,0,4,4],[11,3,7,0],[2,6,10,1],[5,9,1,3]];   // triangles + élément produit
+const SANHUI=[[2,3,4,0],[5,6,7,1],[8,9,10,3],[11,0,1,4]];  // saisons complètes
+const HE_TRONC=[2,3,4,0,1];                                 // 甲己→Terre, 乙庚→Métal, 丙辛→Eau…
+function relations(piliers){
+  const b=piliers.map(p=>p.b), t=piliers.map(p=>p.t), out=[];
+  const nom=i=>piliers[i].n.toLowerCase();
+  for(let i=0;i<b.length;i++)for(let j=i+1;j<b.length;j++){
+    if(Math.abs(b[i]-b[j])===6)
+      out.push({g:BRANCHES[b[i]]+'⇄'+BRANCHES[b[j]],h:`${BRANCHES[b[i]]} ${nom(i)} contre ${BRANCHES[b[j]]} ${nom(j)}`,
+        s:'Opposition (冲) : les deux secteurs se font face. Un point de friction interne, pas un présage — souvent le moteur du thème.'});
+    else if(b[i]+b[j]===1||b[i]+b[j]===13)
+      out.push({g:BRANCHES[b[i]]+'+'+BRANCHES[b[j]],h:`${BRANCHES[b[i]]} ${nom(i)} avec ${BRANCHES[b[j]]} ${nom(j)}`,
+        s:'Accord de paire (六合) : les deux registres coopèrent, quitte à s\'immobiliser l\'un l\'autre.'});
+    if(Math.abs(t[i]-t[j])===5)
+      out.push({g:TRONCS[t[i]]+'+'+TRONCS[t[j]],h:`${TRONCS[t[i]]} ${nom(i)} lié à ${TRONCS[t[j]]} ${nom(j)}`,
+        s:`Liaison de troncs (五合), de tendance ${WX[HE_TRONC[Math.min(t[i],t[j])]].toLowerCase()}. La transformation effective dépend de la saison : ici on nomme le lien, pas son résultat.`});
+  }
+  for(const [x,y,z,el] of SANHE)if([x,y,z].every(v=>b.includes(v)))
+    out.push({g:BRANCHES[x]+BRANCHES[y]+BRANCHES[z],h:'Triangle complet',
+      s:`Les trois branches du triangle ${WX[el].toLowerCase()} sont réunies (三合) : cet élément devient une force organisée du thème, pas un simple comptage.`});
+  for(const [x,y,z,el] of SANHUI)if([x,y,z].every(v=>b.includes(v)))
+    out.push({g:BRANCHES[x]+BRANCHES[y]+BRANCHES[z],h:'Saison complète',
+      s:`Les trois branches d'une même saison sont réunies (三会) : la poussée ${WX[el].toLowerCase()} domine tout le reste.`});
+  return out;
+}
+
+const ANIM_TXT=[
+ 'vif et opportuniste, tu sens le vent avant les autres et tu gardes des réserves',
+ 'patient et obstiné, tu avances à ta cadence et tu ne lâches pas ce que tu as commencé',
+ 'impulsif et courageux, tu entres le premier et tu supportes mal d\'attendre',
+ 'diplomate et sensible aux ambiances, tu préfères contourner que forcer',
+ 'ambitieux et théâtral, tu vises grand et tu tiens mal dans un petit format',
+ 'discret et réfléchi, tu gardes tes raisons pour toi et tu agis une fois',
+ 'franc et mobile, tu as besoin d\'air et de terrain plus que de sécurité',
+ 'conciliante et artiste, tu obtiens par la douceur ce que tu ne prendrais pas de force',
+ 'malin et joueur, tu résous par la ruse ce que d\'autres attaquent de face',
+ 'précis et direct, tu dis ce que tu vois et tu ranges ce qui traîne',
+ 'loyal et inquiet, tu te bats pour les tiens et pour ce qui te paraît juste',
+ 'généreux et confiant, tu cherches le plaisir partagé plutôt que le pouvoir'];
+const DM_IMG=[
+ 'le grand arbre — droit, il pousse vers le haut, prend son temps et ne plie pas facilement',
+ 'la liane — souple, elle contourne l\'obstacle et grimpe sur ce qui est déjà là',
+ 'le soleil — il éclaire tout le monde sans choisir, chaleur constante et visible de loin',
+ 'la flamme de chandelle — chaleur choisie, intense de près, sensible au moindre courant d\'air',
+ 'la montagne — masse stable, on s\'appuie dessus, elle bouge lentement',
+ 'la terre de jardin — nourricière et fine, elle fait pousser ce qu\'on lui confie',
+ 'le métal brut, la hache et l\'outil — ça tranche, ça décide, ça ne s\'embarrasse pas des formes',
+ 'le bijou — métal travaillé, précis, sensible à la façon dont on le manie',
+ 'le fleuve — masse mouvante, il va loin et emporte ce qu\'il rencontre',
+ 'la rosée — eau discrète, elle s\'infiltre partout et pénètre ce que le fleuve contourne'];
+const WX_ROLE=['la croissance et l\'élan de départ','la visibilité et la chaleur donnée',
+ 'la stabilité et la capacité à tenir','le tranchant, l\'ordre et la coupe',
+ 'la réflexion, l\'adaptation et la circulation'];
+/* Bois et métal sont masculins, terre et eau féminines, et eau s'élide :
+   un `WX[i].toLowerCase()` collé derrière un article fixe écrit « le terre ». */
+const LE_WX=['le bois','le feu','la terre','le métal','l\'eau'];
+const AUCUN_WX=['Aucun bois','Aucun feu','Aucune terre','Aucun métal','Aucune eau'];
+
+function renderBazi(){
+  const {profile,jd}=CHART;
+  const kt=profile.knownTime;
+  const [y,mo,d]=profile.date.split('-').map(Number);
+  const h=kt?+profile.time.split(':')[0]:12;
+  const Q=quatrePiliers(y,mo,d,h,jd);
+  /* Sans heure de naissance le pilier de l'heure n'existe pas : le deviner
+     donnerait une colonne fausse sur quatre, avec l'aplomb des trois autres. */
+  const pil=kt?Q.piliers:Q.piliers.slice(0,3);
+
+  const carte=(p,i)=>{
+    const eT=TRONC_WX[p.t], eB=BRANCHE_WX[p.b];
+    return `<div class="bzcard${i===2?' dm':''}">
+      <div class="bzt">${p.n}${i===2?' · maître':''}</div>
+      <div class="bzh han">${TRONCS[p.t]}${BRANCHES[p.b]}</div>
+      <div class="bzn">${ANIMAL_EMO[p.b]} ${ANIMAUX[p.b]}</div>
+      <div class="bzs">${WX_EMO[eT]} ${WX[eT]} ${polMot(p.t)}<br>${WX_EMO[eB]} ${WX[eB]} ${polMot(p.b)}</div>
+    </div>`;
+  };
+
+  /* Deux conventions vivantes pour l'animal de l'année, et elles divergent
+     pour toute naissance entre le 1er janvier et le 20 février. En choisir
+     une en silence donnerait un animal faux une année sur six. */
+  const na=nouvelAnJD(y), naPrec=nouvelAnJD(y-1);
+  const jourNaiss=jdCivil(y,mo,d);
+  const anLun=jourCN(jourNaiss)>=jourCN(na)?y:y-1;
+  const bLun=((anLun-4)%12+12)%12, bSol=Q.piliers[0].b;
+  const divergent=bLun!==bSol;
+
+  /* La frontière à citer est celle qui a ouvert l'année solaire, pas celle
+     de l'année civile : une naissance de janvier appartient au Lichun
+     précédent. */
+  const lcOuvre=Q.anSol===y?Q.lichun:lichunJD(y-1);
+  const naOuvre=anLun===y?na:naPrec;
+
+  const dm=TRONC_WX[Q.piliers[2].t];
+  const wx=wuxing(pil);
+  const maxP=Math.max(...wx.pct), minP=Math.min(...wx.pct);
+  const barres=`<ul class="wxl">`+WX.map((w,e)=>{
+    const f=familleWX(dm,e), cls=wx.pct[e]===maxP?'hi':(wx.pct[e]<=8?'lo':'');
+    return `<li><span class="wn">${WX_EMO[e]} ${w}</span>`+
+      `<span class="wb"><i class="${cls}" style="width:${Math.min(100,wx.pct[e]*2.2)}%"></i></span>`+
+      `<span class="wv">${wx.pct[e]} %</span><span class="wf">${FAM_NOM[f]}</span></li>`;
+  }).join('')+`</ul>`;
+
+  const fort=wx.pct.indexOf(maxP), faible=wx.pct.indexOf(minP);
+  const familles=`<ul class="wxl">`+[0,1,2,3,4].map(f=>{
+    const els=[0,1,2,3,4].filter(e=>familleWX(dm,e)===f);
+    const v=els.reduce((s,e)=>s+wx.pct[e],0);
+    return `<li><span class="wn">${FAM_NOM[f]} <span class="han">${FAM_HAN[f]}</span></span>`+
+      `<span class="wb"><i class="${v===0?'lo':''}" style="width:${Math.min(100,v*2.2)}%"></i></span>`+
+      `<span class="wv">${v} %</span><span class="wf">${WX[els[0]]}</span></li>`;
+  }).join('')+`</ul>`;
+
+  const rel=relations(pil);
+  const relHtml=rel.length
+    ? `<ul class="bzrel">`+rel.map(r=>`<li><span class="rg han">${r.g}</span>`+
+        `<span class="rt"><b>${r.h}</b><span class="sub">${r.s}</span></span></li>`).join('')+`</ul>`
+    : `<p class="vide">Aucune opposition, aucun accord et aucune liaison entre tes ${pil.length} piliers. C'est une configuration lisible : rien ne tire le thème dans un sens particulier.</p>`;
+
+  const caches=`<table class="eph"><tr><th>Branche</th><th>Troncs cachés</th><th>Poids</th></tr>`+
+    pil.map(p=>`<tr><td class="han">${BRANCHES[p.b]} <span class="sub">${p.n.toLowerCase()}</span></td>`+
+      `<td class="han">${CACHES[p.b].map(s=>TRONCS[s]).join(' ')}</td>`+
+      `<td>${CACHES[p.b].map((s,i)=>`${WX[TRONC_WX[s]]} ${String(POIDS_CACHE[i]).replace('.',',')}`).join(' · ')}</td></tr>`).join('')+
+    `</table>`;
+
+  const alerte=(!kt&&Q.bord<0.5)
+    ? `<p class="note">Ta naissance tombe à moins de douze heures d'un terme solaire, et l'heure manque : le pilier du mois — et peut-être celui de l'année — bascule dans la journée. Avec l'heure exacte, la réponse est certaine.</p>`:'';
+
+  $('bazi').innerHTML=
+   `<p class="k">Bazi — les quatre piliers</p>
+    <p class="snote">Le thème chinois, lu sur les mêmes instants que le reste de la page mais dans un système entièrement distinct : dix troncs célestes, douze branches terrestres, cinq mouvements. Rien de ce bloc n'entre dans les éléments, la polarité, les aspects ou l'indice de synastrie — ce sont deux traditions, pas deux mesures de la même chose. Les frontières sont les termes solaires, pas le Nouvel An lunaire.</p>
+    <div class="bzgrid">${pil.map(carte).join('')}</div>
+    ${kt?'':`<p class="note">Heure inconnue : le pilier de l'heure est absent plutôt que deviné. Les trois autres tiennent — le jour vient de la date, le mois et l'année des termes solaires.</p>`}
+    ${alerte}
+
+    <h3 class="ssub">Ton animal — deux conventions</h3>
+    <p><b>${ANIMAL_EMO[bSol]} ${ANIMAUX[bSol]}</b> par l'année solaire, celle du bazi : elle a commencé à Lichun, le ${dateCNStr(lcOuvre)}. C'est la branche de ton pilier d'année, et ${ANIM_TXT[bSol]}.</p>
+    ${divergent
+      ? `<p><b>${ANIMAL_EMO[bLun]} ${ANIMAUX[bLun]}</b> par l'année lunaire, celle des calendriers populaires : elle a commencé au Nouvel An, le ${dateCNStr(naOuvre)}. Tu es né entre les deux frontières, donc les deux réponses sont justes dans leur système — et la plupart des sites te donneront celle-ci sans dire laquelle ils appliquent. Le reste de ce bloc suit l'année solaire, qui est la seule que le bazi utilise.</p>`
+      : `<p class="snote">Ton année lunaire, elle, a commencé le ${dateCNStr(naOuvre)} : ta naissance tombe du même côté des deux frontières, donc la convention populaire donne le même animal. Ce n'est pas toujours le cas : entre le 1er janvier et le 20 février, les deux calendriers divergent d'un animal.</p>`}
+
+    <h3 class="ssub">Maître du jour</h3>
+    <p><b class="han">${TRONCS[Q.piliers[2].t]}</b> — ${WX[dm].toLowerCase()} ${polMot(Q.piliers[2].t)}, ${DM_IMG[Q.piliers[2].t]}. C'est toi dans le thème : tout le reste se lit par rapport à ce tronc, et non par rapport à ton animal. La branche du jour, <span class="han">${BRANCHES[Q.piliers[2].b]}</span> ${ANIMAUX[Q.piliers[2].b].toLowerCase()}, est traditionnellement le domaine du conjoint.</p>
+
+    <h3 class="ssub">Les cinq mouvements</h3>
+    ${barres}
+    <p>${LE_WX[fort].charAt(0).toUpperCase()+LE_WX[fort].slice(1)} domine : c'est ${WX_ROLE[fort]} que tu as le plus à disposition. ${
+      minP===0
+        ? `${AUCUN_WX[faible]} dans tes piliers, troncs cachés compris — c'est un manque franc, pas une faiblesse relative : ${WX_ROLE[faible]} devra venir d'ailleurs que de toi.`
+        : `${LE_WX[faible].charAt(0).toUpperCase()+LE_WX[faible].slice(1)} est ton point bas — ${WX_ROLE[faible]}, c'est ce que tu vas chercher chez les autres.`}</p>
+    <h3 class="ssub">Ce que ces mouvements sont pour toi</h3>
+    ${familles}
+    <p class="snote">${[0,1,2,3,4].map(f=>`<b>${FAM_NOM[f]}</b> — ${FAM_TXT[f]}`).join('. ')}. Ces cinq familles sont les dix dieux ramenés à leur relation au maître du jour ; la distinction yin/yang à l'intérieur de chaque famille est volontairement laissée de côté, elle demande une analyse de saison que ce bloc ne fait pas.</p>
+
+    <h3 class="ssub">Ce qui se croise dans tes piliers</h3>
+    ${relHtml}
+
+    <details><summary>Troncs cachés (藏干)</summary>
+      <span class="sub">Chaque branche terrestre abrite un à trois troncs, qui comptent dans l'équilibre des cinq mouvements sans apparaître dans les caractères visibles. Les poids employés ici — 1, 0,35 et 0,2 — sont une convention parmi plusieurs : d'autres écoles les comptent à parts égales, d'autres ne les comptent pas. Change la pondération et les pourcentages ci-dessus bougent.</span>
+      ${caches}</details>
+
+    <p class="note">Le bazi bascule d'année à Lichun, pas au Nouvel An lunaire : c'est pour ça que les deux animaux peuvent différer, et la page affiche les deux plutôt que d'en choisir un. Les grandes périodes décennales (大運) ne sont pas calculées — leur sens de marche dépend du sexe, que ce site ne demande pas. Les piliers sont posés sur l'heure du fuseau de naissance ; la pratique traditionnelle emploie l'heure solaire vraie du lieu, ce qui déplace le pilier de l'heure quand la naissance tombe à quelques minutes d'une double-heure. Le jour change à minuit : les écoles qui le font changer à 23 h attribuent un autre tronc de jour aux naissances de la dernière heure. Enfin les instants de terme solaire sont calculés sans ΔT et à quelques minutes près — visible seulement pour une naissance posée exactement sur une frontière.</p>`;
+}
+
+/* ========================================================================
    6. Rendu
    ======================================================================== */
 const $=id=>document.getElementById(id);
@@ -3668,7 +4029,7 @@ function renderChart(){
     for(let i=0;i<12;i++)h+=`<tr><td>${i+1}</td><td>${degStr(hs.cusps[i])} ${signLab(hs.cusps[i])}</td></tr>`;
     $('house-tbl').innerHTML=h;
   }
-  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderStruct(); renderProg(); renderAmour();
+  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderStruct(); renderProg(); renderBazi(); renderAmour();
 }
 
 function renderTransits(tr,hits){
