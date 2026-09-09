@@ -439,6 +439,21 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .bazi details{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px}
   /* Fils direct seulement : le même .sub sert de légende dans la table des
      troncs cachés, où un display:block casse la cellule en deux lignes. */
+  .bazi .dysens{margin:14px 0 4px;font-size:13.5px}
+  .bazi table.dytbl td:first-child{font-size:15px;letter-spacing:.08em}
+  .bazi table.dytbl tr.hi td{color:var(--verdigris);font-weight:600}
+  .bazi hr.dysep{border:0;border-top:1px solid var(--rule);margin:22px 0 0}
+  @media (max-width:560px){
+    .bazi .dytbl{font-size:12px}
+    .bazi .dytbl td:nth-child(3),.bazi .dytbl td:nth-child(4){white-space:nowrap}
+  }
+  .dypick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0 0;
+    padding-top:12px;border-top:1px solid var(--rule)}
+  .dypick label{font-family:var(--data);font-size:9px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--ink-soft)}
+  .dypick select{background:transparent;border:1px solid var(--rule);color:var(--ink);
+    font-family:var(--body);font-size:13px;padding:6px 9px;border-radius:2px;cursor:pointer;min-width:0}
+  .dypick select:focus{outline:2px solid var(--verdigris);outline-offset:2px}
   .bazi details>.sub{display:block;font-size:11.5px;color:var(--ink-soft);margin:10px 0;max-width:80ch}
   .bazi table.eph{margin-top:8px}
   .bazi table.eph .sub{color:var(--ink-soft);font-family:var(--data);font-size:9.5px}
@@ -664,6 +679,16 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
       <div class="field">
         <label for="f-ville">Lieu de naissance</label>
         <select id="f-ville"></select>
+      </div>
+
+      <div class="field">
+        <label for="f-sexe">Sexe (facultatif)</label>
+        <select id="f-sexe">
+          <option value="">Ne pas préciser</option>
+          <option value="h">Homme</option>
+          <option value="f">Femme</option>
+        </select>
+        <p class="hint">Sert uniquement au sens de marche des périodes décennales du bazi. Sans réponse, les deux sens sont affichés.</p>
       </div>
 
       <div id="manual" class="row hidden">
@@ -1785,8 +1810,12 @@ function renderReveal(lp){
    5quinquies. Encodage de carte et synastrie
    ======================================================================== */
 function encodeProfile(p){
+  /* Neuvième champ : le sexe, pour le sens de marche des périodes
+     décennales. Vide quand il n'est pas renseigné, et les codes à huit
+     champs émis avant restent lisibles — decodeProfile les déstructure et
+     le champ manquant retombe simplement sur ''. */
   const raw=[p.nom||'',p.date,p.knownTime?p.time:'',p.knownTime?1:0,
-             (+p.lat).toFixed(4),(+p.lon).toFixed(4),p.tz,p.place||''].join('|');
+             (+p.lat).toFixed(4),(+p.lon).toFixed(4),p.tz,p.place||'',p.sexe||''].join('|');
   let b=''; for(const x of new TextEncoder().encode(raw))b+=String.fromCharCode(x);
   return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
@@ -1810,6 +1839,9 @@ function checkProfile(p){
   if(!(p.lon>=-180&&p.lon<=180))throw new Error('longitude hors bornes (-180 à 180)');
   if(!p.tz)throw new Error('fuseau horaire manquant');
   tzOffsetMin(new Date(),p.tz);
+  /* Le jeton est une entrée hostile : le sexe part vers le HTML du bloc
+     bazi, donc liste blanche stricte plutôt que confiance. */
+  if(p.sexe!==undefined&&!['','h','f'].includes(p.sexe))throw new Error('sexe invalide');
   return p;
 }
 function decodeProfile(tok){
@@ -1817,10 +1849,10 @@ function decodeProfile(tok){
   while(s.length%4)s+='=';
   const bin=atob(s);
   const txt=new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)));
-  const [nom,date,time,kt,lat,lon,tz,place]=txt.split('|');
+  const [nom,date,time,kt,lat,lon,tz,place,sexe]=txt.split('|');
   return checkProfile({
     nom:(nom||'').slice(0,60), date, time:time||'12:00', knownTime:kt==='1',
-    lat:+lat, lon:+lon, tz,
+    lat:+lat, lon:+lon, tz, sexe:sexe||'',
     place:(place||((+lat).toFixed(2)+', '+(+lon).toFixed(2))).slice(0,80)
   });
 }
@@ -3721,6 +3753,52 @@ function kAvant(jd){
   return k;
 }
 const jdCivil=(y,mo,d)=>jdFromUTC(new Date(Date.UTC(y,mo-1,d,0,0,0)));
+
+/* --- Heure solaire vraie (真太陽時) ---
+   La tradition pose les doubles-heures sur le Soleil, pas sur un fuseau :
+   l'heure d'un thème est celle qu'aurait marquée un cadran au lieu de
+   naissance. Deux termes séparent les deux. Le décalage de longitude par
+   rapport au méridien du fuseau, 4 minutes par degré — jusqu'à trois heures
+   au Xinjiang, que la Chine tient tout entière à UTC+8. Et l'équation du
+   temps, l'irrégularité propre du Soleil, ±16 minutes.
+
+   La correction s'applique à l'instant UT, jamais à l'heure du fuseau :
+   ainsi l'heure d'été n'entre nulle part, elle est déjà absorbée dans
+   l'instant. Elle déplace aussi le jour, donc le maître du jour : une seule
+   heure de référence pour les quatre piliers, sinon on daterait une
+   double-heure solaire dans un jour de fuseau. */
+function eqTime(jd){
+  const T=centuries(jd);
+  const L0=280.46646+36000.76983*T+0.0003032*T*T;
+  const om=125.04-1934.136*T;
+  const dpsi=-0.00478*sin(om);               // nutation en longitude, degrés
+  const e=obliquity(T);
+  const lam=sunLon(jd);                      // longitude apparente
+  const a=atan2(cos(e)*sin(lam),cos(lam));   // ascension droite apparente
+  /* n360 et non un %360 écrit à la main : L0 est négatif avant 2000, et en
+     JS le reste garde le signe du dividende — la branche bascule et
+     l'équation du temps se retrouve fausse d'un jour entier. */
+  return (n360(L0-0.0057183-a+dpsi*cos(e)+180)-180)*4;   // degrés → minutes
+}
+const jdTST=(jd,lon)=>jd+lon/360+eqTime(jd)/1440;
+/* Date et heure civiles solaires vraies, lues comme si l'instant corrigé
+   était en UTC — c'est exactement ce qu'est une heure locale apparente. */
+function civilTST(jd,lon){
+  const d=jdToDate(jdTST(jd,lon));
+  return {y:d.getUTCFullYear(),mo:d.getUTCMonth()+1,d:d.getUTCDate(),
+          h:d.getUTCHours(),mi:d.getUTCMinutes(),
+          hhmm:String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')};
+}
+/* Distance en minutes à la frontière la plus proche : la double-heure
+   (toutes les deux heures, à cheval sur minuit pour le Rat) et minuit
+   solaire, qui fait basculer le pilier du jour. Quatre minutes valent un
+   degré de longitude — la précision qu'un état civil arrondi à la minute
+   permet honnêtement de revendiquer. */
+const BORD_MIN=4;
+function bordsTST(c){
+  const t=c.h*60+c.mi, x=((t+60)%120);
+  return {heure:Math.min(x,120-x), jour:Math.min(t,1440-t)};
+}
 /* Lichun (立春) : Soleil à 315°, début de l'année solaire chinoise. */
 const lichunJD=y=>termeJD(315,jdCivil(y,2,1));
 /* Nouvel An lunaire — deuxième nouvelle lune après le solstice d'hiver, sauf
@@ -3836,6 +3914,39 @@ function relations(piliers){
   return out;
 }
 
+/* --- Grandes périodes décennales (大運) ---
+   Le sens de marche dépend de la polarité du tronc d'année et du sexe :
+   direct quand les deux concordent (année yang et homme, année yin et
+   femme), rétrograde sinon. Il n'y a pas de variante sur ce point. L'âge de
+   départ vient de la distance au 節 voisin — les termes qui ouvrent les
+   mois, ceux que quatrePiliers résout déjà — à raison de trois jours pour
+   une année de vie, et d'un jour pour quatre mois.
+
+   La somme des deux âges de départ possibles vaut l'écart entre les deux
+   節 divisé par trois, soit environ dix ans mais pas exactement : le Soleil
+   va plus vite en janvier qu'en juillet, donc l'écart réel oscille entre
+   29,4 et 31,4 jours. C'est l'invariant qui vérifie la conversion. */
+function daYun(Q,jdUTC,homme){
+  const direct=estYang(Q.piliers[0].t)===homme, pas=direct?1:-1;
+  const cible=direct?termeJD(n360(315+(Q.sect+1)*30),jdUTC)
+                    :termeJD(n360(315+Q.sect*30),jdUTC);
+  const annees=Math.abs(cible-jdUTC)/3;
+  let a=Math.floor(annees), m=Math.round((annees-a)*12);
+  if(m===12){a+=1;m=0;}
+  const piliers=[];
+  for(let k=1;k<=8;k++)piliers.push({
+    t:((Q.piliers[1].t+pas*k)%10+10)%10,
+    b:((Q.piliers[1].b+pas*k)%12+12)%12,
+    age:a+(k-1)*10});
+  return {direct,depart:{a,m},piliers};
+}
+/* Pilier de l'année en cours (流年). Il bascule à Lichun comme le pilier
+   d'année natal, jamais au 1er janvier. */
+function liuNian(jdNow){
+  const y=jdToDate(jdNow).getUTCFullYear();
+  const anSol=jdNow<lichunJD(y)?y-1:y;
+  return {t:((anSol-4)%10+10)%10,b:((anSol-4)%12+12)%12,an:anSol};
+}
 const ANIM_TXT=[
  'vif et opportuniste, tu sens le vent avant les autres et tu gardes des réserves',
  'patient et obstiné, tu avances à ta cadence et tu ne lâches pas ce que tu as commencé',
@@ -3873,8 +3984,14 @@ function renderBazi(){
   const {profile,jd}=CHART;
   const kt=profile.knownTime;
   const [y,mo,d]=profile.date.split('-').map(Number);
-  const h=kt?+profile.time.split(':')[0]:12;
-  const Q=quatrePiliers(y,mo,d,h,jd);
+  const [hz,miz]=kt?profile.time.split(':').map(Number):[12,0];
+  /* Heure solaire vraie, pas heure du fuseau — et elle gouverne aussi le
+     jour, donc le maître du jour. Les piliers de fuseau sont calculés en
+     regard pour pouvoir nommer l'écart quand il y en a un. */
+  const c=civilTST(jd,+profile.lon);
+  const Q=quatrePiliers(c.y,c.mo,c.d,c.h,jd);
+  const Qz=quatrePiliers(y,mo,d,hz,jd);
+  const bords=bordsTST(c);
   /* Sans heure de naissance le pilier de l'heure n'existe pas : le deviner
      donnerait une colonne fausse sur quatre, avec l'aplomb des trois autres. */
   const pil=kt?Q.piliers:Q.piliers.slice(0,3);
@@ -3940,6 +4057,56 @@ function renderBazi(){
         `<span class="rt"><b>${r.h}</b><span class="sub">${r.s}</span></span></li>`).join('')+`</ul>`
     : `<p class="vide">Aucune opposition, aucun accord et aucune liaison entre tes ${pil.length} piliers. C'est une configuration lisible : rien ne tire le thème dans un sens particulier.</p>`;
 
+  /* Grandes périodes décennales. Sans sexe renseigné les deux sens sont
+     rendus : l'inconnue vaut un bit et a deux issues, donc on les montre
+     toutes les deux plutôt que d'en choisir une en silence. */
+  const jdNow=jdFromUTC(new Date());
+  const age=(jdNow-jd)/AN_TROP;
+  const ln=liuNian(jdNow);
+  const sexe=profile.sexe||'';
+  const sens=sexe==='h'?[true]:sexe==='f'?[false]:[true,false];
+  const tblDaYun=(homme)=>{
+    const D=daYun(Q,jd,homme);
+    const lig=D.piliers.map(p=>{
+      const fin=p.age+10, ici=age>=p.age&&age<fin;
+      const f=familleWX(dm,TRONC_WX[p.t]);
+      return `<tr${ici?' class="hi"':''}><td class="han">${TRONCS[p.t]}${BRANCHES[p.b]}</td>`+
+        `<td>${ANIMAL_EMO[p.b]} ${ANIMAUX[p.b]}</td>`+
+        `<td>${p.age} → ${fin} ans</td>`+
+        `<td>${WX_EMO[TRONC_WX[p.t]]} ${FAM_NOM[f]}</td></tr>`;
+    }).join('');
+    const cur=D.piliers.find(p=>age>=p.age&&age<p.age+10);
+    const avant=age<D.piliers[0].age;
+    /* Les piliers natals sont renommés pour ce balayage : « année » natale
+       et « année en cours » côte à côte dans la même phrase se confondent. */
+    const NAT={'Année':'année natale','Mois':'mois natal','Jour':'jour natal','Heure':'heure natale'};
+    const rel=cur?relations([...pil.map(p=>({...p,n:NAT[p.n]})),
+        {t:ln.t,b:ln.b,n:'année en cours'},{t:cur.t,b:cur.b,n:'période'}])
+      .filter(r=>/année en cours|période/.test(r.h)):[];
+    return {D,html:
+      `<p class="dysens"><b>${sexe?'':(homme?'Si homme — ':'Si femme — ')}sens ${D.direct?'direct':'rétrograde'}</b>, premier pilier à ${D.depart.a} ans${D.depart.m?' et '+D.depart.m+' mois':''}.</p>`+
+      `<table class="eph dytbl"><tr><th>Période</th><th>Animal</th><th>Âge</th><th>Pour toi</th></tr>${lig}</table>`+
+      (avant
+        ? `<p class="snote">Tu n'es pas encore entré dans la première période : avant elle, c'est le pilier du mois qui tient lieu de décor.</p>`
+        : cur
+          ? `<p>Tu es dans <b class="han">${TRONCS[cur.t]}${BRANCHES[cur.b]}</b> — ${LE_WX[TRONC_WX[cur.t]]} en ${FAM_NOM[familleWX(dm,TRONC_WX[cur.t])].toLowerCase()} : pour toi, ${FAM_TXT[familleWX(dm,TRONC_WX[cur.t])]}. L'année en cours, <b class="han">${TRONCS[ln.t]}${BRANCHES[ln.b]}</b> (${ANIMAL_EMO[ln.b]} ${ANIMAUX[ln.b]}, depuis Lichun ${ln.an}), la croise ${rel.length?'ainsi :':'sans contact de branche notable.'}</p>`+
+            (rel.length?`<ul class="bzrel">${rel.map(r=>`<li><span class="rg han">${r.g}</span><span class="rt"><b>${r.h}</b><span class="sub">${r.s}</span></span></li>`).join('')}</ul>`:'')
+          : `<p class="snote">Au-delà du huitième pilier : la table couvre quatre-vingts ans à partir du premier.</p>`)};
+  };
+  const dyRendu=sens.map(tblDaYun);
+  const blocDaYun=
+   `<h3 class="ssub">Grandes périodes décennales <span class="han">大運</span></h3>
+    <p class="snote">Le thème ne bouge pas, mais il traverse des décors qui changent tous les dix ans. Le sens de marche dépend de la polarité du tronc d'année — le tien est <b>${polMot(Q.piliers[0].t)}</b> — et du sexe ; l'âge de départ vient de la distance au terme solaire voisin, trois jours valant une année de vie.</p>
+    ${dyRendu.map(x=>x.html).join('<hr class="dysep">')}
+    <div class="dypick">
+      <label for="bz-sexe">Affiner</label>
+      <select id="bz-sexe">
+        <option value=""${sexe===''?' selected':''}>Ne pas préciser — montrer les deux</option>
+        <option value="h"${sexe==='h'?' selected':''}>Homme</option>
+        <option value="f"${sexe==='f'?' selected':''}>Femme</option>
+      </select>
+    </div>`;
+
   const caches=`<table class="eph"><tr><th>Branche</th><th>Troncs cachés</th><th>Poids</th></tr>`+
     pil.map(p=>`<tr><td class="han">${BRANCHES[p.b]} <span class="sub">${p.n.toLowerCase()}</span></td>`+
       `<td class="han">${CACHES[p.b].map(s=>TRONCS[s]).join(' ')}</td>`+
@@ -3949,12 +4116,28 @@ function renderBazi(){
   const alerte=(!kt&&Q.bord<0.5)
     ? `<p class="note">Ta naissance tombe à moins de douze heures d'un terme solaire, et l'heure manque : le pilier du mois — et peut-être celui de l'année — bascule dans la journée. Avec l'heure exacte, la réponse est certaine.</p>`:'';
 
+  /* Heure solaire vraie : l'écart au fuseau, les piliers qu'aurait donnés
+     l'heure de la montre quand ils diffèrent, et l'avertissement de bord. */
+  const sxp=p=>TRONCS[p.t]+BRANCHES[p.b];
+  const dj=sxp(Q.piliers[2])!==sxp(Qz.piliers[2]), dh=kt&&sxp(Q.piliers[3])!==sxp(Qz.piliers[3]);
+  const ecartMin=Math.round((jdTST(jd,+profile.lon)-jd)*1440-(tzOffsetMin(new Date(jdToDate(jd)),profile.tz)));
+  const blocTST=!kt?'':
+   `<h3 class="ssub">Heure solaire vraie</h3>
+    <p>Ton heure de naissance au cadran solaire du lieu : <b>${c.hhmm}</b>, contre ${profile.time} à la montre — ${ecartMin>0?'+':ecartMin<0?'−':''}${Math.abs(ecartMin)} minute${Math.abs(ecartMin)>1?'s':''}. L'écart vient de ta longitude par rapport au méridien de ton fuseau (quatre minutes par degré) et de l'équation du temps, l'irrégularité propre du Soleil, qui vaut jusqu'à seize minutes. C'est cette heure-là que la tradition emploie, et c'est elle qui fixe ici la double-heure <em>et</em> le jour.</p>`+
+    (dj||dh
+      ? `<p>À l'heure du fuseau tu aurais lu <b class="han">${sxp(Qz.piliers[2])}</b> au jour${kt?` et <b class="han">${sxp(Qz.piliers[3])}</b> à l'heure`:''} — c'est ce que donnent les sites qui ne corrigent pas la longitude. Les deux calculs sont justes ; ils ne répondent pas à la même question.${dj?' Le pilier du jour est celui du maître du jour, donc l\'écart porte ici sur le caractère central du thème.':''}</p>`
+      : '')+
+    ((bords.jour<BORD_MIN||bords.heure<BORD_MIN)
+      ? `<p class="note">Ta naissance tombe à moins de ${BORD_MIN} minutes ${bords.jour<BORD_MIN?'de minuit solaire':'d\'une frontière de double-heure'} — soit un degré de longitude. Une minute d'écart sur l'heure inscrite, ou quelques kilomètres sur le lieu, ${bords.jour<BORD_MIN?'change le pilier du jour, donc le maître du jour':'change le pilier de l\'heure'}. Prends ce pilier-là comme indécis plutôt que comme acquis.</p>`
+      : '');
+
   $('bazi').innerHTML=
    `<p class="k">Bazi — les quatre piliers</p>
     <p class="snote">Le thème chinois, lu sur les mêmes instants que le reste de la page mais dans un système entièrement distinct : dix troncs célestes, douze branches terrestres, cinq mouvements. Rien de ce bloc n'entre dans les éléments, la polarité, les aspects ou l'indice de synastrie — ce sont deux traditions, pas deux mesures de la même chose. Les frontières sont les termes solaires, pas le Nouvel An lunaire.</p>
     <div class="bzgrid">${pil.map(carte).join('')}</div>
     ${kt?'':`<p class="note">Heure inconnue : le pilier de l'heure est absent plutôt que deviné. Les trois autres tiennent — le jour vient de la date, le mois et l'année des termes solaires.</p>`}
     ${alerte}
+    ${blocTST}
 
     <h3 class="ssub">Ton animal — deux conventions</h3>
     <p><b>${ANIMAL_EMO[bSol]} ${ANIMAUX[bSol]}</b> par l'année solaire, celle du bazi : elle a commencé à Lichun, le ${dateCNStr(lcOuvre)}. C'est la branche de ton pilier d'année, et ${ANIM_TXT[bSol]}.</p>
@@ -3977,11 +4160,15 @@ function renderBazi(){
     <h3 class="ssub">Ce qui se croise dans tes piliers</h3>
     ${relHtml}
 
+    ${blocDaYun}
+
     <details><summary>Troncs cachés (藏干)</summary>
       <span class="sub">Chaque branche terrestre abrite un à trois troncs, qui comptent dans l'équilibre des cinq mouvements sans apparaître dans les caractères visibles. Les poids employés ici — 1, 0,35 et 0,2 — sont une convention parmi plusieurs : d'autres écoles les comptent à parts égales, d'autres ne les comptent pas. Change la pondération et les pourcentages ci-dessus bougent.</span>
       ${caches}</details>
 
-    <p class="note">Le bazi bascule d'année à Lichun, pas au Nouvel An lunaire : c'est pour ça que les deux animaux peuvent différer, et la page affiche les deux plutôt que d'en choisir un. Les grandes périodes décennales (大運) ne sont pas calculées — leur sens de marche dépend du sexe, que ce site ne demande pas. Les piliers sont posés sur l'heure du fuseau de naissance ; la pratique traditionnelle emploie l'heure solaire vraie du lieu, ce qui déplace le pilier de l'heure quand la naissance tombe à quelques minutes d'une double-heure. Le jour change à minuit : les écoles qui le font changer à 23 h attribuent un autre tronc de jour aux naissances de la dernière heure. Enfin les instants de terme solaire sont calculés sans ΔT et à quelques minutes près — visible seulement pour une naissance posée exactement sur une frontière.</p>`;
+    <p class="note">Le bazi bascule d'année à Lichun, pas au Nouvel An lunaire : c'est pour ça que les deux animaux peuvent différer, et la page affiche les deux plutôt que d'en choisir un. Les quatre piliers sont posés sur l'heure solaire vraie du lieu — longitude et équation du temps — parce que c'est ce que la tradition emploie ; la même heure sert au jour et à la double-heure, sinon on daterait une heure solaire dans un jour de fuseau. Le jour change à minuit solaire : les écoles qui le font changer à 23 h attribuent un autre tronc de jour aux naissances de la dernière heure. Les périodes décennales suivent la règle classique, qui se fonde sur une distinction binaire ; sans réponse, les deux sens sont montrés. Enfin les instants de terme solaire sont calculés sans ΔT et à quelques minutes près — visible seulement pour une naissance posée exactement sur une frontière.</p>`;
+  const pick=$('bz-sexe');
+  if(pick)pick.addEventListener('change',e=>majSexe(e.target.value));
 }
 
 /* ========================================================================
@@ -4759,7 +4946,8 @@ $('go').onclick=async()=>{
   }else{
     const c=CITIES[+sel.value];place=c[0];lat=c[1];lon=c[2];tz=c[3];
   }
-  const profile={nom:$('f-nom').value.trim().slice(0,60),date,time,knownTime,lat,lon,tz,place};
+  const profile={nom:$('f-nom').value.trim().slice(0,60),date,time,knownTime,lat,lon,tz,place,
+                 sexe:$('f-sexe').value};
   /* Calculer avant d'enregistrer : un profil qu'on n'arrive pas à calculer
      ne doit pas rester en mémoire et casser le prochain démarrage. */
   try{checkProfile(profile);CHART=buildChart(profile);}
@@ -4877,6 +5065,38 @@ function renderShare(){
 /* --- cartes récentes --- */
 const REC_MAX=6;
 const getRecents=async()=>(await store.get('astro:recents'))||[];
+/* Le sexe entre dans encodeProfile, donc il entre dans chartKey, donc la
+   clé de cache des lectures change quand on le renseigne. Or la lecture ne
+   dépend pas de lui — rien du bazi n'atteint buildPrompt(). On déplace donc
+   les entrées au lieu de les abandonner : aucun appel à l'API, aucune
+   lecture perdue. Les quatre fenêtres portent toutes la clé du jour, donc
+   elles s'énumèrent par construction — pas besoin de store.keys(), et la
+   migration marche aussi là où window.storage ne sait pas lister. */
+const PERIODES=['jour','semaine','mois','annee'];
+async function migrerLectures(avant,apres){
+  if(avant===apres)return;
+  const now=new Date();
+  for(const per of PERIODES){
+    const w=windowFor(per,now);
+    const vieux='astro:lecture:'+per+':'+w.key+':'+avant;
+    const neuf='astro:lecture:'+per+':'+w.key+':'+apres;
+    const v=await store.get(vieux);
+    if(v===null||v===undefined)continue;
+    await store.set(neuf,v);
+    await store.del(vieux);
+  }
+}
+async function majSexe(sexe){
+  if(!CHART||!['','h','f'].includes(sexe))return;
+  const avant=chartKey(CHART.profile), tokAvant=encodeProfile(CHART.profile);
+  CHART.profile.sexe=sexe;
+  await migrerLectures(avant,chartKey(CHART.profile));
+  await store.set('astro:profil',CHART.profile);
+  const r=(await getRecents()).filter(x=>x.tok!==tokAvant);
+  await store.set('astro:recents',r);
+  await pushRecent(CHART.profile);
+  renderBazi();
+}
 async function pushRecent(p){
   const tok=encodeProfile(p);
   const r=(await getRecents()).filter(x=>x.tok!==tok);
