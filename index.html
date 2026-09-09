@@ -590,6 +590,40 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   ul.tags li.tf{border-color:rgb(var(--v-rgb) / .45);background:rgb(var(--v-rgb) / .07);color:var(--ink)}
   ul.tags li.tl{border-color:rgb(var(--m-rgb) / .35);background:rgb(var(--m-rgb) / .05);color:var(--ink)}
   .numero .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0}
+
+  /* ---------- âge et type d'âme ---------- */
+  /* Aucune couleur en dur : tout passe par les jetons, sinon la section
+     serait fausse dans l'un des deux thèmes. */
+  .ame{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
+  .ame .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin:0}
+  .ame .intro{font-size:12px;color:var(--ink-soft);margin:8px 0 0;max-width:86ch}
+  .ame .nm{font-family:var(--display);font-size:clamp(20px,2.6vw,24px);line-height:1.15;margin:14px 0 0}
+  .ame p.txt{font-size:14.5px;margin:12px 0 16px;max-width:86ch}
+  .ame .tk{font-family:var(--data);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 8px}
+  .ame .sub{border-top:1px solid var(--rule);margin-top:22px;padding-top:16px}
+  .ame .gaugewrap{margin:14px 0 0;max-width:420px}
+  /* Zones nommées plutôt qu'un axe continu : les autres gauges de l'app vont
+     de « exigeante » à « fluide », et un chemin de vie posé sur cette
+     grammaire-là se lirait comme une note sur neuf. */
+  .ame .zlab{display:flex;font-family:var(--data);font-size:8px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);margin-top:3px;max-width:420px}
+  .ame .zlab span{text-align:center}
+  .ame .arc{width:100%;max-width:520px;height:auto;display:block;margin:12px 0 0}
+  .ame .arclab{display:flex;font-family:var(--data);font-size:8px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);margin-top:3px;max-width:520px}
+  .ame .arclab span{flex:1;text-align:center}
+  .ame .on{color:var(--verdigris)}
+  .ame .tie{border-left:2px solid var(--verdigris);padding:2px 0 2px 14px;margin:22px 0 0;max-width:84ch}
+  .ame .tie p{margin:0;font-size:14.5px}
+  .ame .miss{font-size:13.5px;color:var(--ink-soft);margin:10px 0 0;max-width:84ch}
+  .ame .miss b{color:var(--ink);font-weight:600}
+  .ame .note{font-size:11.5px;color:var(--ink-soft);margin:18px 0 0;max-width:86ch}
+  ul.tags li.tc{border-color:rgb(var(--v-rgb) / .42);background:rgb(var(--v-rgb) / .06);color:var(--ink)}
+  @media(max-width:520px){
+    .ame .arclab{font-size:6.6px;letter-spacing:.02em}
+    .ame .zlab{font-size:7px;letter-spacing:.02em}
+  }
   .emo{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:.95em;line-height:1}
   .loading{font-family:var(--data);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
   .loading::after{content:"";animation:dots 1.4s steps(4,end) infinite}
@@ -744,6 +778,8 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
         <p class="caption" id="wheelcap"></p>
       </div>
     </div>
+
+    <section class="ame" id="ame"></section>
 
     <section class="elements" id="elements"></section>
 
@@ -4172,6 +4208,282 @@ function renderBazi(){
 }
 
 /* ========================================================================
+   5decies. Âge et type d'âme
+   ------------------------------------------------------------------------
+   Trois lectures populaires, réunies parce qu'elles parlent du même objet :
+   l'âge (racine du chemin de vie), l'instrument (jour du mois), l'origine
+   (tiers réel du jour ou de la nuit). Comme KBODIES, renderStruct() et
+   renderBazi(), rien d'ici n'entre dans BODIES, dominance(), polarite(),
+   l'équilibre des éléments, la table d'aspects ni l'indice de synastrie, et
+   rien n'atteint buildPrompt() : les chiffres déjà publiés ne bougent pas.
+   Rien n'entre non plus dans encodeProfile() ni chartKey() — les deux
+   nombres se déduisent de la date déjà présente dans le jeton, donc les
+   anciens liens valent toujours et aucune lecture en cache n'est orpheline.
+   ======================================================================== */
+
+/* ---- 1. Âge : racine du chemin de vie, réduite de force ---------------
+   Le chemin de vie garde 11/22/33 (MASTERS) ; l'échelle des âges se lit sur
+   1 à 9, donc elle les réduit. La convention est annoncée dans la note :
+   c'est une réduction déclarée, pas un chiffre concurrent, et #numero reste
+   la seule place où le nombre maître s'affiche. */
+const AGE_BANDS=[
+ {min:1,max:1,n:'Âme naissante',
+  tx:'L\'étape est celle du départ : tout est à essayer, rien n\'est encore su. On y avance par élan plutôt que par expérience, et la maladresse fait partie du travail. Ce n\'est pas un retard — c\'est le moment où l\'on décide de sa propre direction pour la première fois.'},
+ {min:2,max:3,n:'Âme jeune',
+  tx:'Le lien, la parole et la création sont le terrain de cette étape : on y apprend en se confrontant aux autres plutôt qu\'en se retirant. L\'étape ne dit pas ce que tu vaux, elle dit où le travail se fait — ici, dehors, avec du monde autour.'},
+ {min:4,max:6,n:'Âme mûre',
+  tx:'L\'étape demande de tenir : bâtir ce qui dure, réparer ce qui casse, porter ce qu\'on a accepté de porter. Le terrain n\'est plus la découverte mais la responsabilité, et la question qui revient n\'est pas « qu\'est-ce que je veux » mais « qu\'est-ce qui tient sans moi ».'},
+ {min:7,max:9,n:'Âme ancienne',
+  tx:'L\'étape travaille le recul : comprendre avant d\'adhérer, terminer les cycles, s\'attacher à plus large que soi. Le revers est connu — on peut confondre la distance avec la sagesse, et rester spectateur d\'une vie qu\'on saurait très bien mener.'}];
+const bandeAge=r=>AGE_BANDS.find(b=>r>=b.min&&r<=b.max);
+
+/* ---- 2. Instrument : jour du mois réduit ------------------------------
+   Nombre indépendant du chemin de vie (qui prend mois + jour + année), donc
+   pas un relabel. Mais les neuf archétypes de la source recouvrent mot pour
+   mot ceux de LIFEPATH : écrit ici en capacités, jamais en identité, sans
+   nom d'archétype ni couple de mots-clés — sinon la section répète #numero
+   sous un autre titre pour les 11 % de thèmes où les deux chiffres coïncident. */
+const INSTRU={
+ 1:{tx:'Un outil d\'amorçage : tu démarres ce qui n\'existe pas encore, sans attendre que quelqu\'un valide. Il sert au premier jour d\'un projet et t\'encombre au centième.',
+    f:['Décider sans consensus','Commencer de zéro','Encaisser d\'avoir tort','Tenir seul un cap']},
+ 2:{tx:'Un outil de lecture : tu perçois les rapports de force et les non-dits d\'une pièce avant qu\'on te les explique. Il ne se voit pas et il change tout ce qui se décide ensuite.',
+    f:['Lire une pièce','Désamorcer','Tenir un lien difficile','Attendre le bon moment']},
+ 3:{tx:'Un outil de mise en forme : ce qui reste à l\'intérieur ne prend jamais corps, et tu sais faire sortir les choses — les tiennes et celles des autres.',
+    f:['Mettre en mots','Rendre une idée contagieuse','Entrer dans une pièce inconnue','Fabriquer du léger']},
+ 4:{tx:'Un outil de construction : tu poses des fondations que d\'autres habiteront, et tu supportes la partie du travail que personne ne regarde.',
+    f:['Finir ce qui est commencé','Bâtir pour dix ans','Supporter la répétition','Dire non à l\'improvisation']},
+ 5:{tx:'Un outil d\'adaptation : tu changes de terrain plus vite que la plupart, et ce qui déstabilise les autres te réveille.',
+    f:['Improviser juste','Apprendre en marchant','Changer d\'avis sans drame','Aller là où c\'est inconnu']},
+ 6:{tx:'Un outil de réparation : on vient te chercher quand quelque chose est cassé — un lien, une équipe, une personne — et tu réponds presque toujours présent.',
+    f:['Réparer un lien','Tenir un cadre','Arbitrer sans humilier','Prendre soin dans la durée']},
+ 7:{tx:'Un outil de fond, pas de vitesse : il ne sert à rien dans l\'urgence et tout dans la durée.',
+    f:['Chercher seul, longtemps','Tenir une question ouverte','Repérer la faille','Travailler sans public']},
+ 8:{tx:'Un outil de transformation : tu convertis une idée en organisation, et une intention en moyens réels. Ce que d\'autres trouvent sale à manier — l\'argent, le pouvoir, le rapport de force — tu le manies.',
+    f:['Passer de l\'idée aux moyens','Négocier','Assumer d\'être responsable','Remettre debout']},
+ 9:{tx:'Un outil de clôture : tu sais quand une chose est finie, et tu la termines pendant que les autres la prolongent. Il te coûte, parce qu\'il te fait lâcher avant d\'avoir envie de lâcher.',
+    f:['Terminer un cycle','Voir large','Donner sans compter','Lâcher au bon moment']}};
+/* Coïncidence chiffre du jour = racine du chemin de vie : environ 11 % des
+   thèmes. Nommée explicitement plutôt que laissée bégayer. */
+const INSTRU_MEME='Ta route et ton outil pointent au même endroit — c\'est rare, et ça coupe les échappatoires : ce que tu sais faire est exactement ce qu\'on te demande.';
+
+/* ---- 3. Origine : tiers réels du jour et de la nuit -------------------
+   La source découpe des tranches d'horloge (00h–04h…). Mais « porteuse de
+   nouvelles aubes » est une affirmation sur le soleil, et 04h–08h n'est
+   l'aube nulle part en particulier : à Montréal le lever passe de 05h06 en
+   juin à 07h33 en décembre, sans compter l'heure d'été qui déplace le même
+   instant d'une tranche entière. On découpe donc le jour réel (lever →
+   coucher) en trois et la nuit réelle en trois, comme les heures planétaires.
+   Les instants de lever et de coucher absorbent par construction la longitude
+   et l'équation du temps : civilTST n'est pas nécessaire ici. */
+const sunDecl=jd=>asin(sin(obliquity(centuries(jd)))*sin(sunLon(jd)));
+/* Angle horaire du lever, −0.833° pour la réfraction et le demi-diamètre.
+   Renvoie null aux latitudes où le soleil ne se lève ni ne se couche ce
+   jour-là : |cos H| > 1 n'a pas de solution, et se rabattre sur des tiers
+   d'horloge redonnerait exactement ce qu'on vient d'écarter. */
+function angleHoraireLever(jd,lat){
+  const dec=sunDecl(jd);
+  const c=(sin(-0.833)-sin(lat)*sin(dec))/(cos(lat)*cos(dec));
+  return Math.abs(c)>1?null:Math.acos(c)*R2D;
+}
+/* Midi solaire vrai en JD, puis lever et coucher de part et d'autre.
+   Le midi retenu est le PLUS PROCHE de l'instant, pas celui du jour UT :
+   à 170° de longitude le jour local est décalé de plus de onze heures de
+   l'UT, et prendre le midi du jour UT plaçait la naissance hors de l'arc
+   qu'on venait de calculer — le tiers renvoyé contredisait alors secteDe().
+   Deux itérations : l'équation du temps se lit au midi cherché. */
+function evenementsSoleil(jd,lat,lon){
+  const N=Math.round(jd+lon/360);
+  let midi=N-lon/360;
+  for(let i=0;i<2;i++)midi=N-lon/360-eqTime(midi)/1440;
+  const H=angleHoraireLever(midi,lat);
+  if(H===null)return null;
+  return {midi,lever:midi-H/360,coucher:midi+H/360};
+}
+const ORIGINES={
+ mystique:{n:'Âme Mystique',arc:'nuit',
+   tx:'Né(e) dans le premier tiers de la nuit, quand le jour vient de tomber et que la maison se referme. La tradition met là ce qui se garde plutôt que ce qui se montre.'},
+ stellaire:{n:'Âme Stellaire',arc:'nuit',
+   tx:'Né(e) au cœur de la nuit, au deuxième tiers — le seul moment où les étoiles sont réellement levées, ce qu\'un découpage d\'horloge ne garantit pas.'},
+ eveilleuse:{n:'Âme Éveilleuse',arc:'nuit',
+   tx:'Né(e) dans le dernier tiers de la nuit, avant le lever : l\'heure où quelque chose est déjà en route et où rien n\'est encore visible.'},
+ solaire:{n:'Âme Solaire',arc:'jour',
+   tx:'Né(e) dans le premier tiers du jour, soleil en montée. L\'arc est celui de ce qui prend de l\'ampleur en se montrant.'},
+ terrestre:{n:'Âme Terrestre',arc:'jour',
+   tx:'Né(e) autour du midi solaire, au deuxième tiers du jour : le moment le plus stable de la course, ombre la plus courte.'},
+ guerisseuse:{n:'Âme Guérisseuse',arc:'jour',
+   tx:'Né(e) dans le dernier tiers du jour, soleil déclinant vers le coucher — l\'arc de ce qui se referme et se répare avant la nuit.'}};
+const ORIGINE_ORDRE=['mystique','stellaire','eveilleuse','solaire','terrestre','guerisseuse'];
+/* Tiers atteint. La nuit qui précède le lever appartient à la nuit de la
+   veille : on compare donc à trois bornes plutôt qu'à une seule journée. */
+function origineDe(jd,lat,lon){
+  const e=evenementsSoleil(jd,lat,lon);
+  if(!e)return null;
+  if(jd>=e.lever&&jd<e.coucher){
+    const t=(jd-e.lever)/(e.coucher-e.lever);
+    return {cle:t<1/3?'solaire':t<2/3?'terrestre':'guerisseuse',ev:e,arc:'jour',
+            debut:e.lever,fin:e.coucher};
+  }
+  /* Avant le lever : nuit ouverte au coucher de la veille. Après le coucher :
+     nuit fermée au lever du lendemain. */
+  const av=jd<e.lever;
+  const autre=evenementsSoleil(jd+(av?-1:1),lat,lon);
+  if(!autre)return null;
+  const debut=av?autre.coucher:e.coucher, fin=av?e.lever:autre.lever;
+  const t=(jd-debut)/(fin-debut);
+  return {cle:t<1/3?'mystique':t<2/3?'stellaire':'eveilleuse',ev:e,arc:'nuit',debut,fin};
+}
+
+/* ---- 4. Passerelle : bande d'âge × arc -------------------------------
+   Huit lignes, pas vingt-quatre. Un tableau 6×4 demanderait d'inventer
+   vingt-quatre doctrines à partir de deux sources qui ne se citent pas ;
+   l'axe jour/nuit est le seul croisement que les deux tiennent vraiment. */
+const PASSERELLE={
+ 'Âme naissante':{
+  jour:'L\'étape est celle du premier élan, et l\'arc de jour te pousse dehors avec : tu apprendras en public, très tôt, sans le filtre que d\'autres ont le temps de se construire.',
+  nuit:'L\'étape est celle du premier élan, mais l\'arc de nuit le garde à l\'abri : tu essaies d\'abord seul, et tu ne montres que ce qui a déjà tenu une fois.'},
+ 'Âme jeune':{
+  jour:'L\'étape demande du contact et de la parole, et l\'arc te pousse dans le même sens : tu apprends en public, vite, quitte à te tromper devant témoins. Rien ne te protège de l\'exposition, et c\'est là que ça avance.',
+  nuit:'L\'étape demande du contact et de la parole ; l\'arc, lui, travaille à l\'abri du regard. Tu apprendras par les autres, mais pas devant eux : les choses se décident chez toi, tard, et se disent le lendemain.'},
+ 'Âme mûre':{
+  jour:'L\'étape demande de tenir, et l\'arc de jour te met en charge visible : on te confie des choses, on te voit les porter, et le poids se mesure au regard des autres autant qu\'au tien.',
+  nuit:'L\'étape demande de tenir, et l\'arc de nuit te fait porter sans public : ce que tu répares se voit peu, et personne ne saura le compte exact de ce que tu as tenu.'},
+ 'Âme ancienne':{
+  jour:'L\'étape travaille le recul, et l\'arc de jour t\'empêche de t\'y installer : on continue de venir te chercher, et la distance que tu prends t\'est régulièrement reprise.',
+  nuit:'L\'étape travaille le recul et l\'arc de nuit va dans le même sens — c\'est la combinaison la plus confortable de la section, donc la plus facile à laisser filer vers le retrait complet.'}};
+
+/* ---- 5. Rendu --------------------------------------------------------- */
+/* Barre à quatre zones et non un axe continu : les gauges de l'app vont de
+   « exigeante » à « fluide », gauche = moins. Un chiffre de chemin de vie
+   posé sur cette grammaire-là se lit comme une note, alors que LIFEPATH
+   traite les neuf comme des genres et non des degrés. Les segments sont
+   proportionnels à la taille des bandes — des quarts égaux mentiraient sur
+   le découpage. */
+function barreAge(r){
+  const seg=[[1,1],[2,3],[4,6],[7,9]], tot=9, x0=6, x1=254, g=6;
+  let x=x0, out='', pos=0;
+  const larg=n=>((x1-x0)-3*g)*n/tot;
+  seg.forEach(([a,b],i)=>{
+    const w=larg(b-a+1), on=r>=a&&r<=b;
+    out+=`<line x1="${x.toFixed(1)}" y1="25" x2="${(x+w).toFixed(1)}" y2="25" `+
+         `stroke="${on?'var(--verdigris)':'var(--ink)'}" stroke-width="${on?2.4:1}"/>`;
+    if(on)pos=x+w*((r-a+0.5)/(b-a+1));
+    x+=w+g;
+  });
+  const p=pos.toFixed(1);
+  out+=`<polygon points="${p},19 ${(pos-5.5).toFixed(1)},9 ${(pos+5.5).toFixed(1)},9" fill="var(--verdigris)"/>`;
+  const noms=['Naissante','Jeune','Mûre','Ancienne'];
+  const lab=seg.map(([a,b],i)=>
+    `<span style="flex:0 0 ${(100*(b-a+1)/tot).toFixed(1)}%"${r>=a&&r<=b?' class="on"':''}>${noms[i]}</span>`).join('');
+  return `<div class="gaugewrap"><svg viewBox="0 0 260 34" class="gauge" role="img"
+      aria-label="Âge de l'âme : ${bandeAge(r).n}, racine ${r} sur 9">${out}</svg>
+      <div class="zlab">${lab}</div></div>`;
+}
+/* Bande des six tiers. Les deux barres verticales sont le lever et le
+   coucher : c'est ce qui rend lisible le fait que les tiers de nuit et de
+   jour n'ont pas la même largeur selon la saison. */
+function bandeArc(o){
+  const w=520, seg=ORIGINE_ORDRE, x0=4, yT=20, yB=34;
+  let out='', x=x0;
+  const wSeg=(w-2*x0)/6;
+  /* Encre + fill-opacity, jamais un triplet écrit en dur : --ink s'éclaircit
+     en thème sombre, alors qu'un rgb(27 42 68) figé y devient invisible —
+     c'est exactement ce que la bande faisait au premier jet. Même procédé
+     que les cercles .disc de la roue. Chaque segment porte en plus un filet :
+     l'opacité seule ne suffit pas à faire lire les tiers de jour, qui sont
+     les plus clairs des six. */
+  seg.forEach(k=>{
+    const nuit=ORIGINES[k].arc==='nuit', on=k===o.cle;
+    out+=`<rect x="${x.toFixed(1)}" y="${on?yT-2:yT}" width="${wSeg.toFixed(1)}" height="${on?yB-yT+2:yB-yT}" `+
+         (on?'fill="var(--verdigris)"':`fill="var(--ink)" fill-opacity="${nuit?.30:.07}"`)+
+         ` stroke="var(--ink)" stroke-opacity="${on?0:.4}" stroke-width=".6"/>`;
+    x+=wSeg;
+  });
+  /* Les deux bornes réelles : le milieu est le lever, les deux extrémités
+     sont le même coucher — la bande est un cycle, pas un segment. Nommées,
+     sinon un filet vertical sans légende ne dit rien. */
+  const bx=x0+wSeg*3, rx=w-x0;
+  const rule=(px,txt,anchor)=>
+    `<line x1="${px.toFixed(1)}" y1="${yT-4}" x2="${px.toFixed(1)}" y2="${yB+2}" stroke="var(--ink)" stroke-width="1"/>`+
+    `<text x="${(px+(anchor==='end'?-3:3)).toFixed(1)}" y="${yT-7}" text-anchor="${anchor}"
+       font-size="7.5" letter-spacing=".08" fill="var(--ink-soft)">${txt}</text>`;
+  /* Seulement le mot sur la bande : l'heure y descendrait sous 5 px de haut
+     une fois le SVG remis à la largeur d'un téléphone. Les heures sont dans
+     le paragraphe, où elles restent lisibles à toute largeur. */
+  out+=rule(bx,'lever','start');
+  out+=rule(rx,'coucher','end');
+  const idx=seg.indexOf(o.cle), t=(CHART.jd-o.debut)/(o.fin-o.debut);
+  const mx=x0+wSeg*(idx+(t*3-Math.floor(t*3)));
+  out+=`<polygon points="${mx.toFixed(1)},${yT-3} ${(mx-5.5).toFixed(1)},${yT-13} ${(mx+5.5).toFixed(1)},${yT-13}" fill="var(--verdigris)"/>`;
+  const lab=seg.map(k=>`<span${k===o.cle?' class="on"':''}>${ORIGINES[k].n.replace('Âme ','')}</span>`).join('');
+  return `<svg viewBox="0 0 520 40" class="arc" role="img"
+      aria-label="Origine : ${ORIGINES[o.cle].n}, arc de ${o.arc}">${out}</svg>
+      <div class="arclab">${lab}</div>`;
+}
+const hLoc=(jd,tz)=>jdToDate(jd).toLocaleTimeString('fr-CA',
+  {timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false});
+
+function renderAme(lp){
+  const p=CHART.profile;
+  const D=+p.date.split('-')[2];
+  const r=reduceFull(lp), b=bandeAge(r);
+  const jour=reduceFull(D), ins=INSTRU[jour];
+  const o=p.knownTime?origineDe(CHART.jd,p.lat,p.lon):null;
+
+  let h=`<p class="k">Âge et type d'âme</p>
+    <p class="intro">Lecture numérologique et solaire, indépendante du thème : rien ici n'entre dans les
+     dominantes, l'équilibre des éléments, les aspects ni la lecture du jour.</p>
+    <div class="nm">${b.n}</div>
+    ${barreAge(r)}
+    <p class="txt">${b.tx}</p>`;
+
+  h+=`<div class="sub"><p class="k">Origine${o?` · ${ORIGINES[o.cle].n} — arc de ${o.arc}`:''}</p>`;
+  if(o){
+    h+=bandeArc(o);
+    /* Les heures de lever et de coucher sont portées par la bande : les
+       répéter ici ferait lire deux fois la même donnée. */
+    /* « à ${place} » et non « du ${place} » : le champ porte déjà le nom nu
+       (« Montréal, QC »), et l'article collé donnait « du Montréal, QC ». */
+    h+=`<p class="txt" style="margin-top:10px">${ORIGINES[o.cle].tx} Ce jour-là à ${esc(p.place)},
+        lever à ${hLoc(o.ev.lever,p.tz)} et coucher à ${hLoc(o.ev.coucher,p.tz)} : la même heure
+        d'horloge à une autre saison tomberait dans un autre tiers, et les six tiers n'ont pas
+        tous la même durée.</p>`;
+  }else if(p.knownTime){
+    /* Latitude polaire : pas de lever ni de coucher ce jour-là. */
+    h+=`<p class="miss">Le soleil ne s'est ni levé ni couché ce jour-là à cette latitude : le jour et la
+        nuit n'ont pas de tiers à découper, et l'origine reste sans réponse. Se rabattre sur des tranches
+        d'horloge redonnerait le découpage que cette section écarte.</p>`;
+  }else{
+    h+=`<p class="miss">L'origine se lit à la position réelle du soleil à ta naissance — dans quel tiers
+        du jour ou de la nuit tu es arrivé. <b>Il y faut l'heure</b>, que ce thème n'a pas. Ajoute-la
+        dans le formulaire et cette partie apparaîtra, avec la passerelle vers l'âge.</p>
+        <p class="miss" style="margin-top:8px">Elle n'est pas devinée à midi : les six tiers durent de
+        2 h 50 à 5 h 15 selon la saison et la latitude, et un thème sans heure tomberait sur
+        « Terrestre » par défaut, pour tout le monde.</p>`;
+  }
+  h+=`</div>`;
+
+  if(o)h+=`<div class="tie"><p><strong>${b.n}, dans l'arc de ${o.arc}.</strong>
+      ${PASSERELLE[b.n][o.arc]}</p></div>`;
+
+  h+=`<div class="sub"><p class="k">Ton instrument · né un ${jour}</p>
+    <p class="txt">${ins.tx}${jour===r?' '+INSTRU_MEME:''}</p>
+    <p class="tk">Ce que tu sais faire</p>
+    <ul class="tags">${ins.f.map(t=>`<li class="tc">${t}</li>`).join('')}</ul></div>`;
+
+  h+=`<p class="note">Âge et instrument : réduction du chemin de vie et du jour du mois
+    (${lp}${lp!==r?` → racine ${r}`:''} et ${D}${D!==jour?` → ${jour}`:''}) ; les nombres maîtres,
+    conservés dans le chemin de vie, sont réduits ici — l'échelle des âges se lit de 1 à 9.
+    L'origine découpe le jour et la nuit réels au lieu de naissance en trois, pas des tranches
+    d'horloge : les sites qui coupent à 00h, 04h, 08h donnent parfois le même nom, mais par
+    coïncidence. Ces trois lectures viennent de la numérologie populaire contemporaine et non
+    d'une tradition fixée — les versions publiées ne s'accordent ni sur les bornes des bandes
+    ni sur les tranches horaires. À prendre comme des correspondances, pas comme un résultat
+    d'étude.</p>`;
+
+  $('ame').innerHTML=h;
+}
+
+/* ========================================================================
    6. Rendu
    ======================================================================== */
 const $=id=>document.getElementById(id);
@@ -4237,7 +4549,7 @@ function renderChart(){
     for(let i=0;i<12;i++)h+=`<tr><td>${i+1}</td><td>${degStr(hs.cusps[i])} ${signLab(hs.cusps[i])}</td></tr>`;
     $('house-tbl').innerHTML=h;
   }
-  const lp=renderNumero(); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderStruct(); renderProg(); renderBazi(); renderAmour();
+  const lp=renderNumero(); renderAme(lp); renderElements(); renderIntro(); renderReveal(lp); renderSynthese(lp); renderKarma(); renderStruct(); renderProg(); renderBazi(); renderAmour();
 }
 
 function renderTransits(tr,hits){
