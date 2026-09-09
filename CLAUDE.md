@@ -156,6 +156,18 @@ Section 5decies (`renderAme()`), rendered in `#ame` between `.cols` and `#elemen
 - **The tie is age × arc only** — 8 lines, not a 6×4 table. Twenty-four cells would mean inventing twenty-four doctrines from two sources that never cite each other; the day/night axis is the only crossing both actually hold.
 - **The arc strip paints with `var(--ink)` + `fill-opacity`**, never a raw triplet. The first draft used `rgb(27 42 68 / .30)`, which is invisible in dark theme where `--ink` is pale — the exact failure the tokens rule guards. Every segment also carries a hairline stroke: opacity alone did not make the daylight thirds legible. Boundary rules are labelled « lever » / « coucher » with the **times in the paragraph**, not in the SVG, where they fall under 5 px once the strip scales to a phone.
 - Sunrise/sunset were checked against an independently coded NOAA implementation sharing no line with the app: **max 1.5 min** over 8 sites × 5 dates, latitudes −34° to +65° including two near the date line, plus the physical anchor that equinox daylight is ~12 h everywhere (12.1–12.3 h, the excess being the refraction term).
+#### Marqueurs d'âme ancienne
+
+A **second, independent reading** at the end of `#ame` (`MARQ`, `marqueursDe()`): six placements the astrological tradition attaches to soul age. Different evidence entirely — positions, not date digits — so the two halves of the section have no reason to agree, and the intro says so once in fixed text.
+
+- **It lists, it never counts.** No published source turns these indicators into a score, so the block doesn't either. A tally was rejected twice over: it would be invented doctrine reading with the confidence of a computed fact, and the measured distribution makes it meaningless anyway.
+- **Every row carries its measured base rate** (20 000 random charts, 8 cities, 1930–2019): maison 12 chargée 22.9 %, ASC Scorpion/Poissons 16.0 %, Soleil/Lune en 8 15.8 %, nœud sud en 12 8.3 %, Pluton en 12 8.0 %, Saturne–nœud sud 5.9 %. This is `RETRO_BAND`'s lesson again — a ticked box without its frequency implies it distinguishes. **A test asserts the printed percentages still match reality**, so moving a threshold without updating the copy fails rather than lying.
+- **The maison-12 threshold is two bodies, not one.** "At least one" measures **56 %** — ten bodies in twelve houses, i.e. chance. Two is also what the sources say ("several planets"). Three would duplicate `amasDe()`, which already reports stelliums per house. The row states the 56 % figure, so the threshold explains itself.
+- **44 % of charts carry no marker at all** — the single most common outcome, and the reason the empty state is written copy rather than an empty list. It says explicitly that no marker does **not** mean "young soul": absence only weighs if presence did, and no source makes these a measure. 4+ markers is 0.3 %.
+- **Two facts are deliberately repeated from `renderKarma()`** — the south node's house and the Saturn–node contact, both already produced by `karmaScan()`. They appear because the question asked here is different, and the rows **point at `Axe karmique`** for the detail instead of restating it.
+- **Only one of the six survives a missing birth time** (Saturne–nœud sud; the rest are houses or the ASC). The block says that instead of rendering five blanks, which would read as five negative results.
+- A per-chart line reporting whether the two readings agree was designed and rejected: it needs a suppression rule for the 44 %, and when it misfires the block appears to adjudicate between two systems it has just said cannot adjudicate each other.
+
 - Per the `.polnote` precedent, the note states these are correspondences rather than a study result — and adds that, unlike Placidus houses or the sexagenary cycle, the three systems come from **contemporary popular numerology with no settled tradition**: the published versions disagree on band boundaries and on the hour slices. The copy stays in the app's grounded register throughout — no other dimensions, no powers.
 
 ### Void-of-course Moon
@@ -195,6 +207,8 @@ Sharing:
 
 Reading cache keys are `astro:lecture:<period>:<date>:<chartKey>`, where `chartKey()` is a 32-bit FNV hash of `encodeProfile()` in base 36. The chart segment is not optional: without it, opening a second chart the same day replayed the first one's reading — solar return and transit agenda included. Two charts colliding on the hash would resurrect that bug, but at ~1 in 4 billion per pair it is not worth a longer key.
 
+**`loadReading()` is generation-numbered (`LECTURE_SEQ`), and every write and paint after an `await` checks it.** The key is computed once at entry from `CHART.profile`, but the function then awaits — storage, and above all the API call, which takes seconds. If the chart changes during that flight (sexe, a retouch, a chart switch), the late `store.set(key, …)` lands on the **old** key and recreates the very entry `migrerLectures()` just deleted: two readings for one chart, one with the sexe and one without. Reproduced deliberately against the pre-fix build — a 1.2 s API call interrupted by a sexe change left `jour:…:<vieille clé>` and `jour:…:<nouvelle clé>` side by side; with the guard, one key. The same guard stops a stale reading being painted over a chart the user has since switched away from. `majSexe()` bumps `LECTURE_SEQ` by hand because it is the one path that migrates without starting a new read, so nothing else would invalidate a request already in flight.
+
 `pruneReadings()` runs after each write and drops every `astro:lecture:` key whose window segment isn't today's, legacy four-segment keys included — there is now one entry per chart per period, so nothing would ever be reclaimed otherwise. It needs `store.keys()`, which enumerates localStorage and `mem`; `window.storage` has no listing API, so in the sandbox stale keys simply survive. Ménage failing is harmless; serving a wrong reading is not.
 
 `askClaude()` has **no `x-api-key` header** — an API key must be injected if direct browser calls are intended, or a proxy must be used.
@@ -226,6 +240,33 @@ Two states, toggled by `#themebtn` and stored in `astro:theme`. With nothing sto
 - The dark palette is not an inversion: `#EFE9DA` on `#1B2A44` vibrates, so ink and vellum are re-picked, and verdigris and minium are lightened to hold contrast.
 
 ### Accessibility
+
+`wireMenu(menuId, togId, listId)` holds the whole `role="menu"` keyboard contract in one place, and both topbar menus use it. Duplicating it would let two contracts drift apart, and a declared role whose keyboard behaviour has rotted is worse than no role.
+
+### Chart switcher
+
+`#swmenu` — a third `.tbtn` in `.topbar`, between theme and share, opening a dropdown of the other saved charts. It exists so switching charts doesn't require a trip back to the setup screen.
+
+- **No new state.** It paints from `COMBO`, which `renderPicker()` already computes for the comparison selector: recents minus the chart on screen. One list, two places, no way for them to diverge. `renderSwitch()` is called at the end of `renderPicker()`.
+- **The current chart is always `recents[0]`**, because `pushRecent()` moves whatever loads to the front. That is why a plain ⇄ *toggle* was rejected: after one swap the previous chart becomes `recents[1]`, so repeated clicks ping-pong between two and charts 3–6 stay unreachable. A dropdown has no such trap.
+- **Two lines per entry**, the second carrying date · heure · lieu. Two saved charts can share name, sun sign and date and differ **only by birth time** — on one line they rendered as indistinguishable duplicates. Untimed charts read « sans heure ».
+- The arrows are **drawn inline**, not ⇄ (U+21C4) — same reason as Chiron and Lilith, plus an icon-only button has no text to fall back on when a glyph becomes an empty box.
+- The button hides when `COMBO` is empty (one saved chart, or none) and on the setup screen, following `#shmenu`.
+- Selecting an entry goes through `chargerCode()`, which builds the chart **before** writing to storage and returns false if the token no longer decodes — a code saved under looser validation, say. The current chart then stays put and `#swerr` says why, rather than the click doing nothing.
+
+### Chart edit (cog)
+
+`#edtog` is the fourth `.tbtn`; it opens `#edmodal`, a small `aria-modal` dialog editing **prénom, heure (+ « je ne connais pas l'heure »), sexe** — and nothing else. Date and place are what make a chart *a different chart*; changing those means you wanted a new one, and the setup screen already does that with the manual-coordinates branch this modal would otherwise have to duplicate.
+
+The payoff case is adding an hour to an untimed chart: it unlocks the ascendant, houses, sect, Part of Fortune, the bazi hour pillar and the soul origin in one edit, where before it meant re-entering the whole birth record.
+
+- **Cache rule, and it is derived, not chosen.** A cached reading survives only if `buildPrompt()` would produce the same prompt. `sexe` never reaches it (that is why `majSexe()` already migrated). `nom` **does** — the prompt opens « THÈME NATAL DE X » and `nom` also seeds the offline engine — and `heure`/`knownTime` change the chart itself. So `memeLecture()` compares every field **except** `sexe`: equal → `migrerLectures()`; otherwise the old keys are left to orphan and `loadReading()` fetches one that actually matches. `pruneReadings()` sweeps the remains. Verified by writing a sentinel into the cache: a sexe-only edit carries it across and deletes the old key; a rename leaves it behind and regenerates.
+- **The recents entry is replaced, not appended** — the old token is filtered out before `pushRecent()`, exactly as `majSexe()` does. Without it every retouch would leave the previous version of the same chart behind and fill `REC_MAX` with near-duplicates. When the edit happens to produce a token that already exists, `pushRecent()`'s own dedupe collapses them.
+- **Build before store**, like everywhere else: `checkProfile()` then `buildChart()`, and on failure the current chart stays and `#ederr` says why.
+- A save with nothing changed closes without touching storage or refetching — an idle edit must not cost an API call.
+- `aria-modal` is a contract: Escape closes and returns focus to the cog, the backdrop closes but the box does not, and Tab cycles inside the box in both directions.
+- `openEdit()` sets `#e-heure.disabled` itself. Assigning `.checked` fires no `change` event, so without that line the time field opened editable under an already-ticked « je ne connais pas l'heure ».
+- **`.tbtn svg:not(.tico)`** carries the stroked-icon styling. It was scoped to `button.shtog`, so the cog inherited the default black `fill` and rendered as a solid dot; the theme icon keeps its own `.tico` because its crescent is a fill, not a stroke.
 
 The share menu (`#shlist`) declares `role="menu"`, which is a contract: arrow keys cycle entries and wrap, Home/End jump to the ends, Escape closes and returns focus to `#shtog`, hidden entries are skipped, and entries carry `tabindex="-1"` so only the button sits in the tab order. `#combolist` implements the same pattern. If you add a menu, match it or drop the roles — declaring the role without the keyboard behaviour is worse than no role.
 

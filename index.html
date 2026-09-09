@@ -281,9 +281,13 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .shmenu{position:relative;flex:0 0 auto}
   /* La boite vient de .tbtn : les deux commandes de la barre doivent faire
      exactement le meme carre, sinon l'alignement se voit. */
-  button.shtog{transition:color .18s,border-color .18s}
-  button.shtog:hover{color:var(--verdigris);border-color:var(--verdigris)}
-  button.shtog svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;
+  button.shtog,#edtog{transition:color .18s,border-color .18s}
+  button.shtog:hover,#edtog:hover{color:var(--verdigris);border-color:var(--verdigris)}
+  /* Toutes les icônes tracées de la barre, sauf celle du thème, qui a son
+     propre .tico (le croissant est un remplissage, pas un trait). Scopé à
+     .shtog seul, un nouveau bouton de la barre héritait du fill noir par
+     défaut et s'affichait en pastille pleine. */
+  .tbtn svg:not(.tico){width:15px;height:15px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   ul.shlist{position:absolute;z-index:30;top:calc(100% + 5px);right:0;margin:0;padding:0;list-style:none;
     min-width:210px;background:var(--vellum);border:1px solid var(--ink);
@@ -294,6 +298,43 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
     font-family:var(--data);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--ink);padding:11px 14px}
   ul.shlist button:hover{background:rgb(var(--v-rgb) / .13);color:var(--verdigris)}
+  ul.shlist button:focus-visible{outline:2px solid var(--verdigris);outline-offset:-2px}
+  /* Bascule de carte : même boîte que le menu de partage, mais des lignes de
+     carte et non des libellés d'action — donc la casse et l'interlettrage du
+     .shlist sont annulés, et on reprend la mise en forme du sélecteur de
+     comparaison pour que la même liste se reconnaisse aux deux endroits. */
+  ul.swlist{min-width:252px;max-width:min(330px,calc(100vw - 32px))}
+  ul.swlist button{display:block;padding:9px 12px;
+    font-family:var(--body);font-size:inherit;letter-spacing:0;text-transform:none}
+  .swlist .cl1{display:flex;align-items:baseline;gap:8px}
+  .swlist .ce{flex:0 0 auto;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:14px}
+  .swlist .cn{flex:0 1 auto;font-family:var(--display);font-size:15px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .swlist .cd{flex:0 0 auto;margin-left:auto;font-family:var(--data);font-size:9.5px;
+    letter-spacing:.06em;color:var(--ink-soft);white-space:nowrap}
+  /* Deuxième ligne : c'est elle qui départage deux cartes du même jour. */
+  .swlist .cl2{display:block;margin-top:2px;font-family:var(--data);font-size:9.5px;
+    letter-spacing:.04em;color:var(--ink-soft);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  ul.swlist button:hover .cd,ul.swlist button:hover .cl2{color:var(--verdigris)}
+  /* ---------- retouche de carte ---------- */
+  /* Voile en var(--ink) et non un noir fixe : en thème sombre l'encre est
+     pâle, donc le voile s'inverse avec le reste au lieu de rester opaque. */
+  .modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:rgba(0,0,0,.34);overflow-y:auto}
+  :root[data-theme="dark"] .modal{background:rgba(0,0,0,.58)}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .modal{background:rgba(0,0,0,.58)}}
+  .modalbox{background:var(--vellum);border:1px solid var(--ink);box-shadow:0 14px 40px var(--shadow);
+    padding:22px 22px 18px;width:min(400px,100%);max-height:calc(100vh - 40px);overflow-y:auto}
+  .modalbox .k{font-family:var(--data);font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 16px}
+  .modalbox .field{margin-bottom:16px}
+  .modalbox .check{margin:-6px 0 18px}
+  .modalbox .cklab{margin:0;font-family:var(--body);font-size:14px;letter-spacing:0;
+    text-transform:none;color:var(--ink-soft)}
+  .modalbox .hint{margin:0 0 14px}
+  .modalrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .modalrow .cta{flex:0 0 auto}
   .comparebar{margin-top:24px;border-top:1px solid var(--rule);padding-top:18px}
   .comparebar .note{font-size:11.5px;color:var(--ink-soft);margin:10px 0 0;max-width:82ch}
   .comparebar .err{margin-top:12px}
@@ -620,6 +661,23 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .ame .miss b{color:var(--ink);font-weight:600}
   .ame .note{font-size:11.5px;color:var(--ink-soft);margin:18px 0 0;max-width:86ch}
   ul.tags li.tc{border-color:rgb(var(--v-rgb) / .42);background:rgb(var(--v-rgb) / .06);color:var(--ink)}
+  /* Marqueurs : la colonne de droite porte la fréquence mesurée. C'est elle
+     qui empêche de lire la liste comme un score — sans elle, « maison 12 »
+     et « Saturne conjoint au nœud sud » se ressemblent, alors que l'un sort
+     quatre fois plus souvent que l'autre. */
+  .ame ul.mk{list-style:none;margin:12px 0 0;padding:0}
+  .ame ul.mk li{display:flex;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--rule)}
+  .ame ul.mk li:last-child{border-bottom:0}
+  .ame .mkst{flex:0 0 12px;font-family:var(--data);font-size:12px;line-height:1.2}
+  .ame ul.mk li.on .mkst{color:var(--verdigris)}
+  .ame ul.mk li.off .mkn,.ame ul.mk li.off .mkd{opacity:.62}
+  .ame .mkbody{flex:1 1 auto;min-width:0}
+  .ame .mkn{font-size:14px;display:block}
+  .ame ul.mk li.on .mkn{font-weight:600}
+  .ame .mkd{font-size:12.5px;color:var(--ink-soft);margin-top:2px;display:block}
+  .ame .mkf{flex:0 0 4.4em;text-align:right;font-family:var(--data);font-size:10px;
+    color:var(--ink-soft);letter-spacing:.04em}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   @media(max-width:520px){
     .ame .arclab{font-size:6.6px;letter-spacing:.02em}
     .ame .zlab{font-size:7px;letter-spacing:.02em}
@@ -659,6 +717,20 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
 <div class="wrap">
   <div class="topbar">
     <button class="tbtn" id="themebtn" type="button" aria-live="polite"></button>
+    <!-- Bascule de carte. Les deux flèches sont dessinées et non ⇄ (U+21C4) :
+         même raison que Chiron et la Lune noire, la police système ne porte
+         pas ce bloc de façon fiable sur iOS et un bouton sans texte n'a rien
+         pour retomber si le glyphe devient un carré vide. -->
+    <div class="shmenu hidden" id="swmenu">
+      <button class="tbtn shtog" id="swtog" type="button" aria-label="Changer de carte"
+              aria-haspopup="true" aria-expanded="false" aria-controls="swlist">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9h13M13.5 5.5 17 9l-3.5 3.5"/>
+          <path d="M20 15H7M10.5 11.5 7 15l3.5 3.5"/>
+        </svg>
+      </button>
+      <ul class="shlist swlist hidden" id="swlist" role="menu" aria-label="Cartes enregistrées"></ul>
+    </div>
     <div class="shmenu hidden" id="shmenu">
       <button class="tbtn shtog" id="shtog" type="button" aria-label="Partager cette carte"
               aria-haspopup="true" aria-expanded="false" aria-controls="shlist">
@@ -672,6 +744,59 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
         <li role="none" class="hidden" id="mlinkli"><button role="menuitem" type="button" tabindex="-1" id="mlink">Copier le lien</button></li>
         <li role="none" class="hidden" id="mshareli"><button role="menuitem" type="button" tabindex="-1" id="mshare">Partager le lien…</button></li>
       </ul>
+    </div>
+    <!-- Retouche de la carte affichée. Curseurs, pas une roue dentée : le
+         premier jet dessinait un cercle et huit rayons, c'est-à-dire le
+         soleil de TICO.light avec un centre plus petit — les deux boutons de
+         la barre devenaient impossibles à distinguer. Trois rails et trois
+         molettes restent lisibles à 15 px, là où les dents d'un engrenage se
+         referment. Dessiné, comme toutes les icônes de la barre. -->
+    <button class="tbtn hidden" id="edtog" type="button" aria-label="Modifier cette carte"
+            aria-haspopup="dialog" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 7h14M5 12h14M5 17h14"/>
+        <circle cx="9" cy="7" r="2.1"/><circle cx="15" cy="12" r="2.1"/><circle cx="8" cy="17" r="2.1"/>
+      </svg>
+    </button>
+  </div>
+
+  <p class="err hidden" id="swerr"></p>
+
+  <!-- ============ RETOUCHE ============ -->
+  <!-- Prénom, heure et sexe seulement : la date et le lieu sont ce qui fait
+       qu'une carte est une AUTRE carte, et l'écran de saisie est à un geste.
+       Ajouter l'heure à une carte qui n'en avait pas débloque d'un coup
+       l'ascendant, les maisons, la secte, la Part de Fortune, le pilier
+       horaire du bazi et l'origine de l'âme — c'est la retouche qui compte. -->
+  <div class="modal hidden" id="edmodal">
+    <div class="modalbox" role="dialog" aria-modal="true" aria-labelledby="edtitle">
+      <p class="k" id="edtitle">Modifier cette carte</p>
+      <div class="field">
+        <label for="e-nom">Prénom (facultatif)</label>
+        <input id="e-nom" type="text" autocomplete="off" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="e-heure">Heure de naissance</label>
+        <input id="e-heure" type="time">
+      </div>
+      <div class="check">
+        <input id="e-nohour" type="checkbox">
+        <label for="e-nohour" class="cklab">Je ne connais pas l'heure</label>
+      </div>
+      <div class="field">
+        <label for="e-sexe">Sexe (facultatif)</label>
+        <select id="e-sexe">
+          <option value="">Ne pas préciser</option>
+          <option value="h">Homme</option>
+          <option value="f">Femme</option>
+        </select>
+      </div>
+      <p class="hint" id="edhint"></p>
+      <p class="err hidden" id="ederr"></p>
+      <div class="modalrow">
+        <button class="cta" id="edsave" type="button">Enregistrer</button>
+        <button class="ghost" id="edcancel" type="button">Annuler</button>
+      </div>
     </div>
   </div>
 
@@ -4351,6 +4476,69 @@ const PASSERELLE={
   jour:'L\'étape travaille le recul, et l\'arc de jour t\'empêche de t\'y installer : on continue de venir te chercher, et la distance que tu prends t\'est régulièrement reprise.',
   nuit:'L\'étape travaille le recul et l\'arc de nuit va dans le même sens — c\'est la combinaison la plus confortable de la section, donc la plus facile à laisser filer vers le retrait complet.'}};
 
+/* ---- 4bis. Marqueurs astrologiques d'âme ancienne ---------------------
+   Seconde lecture, sur des preuves entièrement différentes : la tradition
+   rattache certains placements à l'ancienneté de l'âme. Aucune source
+   publiée n'en fait un score — les indices sont cités un par un — donc le
+   bloc n'en calcule pas. Il liste, il ne tranche pas.
+
+   Chaque marqueur porte sa FRÉQUENCE MESURÉE (20 000 thèmes tirés au sort,
+   8 villes, 1930–2019). C'est la leçon de RETRO_BAND : une case cochée sans
+   sa fréquence laisse croire qu'elle distingue. « Maison 12 occupée » au
+   sens large sort à 56 % — dix corps pour douze maisons, soit le hasard —
+   d'où le seuil à DEUX corps, qui est aussi ce que disent les sources
+   (« several planets »). Trois corps doublerait amasDe(), qui compte déjà
+   les amas par maison.
+
+   Deux de ces faits sont déjà ailleurs dans la page : la maison du nœud sud
+   et le contact Saturne–nœud sont rendus par renderKarma()/karmaScan(). Ils
+   sont repris ici parce que la question posée n'est pas la même, et les
+   lignes renvoient à la section qui les détaille au lieu de la réécrire. */
+const MARQ_ORB=8;
+const MARQ=[
+ {id:'m12',nom:'Maison 12 chargée',freq:22.9,
+  test:c=>c.en12.length>=2,
+  det:c=>c.en12.length>=2
+    ?`${c.en12.length} corps y tombent : ${c.en12.map(b=>NAMES[b]).join(', ')}.`
+    :(c.en12.length===1?`Un seul corps y tombe (${NAMES[c.en12[0]]}) — le seuil est à deux.`
+                       :'Aucun corps en maison 12.'),
+  pq:'Le seuil est à deux corps : « au moins un » sort à 56 % des thèmes, soit à peu près le hasard de dix corps dans douze maisons.'},
+ {id:'asc',nom:'Ascendant Scorpion ou Poissons',freq:16.0,
+  test:c=>['Scorpion','Poissons'].includes(c.ascS),
+  det:c=>`Ascendant ${c.ascS}.`,
+  pq:'Les deux signes que la tradition associe au rapport à ce qui ne se voit pas.'},
+ {id:'lum8',nom:'Soleil ou Lune en maison 8',freq:15.8,
+  test:c=>c.hSol===8||c.hLun===8,
+  det:c=>`Soleil en maison ${c.hSol}, Lune en maison ${c.hLun}.`,
+  pq:'Maison de ce qui se transforme et de ce qui se met en commun.'},
+ {id:'ns12',nom:'Nœud sud en maison 12',freq:8.3,
+  test:c=>c.hNS===12,
+  det:c=>`Nœud sud en maison ${c.hNS}.`,
+  pq:'Le détail de l\'axe est dans <i>Axe karmique</i>, qui donne aussi son signe et ses contacts.'},
+ {id:'plu12',nom:'Pluton en maison 12',freq:8.0,
+  test:c=>c.hPlu===12,
+  det:c=>`Pluton en maison ${c.hPlu}.`,
+  pq:'Placement que certaines sources disent terminal — à prendre pour ce qu\'il est, une affirmation invérifiable.'},
+ {id:'satNS',nom:'Saturne conjoint au nœud sud',freq:5.9,
+  test:c=>c.orbSat<=MARQ_ORB,
+  det:c=>c.orbSat<=MARQ_ORB?`Orbe ${c.orbSat.toFixed(1)}°.`:`${c.orbSat.toFixed(0)}° d'écart.`,
+  pq:'Le contact figure de toute façon dans le balayage de l\'<i>Axe karmique</i>.',
+  sansHeure:true}];
+/* Un seul des six se calcule sans l'heure : les cinq autres sont des
+   maisons ou l'ascendant. Le bloc le dit au lieu de rendre une liste
+   presque entièrement vide qui se lirait comme un résultat. */
+function marqueursDe(natal,karma,hs,kt){
+  const H=l=>houseOf(l,hs.cusps);
+  let d=Math.abs(n360(natal.saturne.lon-karma.noeudsud.lon)); if(d>180)d=360-d;
+  const c={orbSat:d};
+  if(kt){
+    c.en12=BODIES.filter(b=>H(natal[b].lon)===12);
+    c.ascS=signOf(hs.asc); c.hSol=H(natal.soleil.lon); c.hLun=H(natal.lune.lon);
+    c.hNS=H(karma.noeudsud.lon); c.hPlu=H(natal.pluton.lon);
+  }
+  return MARQ.filter(m=>kt||m.sansHeure).map(m=>({...m,on:m.test(c),d:m.det(c)}));
+}
+
 /* ---- 5. Rendu --------------------------------------------------------- */
 /* Barre à quatre zones et non un axe continu : les gauges de l'app vont de
    « exigeante » à « fluide », gauche = moins. Un chiffre de chemin de vie
@@ -4470,6 +4658,37 @@ function renderAme(lp){
     <p class="tk">Ce que tu sais faire</p>
     <ul class="tags">${ins.f.map(t=>`<li class="tc">${t}</li>`).join('')}</ul></div>`;
 
+  /* Marqueurs : une liste, jamais un compte. Les deux lectures de la
+     section reposent sur des preuves sans rapport — chiffres de date d'un
+     côté, positions de l'autre — et n'ont donc aucune raison de s'accorder.
+     C'est dit une fois, en texte fixe : une ligne qui rapporterait leur
+     accord au cas par cas ferait exactement ce que cette phrase récuse. */
+  const mq=marqueursDe(CHART.natal,CHART.karma,CHART.hs,p.knownTime);
+  const nOn=mq.filter(m=>m.on).length;
+  h+=`<div class="sub"><p class="k">Marqueurs d'âme ancienne</p>
+    <p class="intro" style="margin-bottom:2px">Une seconde lecture, sur d'autres preuves : la tradition
+     astrologique rattache certains placements à l'ancienneté de l'âme. Des indices cités un par un —
+     aucune source publiée n'en fait un score, et cette page n'en invente pas un. Elle ne mesure pas
+     la même chose que la bande ci-dessus et n'a aucune raison de lui donner raison.</p>`;
+  if(!p.knownTime)
+    h+=`<p class="miss">Cinq des six marqueurs sont des maisons ou l'ascendant : sans heure de
+        naissance ils ne se calculent pas. Seul le contact Saturne–nœud sud reste lisible.</p>`;
+  else if(!nOn)
+    h+=`<p class="txt" style="margin:12px 0 0">Aucun des six n'est présent — c'est le cas de
+        <b>44 %</b> des thèmes. Cela ne veut pas dire « âme jeune » : l'absence d'un indice ne
+        pèse que si sa présence pesait, et aucune source ne fait de ces placements une mesure.</p>`;
+  h+=`<ul class="mk">`+mq.map(m=>
+    `<li class="${m.on?'on':'off'}"><span class="mkst" aria-hidden="true">${m.on?'●':'○'}</span>
+      <span class="mkbody"><span class="mkn">${m.nom}${m.on?' <span class="sr">— présent</span>':''}</span>
+      <span class="mkd">${m.d} ${m.pq}</span></span>
+      <span class="mkf" title="fréquence mesurée sur 20 000 thèmes">${m.freq.toFixed(0)} %</span></li>`).join('')+
+    `</ul>`;
+  h+=`<p class="note" style="margin-top:12px">${p.knownTime?`${nOn} marqueur${nOn>1?'s':''} sur six. `:''}Les
+      pourcentages sont la fréquence mesurée sur 20 000 thèmes tirés au hasard : ils disent à quel point
+      un marqueur est banal, ce qu'une case cochée ne dit pas. Presque la moitié des thèmes n'en portent
+      aucun et trois sur mille en portent quatre — les compter ne ferait donc pas une échelle, d'autant
+      qu'ils ne mesurent pas la même chose et ne sont pas indépendants entre eux.</p></div>`;
+
   h+=`<p class="note">Âge et instrument : réduction du chemin de vie et du jour du mois
     (${lp}${lp!==r?` → racine ${r}`:''} et ${D}${D!==jour?` → ${jour}`:''}) ; les nombres maîtres,
     conservés dans le chemin de vie, sont réduits ici — l'échelle des âges se lit de 1 à 9.
@@ -4507,6 +4726,7 @@ function renderChart(){
   $('setup').classList.add('hidden');
   $('app').classList.remove('hidden');
   $('shmenu').classList.remove('hidden');
+  $('edtog').classList.remove('hidden');
 
   const dl=new Date(profile.date+'T12:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'});
   $('birthline').textContent=`${dl}${kt?' · '+profile.time:''} · ${profile.place} · ${ageDe(profile.date)} ans`;
@@ -5149,7 +5369,19 @@ async function pruneReadings(keep){
   }
 }
 
+/* Génération de lecture. `key` est figée à l'entrée, mais la fonction attend
+   ensuite — le stockage, puis l'API, qui prend des secondes. Si la carte
+   change pendant ce temps (retouche, bascule de carte, sexe), l'écriture
+   tardive retombe sur l'ANCIENNE clé : elle recrée exactement l'entrée que
+   migrerLectures venait de supprimer, d'où deux lectures jumelles, l'une
+   avec le sexe et l'autre sans. Et `paintReading` afficherait la lecture de
+   la carte précédente par-dessus la nouvelle.
+   On numérote donc les appels : à chaque reprise après un await, une
+   génération périmée s'arrête sans peindre ni écrire. */
+let LECTURE_SEQ=0;
 async function loadReading(force){
+  const seq=++LECTURE_SEQ;
+  const perime=()=>seq!==LECTURE_SEQ;
   const now=new Date();
   const win=windowFor(PERIOD,now);
   const key=readKey(PERIOD,win.key,CHART.profile);
@@ -5168,6 +5400,7 @@ async function loadReading(force){
 
   if(!force){
     const cached=await store.get(key);
+    if(perime())return;
     if(cached){paintReading(cached);setSource(cached.src);return;}
   }
 
@@ -5176,6 +5409,7 @@ async function loadReading(force){
   // 1. lecture locale, immédiate et sans réseau
   const local=PERIOD==='jour'?localReading(tr,hits,voc):spanReading(PERIOD,win);
   local.src='local';
+  if(perime())return;
   paintReading(local);
   setSource('local');
   await store.set(key,local);
@@ -5185,6 +5419,9 @@ async function loadReading(force){
   if(apiDown||PERIOD!=='jour')return;
   try{
     const o=await askClaude(buildPrompt(tr,hits,jd,voc));
+    /* Le trajet réseau est la fenêtre la plus large : c'est ici qu'une
+       lecture d'une carte abandonnée revenait se ranger sous sa clé. */
+    if(perime())return;
     o.src='claude';
     await store.set(key,o);
     paintReading(o);
@@ -5292,6 +5529,9 @@ $('reset').onclick=async()=>{
   $('app').classList.add('hidden');
   $('setup').classList.remove('hidden');
   $('shmenu').classList.add('hidden');
+  $('swmenu').classList.add('hidden');
+  $('edtog').classList.add('hidden');
+  closeEdit(false);
   renderRecents();
   window.scrollTo({top:0});
 };
@@ -5313,11 +5553,16 @@ function copyText(t,btn){
   else fallback();
 }
 const SITE='https://blackoutzz.github.io/horoscope/';
-function wireShareMenu(){
-  const tog=$('shtog'), list=$('shlist'), menu=$('shmenu');
-  /* role="menu" est un contrat : au clavier, les flèches circulent entre les
-     entrées, Échap referme et rend le focus au bouton. Les entrées sortent de
-     l'ordre de tabulation (tabindex="-1") — c'est le bouton qui y reste. */
+/* role="menu" est un contrat : au clavier, les flèches circulent entre les
+   entrées, Home/End sautent aux extrémités, Échap referme et rend le focus au
+   bouton, les entrées cachées sont sautées. Les entrées sortent de l'ordre de
+   tabulation (tabindex="-1") — c'est le bouton qui y reste.
+
+   Écrit une fois et partagé par les deux menus de la barre. Le dupliquer
+   laisserait deux contrats dériver l'un de l'autre, et un role="menu" sans
+   son clavier vaut moins que pas de role du tout. */
+function wireMenu(menuId,togId,listId){
+  const tog=$(togId), list=$(listId), menu=$(menuId);
   const items=()=>[...list.querySelectorAll('li:not(.hidden) button')];
   const estOuvert=()=>!list.classList.contains('hidden');
   const open=(on,bouger)=>{
@@ -5343,6 +5588,12 @@ function wireShareMenu(){
   });
   document.addEventListener('click',e=>{if(!menu.contains(e.target))open(false,false);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&estOuvert())open(false,true);});
+  return {open,estOuvert};
+}
+
+function wireShareMenu(){
+  const menu=$('shmenu');
+  const {open}=wireMenu('shmenu','shtog','shlist');
   $('mcode').onclick=()=>{copyText(menu.dataset.tok||'',$('mcode'));setTimeout(()=>open(false,true),1800);};
   $('mlink').onclick=()=>{copyText(menu.dataset.url||'',$('mlink'));setTimeout(()=>open(false,true),1800);};
   $('mshare').onclick=()=>{
@@ -5402,6 +5653,10 @@ async function majSexe(sexe){
   if(!CHART||!['','h','f'].includes(sexe))return;
   const avant=chartKey(CHART.profile), tokAvant=encodeProfile(CHART.profile);
   CHART.profile.sexe=sexe;
+  /* Ce chemin-ci ne relance pas de lecture, donc rien ne périmerait une
+     requête déjà en vol : elle reviendrait écrire sous l'ancienne clé, juste
+     après la migration, et recréerait la jumelle. On invalide à la main. */
+  LECTURE_SEQ++;
   await migrerLectures(avant,chartKey(CHART.profile));
   await store.set('astro:profil',CHART.profile);
   const r=(await getRecents()).filter(x=>x.tok!==tokAvant);
@@ -5495,6 +5750,143 @@ async function renderPicker(){
   COMBO=(await getRecents()).filter(x=>x.tok!==cur);
   $('combotog').classList.toggle('hidden',!COMBO.length);
   if(!COMBO.length)closeCombo();
+  renderSwitch();
+}
+
+/* Bascule rapide. Se sert de COMBO, que renderPicker vient de calculer :
+   les cartes enregistrées moins celle qu'on regarde. Aucun état en plus, et
+   la liste ne peut pas diverger de celle de la comparaison.
+
+   Le bouton disparaît quand il n'y a rien vers quoi basculer — une seule
+   carte enregistrée, ou aucune. Les lignes reprennent la mise en forme du
+   sélecteur de comparaison (emoji du signe solaire, nom, signe · date) pour
+   qu'on reconnaisse la même liste à deux endroits. */
+function renderSwitch(){
+  const ul=$('swlist');
+  $('swmenu').classList.toggle('hidden',!COMBO.length);
+  if(!COMBO.length){
+    ul.classList.add('hidden');
+    $('swtog').setAttribute('aria-expanded','false');
+    ul.innerHTML=''; return;
+  }
+  /* Deux lignes par entrée, et l'heure sur la seconde. Deux cartes de la même
+     personne au même jour ne diffèrent parfois que par l'heure de naissance —
+     nom, signe et date identiques : sur une seule ligne elles s'affichaient
+     comme deux doublons impossibles à départager. */
+  ul.innerHTML=COMBO.map(x=>{
+    const si=sunSignOf(x.tok);
+    let heure='';
+    try{const p=decodeProfile(x.tok); heure=p.knownTime?p.time:'sans heure';}catch(e){}
+    return `<li role="none"><button role="menuitem" type="button" tabindex="-1" data-tok="${esc(x.tok)}">`+
+      `<span class="cl1"><span class="ce">${si===null?'✳':SIGN_EMO[si]}</span>`+
+      `<span class="cn">${esc(x.nom||'Carte sans nom')}</span>`+
+      `<span class="cd">${si===null?'—':SIGNS[si]}</span></span>`+
+      `<span class="cl2">${dateFR(x.date)}${heure?' · '+esc(heure):''}${
+        x.place?' · '+esc(x.place):''}</span></button></li>`;
+  }).join('');
+}
+/* --- retouche de la carte affichée : prénom, heure, sexe --- */
+/* La lecture ne survit à une modification que si le PROMPT ne change pas.
+   Le sexe n'atteint pas buildPrompt() — c'est pourquoi majSexe() migrait
+   déjà son cache. Le prénom, lui, y entre (« THÈME NATAL DE X ») et sème
+   aussi le moteur local ; l'heure change le thème tout court. Donc : on
+   migre quand seul le sexe bouge, et on laisse les clés s'orpheliner sinon,
+   pour aller rechercher une lecture qui corresponde vraiment. */
+const MEMES_CHAMPS=['nom','date','time','knownTime','lat','lon','tz','place'];
+const memeLecture=(a,b)=>MEMES_CHAMPS.every(k=>a[k]===b[k]);
+
+function openEdit(){
+  if(!CHART)return;
+  const p=CHART.profile;
+  $('e-nom').value=p.nom||'';
+  $('e-heure').value=p.knownTime?p.time:'';
+  $('e-nohour').checked=!p.knownTime;
+  /* Régler la case ne déclenche pas son propre événement change : sans cette
+     ligne le champ heure s'ouvrait actif sous une case déjà cochée. */
+  $('e-heure').disabled=!p.knownTime;
+  $('e-sexe').value=p.sexe||'';
+  $('ederr').classList.add('hidden');
+  $('edhint').textContent=p.knownTime
+    ? 'La date et le lieu ne se modifient pas ici : les changer ferait une autre carte. Passe par « Nouvelle carte ».'
+    : 'Ajouter l\'heure débloque l\'ascendant, les maisons, la secte, le pilier horaire du bazi et l\'origine de l\'âme.';
+  $('edmodal').classList.remove('hidden');
+  $('edtog').setAttribute('aria-expanded','true');
+  $('e-nom').focus();
+}
+function closeEdit(rendre){
+  $('edmodal').classList.add('hidden');
+  $('edtog').setAttribute('aria-expanded','false');
+  if(rendre)$('edtog').focus();
+}
+async function saveEdit(){
+  const err=$('ederr'); err.classList.add('hidden');
+  const avantP=CHART.profile;
+  const knownTime=!$('e-nohour').checked;
+  const time=$('e-heure').value;
+  if(knownTime&&!time){
+    err.textContent='Il manque l\'heure — ou coche « je ne connais pas l\'heure ».';
+    err.classList.remove('hidden'); return;
+  }
+  const p={...avantP,nom:$('e-nom').value.trim().slice(0,60),
+           time:knownTime?time:'',knownTime,sexe:$('e-sexe').value};
+  /* Rien n'a bougé : on referme sans toucher au stockage ni relancer de
+     lecture — une modification à blanc ne doit pas coûter un appel API. */
+  if(memeLecture(p,avantP)&&p.sexe===avantP.sexe){closeEdit(true);return;}
+  /* Calculer avant d'enregistrer, comme partout ailleurs : un profil qu'on
+     n'arrive pas à calculer ne doit pas remplacer celui qui marche. */
+  let neuf;
+  try{checkProfile(p);neuf=buildChart(p);}
+  catch(e){err.textContent='Carte impossible à calculer : '+e.message+'.';err.classList.remove('hidden');return;}
+
+  const tokAvant=encodeProfile(avantP), cleAvant=chartKey(avantP);
+  CHART=neuf;
+  if(memeLecture(p,avantP))await migrerLectures(cleAvant,chartKey(p));
+  await store.set('astro:profil',p);
+  /* Remplacer l'entrée récente au lieu d'en ajouter une seconde : sans ce
+     filtre, chaque retouche laisserait derrière elle la version précédente
+     de la même carte, et REC_MAX se remplirait de doublons. */
+  const r=(await getRecents()).filter(x=>x.tok!==tokAvant);
+  await store.set('astro:recents',r);
+  await pushRecent(p);
+  closeEdit(true);
+  renderChart(); renderShare(); loadReading(false);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function wireEdit(){
+  const modal=$('edmodal'), box=modal.querySelector('.modalbox');
+  $('edtog').onclick=e=>{e.stopPropagation();openEdit();};
+  $('edcancel').onclick=()=>closeEdit(true);
+  $('edsave').onclick=saveEdit;
+  /* Clic sur le voile — mais pas sur la boîte — referme. */
+  modal.addEventListener('mousedown',e=>{if(!box.contains(e.target))closeEdit(true);});
+  /* aria-modal est un contrat : Échap referme, et la tabulation ne doit pas
+     s'échapper derrière le voile tant que la boîte est ouverte. */
+  modal.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.stopPropagation();closeEdit(true);return;}
+    if(e.key!=='Tab')return;
+    const f=[...box.querySelectorAll('input,select,button')].filter(x=>!x.disabled);
+    if(!f.length)return;
+    const prem=f[0], der=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===prem){e.preventDefault();der.focus();}
+    else if(!e.shiftKey&&document.activeElement===der){e.preventDefault();prem.focus();}
+  });
+  $('e-nohour').addEventListener('change',e=>{
+    $('e-heure').disabled=e.target.checked;
+  });
+}
+
+function wireSwitchMenu(){
+  const {open}=wireMenu('swmenu','swtog','swlist');
+  $('swlist').addEventListener('click',async e=>{
+    const b=e.target.closest('button[data-tok]');
+    if(!b)return;
+    open(false,false);
+    /* chargerCode reconstruit la carte AVANT d'écrire dans le stockage, et
+       rend false si le jeton ne décode plus — un code enregistré sous une
+       règle de validation plus ancienne, par exemple. On laisse alors la
+       carte courante en place plutôt que d'afficher une page vide. */
+    await chargerCode(b.dataset.tok,'swerr',true);
+  });
 }
 function comboItems(){
   const q=$('othercode').value.trim().toLowerCase();
@@ -5568,7 +5960,7 @@ function wireShare(){
   $('cpcode').onclick=()=>copyText($('cpcode').dataset.tok||'',$('cpcode'));
   $('gocode').onclick=()=>chargerCode($('setupcode').value,'setup-err2');
   $('setupcode').addEventListener('keydown',e=>{if(e.key==='Enter')$('gocode').click();});
-  wireShareMenu();
+  wireShareMenu(); wireSwitchMenu(); wireEdit();
   const lire=()=>{
     try{return decodeProfile($('othercode').value);}
     catch(e){
