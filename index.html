@@ -426,16 +426,11 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .bzcard .bzh{font-size:31px;line-height:1.15;margin:5px 0 3px;letter-spacing:.05em}
   .bzcard .bzn{font-size:12.5px}
   .bzcard .bzs{font-family:var(--data);font-size:9.5px;color:var(--ink-soft);margin-top:4px;line-height:1.6}
-  ul.wxl{list-style:none;margin:8px 0 12px;padding:0}
-  ul.wxl li{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13.5px}
-  ul.wxl .wn{flex:0 0 8.6em}
-  ul.wxl .wb{flex:1 1 auto;height:9px;border:1px solid var(--rule);position:relative}
-  ul.wxl .wb i{position:absolute;inset:0 auto 0 0;background:var(--ink);opacity:.28}
-  ul.wxl .wb i.hi{background:var(--verdigris);opacity:1}
-  ul.wxl .wb i.lo{background:var(--minium);opacity:.45}
-  ul.wxl .wv{flex:0 0 3em;text-align:right;font-family:var(--data);font-size:11px;color:var(--ink-soft)}
-  ul.wxl .wf{flex:0 0 8.4em;font-family:var(--data);font-size:9.5px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--ink-soft);text-align:right}
+  /* Les barres réutilisent ul.elems et les tiroirs .edraw/.epts des Éléments :
+     même geste, même code, et le tiroir porte ce que la barre ne peut pas dire. */
+  .bazi .epts .pg{font-size:15px}
+  .bazi .epts .pn{flex:0 0 4.6em}
+  .bazi .edraw .ed1 .han{font-size:13px}
   ul.bzrel{list-style:none;margin:6px 0 0;padding:0}
   ul.bzrel li{display:flex;gap:11px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
   ul.bzrel .rg{flex:0 0 4.2em;font-size:15px;letter-spacing:.06em}
@@ -448,7 +443,7 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .bazi table.eph{margin-top:8px}
   .bazi table.eph .sub{color:var(--ink-soft);font-family:var(--data);font-size:9.5px}
   .bazi table.eph td.han{font-size:15px;letter-spacing:.08em}
-  @media (max-width:560px){ul.wxl .wf{display:none}}
+  @media (max-width:560px){.bazi .epts .pn{flex:0 0 4em}}
   .ksvg{width:1em;height:1em;vertical-align:-.14em;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .amour{margin-top:34px;border-top:2px solid var(--ink);padding-top:18px}
@@ -2714,8 +2709,10 @@ function blocPolarite(p){
       p.kt?'':' — heure inconnue : l\'hémisphère et l\'angularité la demandent, seule la polarité des signes entre ici'
     }. La correspondance entre ces trois mesures et l'extraversion est une convention astrologique : les études contrôlées ne la retrouvent pas.</p>`;
 }
-function wireElements(){
-  $('elements').addEventListener('click',e=>{
+/* Tiroirs .erow/.edraw — le même comportement sert aux éléments et au bazi,
+   donc la délégation est posée sur la section passée en argument. */
+function wireDrawers(id){
+  $(id).addEventListener('click',e=>{
     const b=e.target.closest('button.erow');
     if(!b)return;
     const dr=$('dr-'+b.dataset.d);
@@ -2725,6 +2722,7 @@ function wireElements(){
     b.classList.toggle('on',ouvre);
   });
 }
+function wireElements(){wireDrawers('elements');wireDrawers('bazi');}
 function aspectBetween(a,b,orb){
   let d=Math.abs(n360(a-b)); if(d>180)d=360-d;
   for(const A of ASPECTS)if(Math.abs(d-A.a)<=orb)return {asp:A,orb:Math.abs(d-A.a)};
@@ -3774,12 +3772,16 @@ function quatrePiliers(y,mo,d,h,jdUTC){
    plusieurs : d'autres écoles comptent les cachés à parts égales, ou ne les
    comptent pas du tout. Le note le dit. --- */
 function wuxing(piliers){
-  const v=[0,0,0,0,0]; let tot=0;
+  const v=[0,0,0,0,0], det=[[],[],[],[],[]]; let tot=0;
   for(const p of piliers){
     v[TRONC_WX[p.t]]+=1; tot+=1;
-    CACHES[p.b].forEach((s,i)=>{const w=POIDS_CACHE[i]; v[TRONC_WX[s]]+=w; tot+=w;});
+    det[TRONC_WX[p.t]].push({car:TRONCS[p.t],ou:p.n.toLowerCase(),quoi:'tronc apparent',w:1});
+    CACHES[p.b].forEach((s,i)=>{
+      const w=POIDS_CACHE[i]; v[TRONC_WX[s]]+=w; tot+=w;
+      det[TRONC_WX[s]].push({car:TRONCS[s],ou:p.n.toLowerCase(),quoi:`caché dans <span class="han">${BRANCHES[p.b]}</span>`,w});
+    });
   }
-  return {v,pct:v.map(x=>Math.round(x/tot*100)),tot};
+  return {v,det,pct:v.map(x=>Math.round(x/tot*100)),tot};
 }
 /* Cinq familles — les dix dieux ramenés à leur relation à l'élément du
    maître du jour, qui est la seule chose que la structure permet d'affirmer. */
@@ -3798,6 +3800,14 @@ const FAM_TXT=[
  'ce que tu maîtrises : l\'argent, le concret, l\'objet du désir',
  'ce qui te contraint : la règle, la charge, le cadre — et le statut qui vient avec',
  'ce qui te nourrit : l\'étude, l\'appui, la mère, ce qui te refait'];
+/* Pourquoi cet élément tombe dans cette famille : c'est la seule chose que
+   la légende plate ne disait pas, et c'est toute la mécanique du système. */
+const FAM_LIEN=[
+ 'c\'est l\'élément de ton maître du jour lui-même',
+ 'ton maître du jour l\'engendre',
+ 'ton maître du jour le contrôle',
+ 'il contrôle ton maître du jour',
+ 'il engendre ton maître du jour'];
 
 /* --- Relations entre branches et entre troncs --- */
 const SANHE=[[8,0,4,4],[11,3,7,0],[2,6,10,1],[5,9,1,3]];   // triangles + élément produit
@@ -3857,6 +3867,7 @@ const WX_ROLE=['la croissance et l\'élan de départ','la visibilité et la chal
    un `WX[i].toLowerCase()` collé derrière un article fixe écrit « le terre ». */
 const LE_WX=['le bois','le feu','la terre','le métal','l\'eau'];
 const AUCUN_WX=['Aucun bois','Aucun feu','Aucune terre','Aucun métal','Aucune eau'];
+const IL_WX=['il','il','elle','il','elle'];
 
 function renderBazi(){
   const {profile,jd}=CHART;
@@ -3896,21 +3907,32 @@ function renderBazi(){
   const dm=TRONC_WX[Q.piliers[2].t];
   const wx=wuxing(pil);
   const maxP=Math.max(...wx.pct), minP=Math.min(...wx.pct);
-  const barres=`<ul class="wxl">`+WX.map((w,e)=>{
+  /* Une seule liste. Chaque élément tombe dans exactement une famille, donc
+     une seconde liste par famille serait la première réordonnée avec
+     d'autres étiquettes — les mêmes cinq nombres, lus deux fois. Ce que la
+     famille ajoute va dans le tiroir, avec les caractères qui la composent,
+     que la barre ne peut pas montrer. */
+  const barres=`<ul class="elems">`+WX.map((w,e)=>{
     const f=familleWX(dm,e), cls=wx.pct[e]===maxP?'hi':(wx.pct[e]<=8?'lo':'');
-    return `<li><span class="wn">${WX_EMO[e]} ${w}</span>`+
-      `<span class="wb"><i class="${cls}" style="width:${Math.min(100,wx.pct[e]*2.2)}%"></i></span>`+
-      `<span class="wv">${wx.pct[e]} %</span><span class="wf">${FAM_NOM[f]}</span></li>`;
+    const src=wx.det[e].sort((a,b)=>b.w-a.w);
+    return `<li>`+
+      `<button class="erow" type="button" data-d="wx-${e}" aria-expanded="false" aria-controls="dr-wx-${e}">`+
+        `<span class="en">${WX_EMO[e]} ${w}</span>`+
+        `<span class="eb"><i class="${cls}" style="width:${Math.min(100,wx.pct[e]*2.2)}%"></i></span>`+
+        `<span class="ev">${wx.pct[e]} %</span><span class="ech">▸</span>`+
+      `</button>`+
+      `<div class="edraw hidden" id="dr-wx-${e}">`+
+        `<p class="ed1"><b>${FAM_NOM[f]} <span class="han">${FAM_HAN[f]}</span></b> · ${FAM_LIEN[f]}</p>`+
+        `<p class="ed2">Pour toi, ${LE_WX[e]}, c'est ${FAM_TXT[f]}. Dans l'absolu, ${IL_WX[e]} porte ${WX_ROLE[e]}.</p>`+
+        (src.length
+          ? `<ul class="epts">`+src.map(x=>`<li><span class="pg han">${x.car}</span>`+
+              `<span class="pn">${x.ou}</span><span class="ps">${x.quoi}</span>`+
+              `<span class="pw">poids ${String(x.w).replace('.',',')}</span></li>`).join('')+`</ul>`
+          : `<p class="ed2 vide">Aucun tronc de cet élément dans tes piliers, caché compris.</p>`)+
+      `</div></li>`;
   }).join('')+`</ul>`;
 
   const fort=wx.pct.indexOf(maxP), faible=wx.pct.indexOf(minP);
-  const familles=`<ul class="wxl">`+[0,1,2,3,4].map(f=>{
-    const els=[0,1,2,3,4].filter(e=>familleWX(dm,e)===f);
-    const v=els.reduce((s,e)=>s+wx.pct[e],0);
-    return `<li><span class="wn">${FAM_NOM[f]} <span class="han">${FAM_HAN[f]}</span></span>`+
-      `<span class="wb"><i class="${v===0?'lo':''}" style="width:${Math.min(100,v*2.2)}%"></i></span>`+
-      `<span class="wv">${v} %</span><span class="wf">${WX[els[0]]}</span></li>`;
-  }).join('')+`</ul>`;
 
   const rel=relations(pil);
   const relHtml=rel.length
@@ -3944,14 +3966,13 @@ function renderBazi(){
     <p><b class="han">${TRONCS[Q.piliers[2].t]}</b> — ${WX[dm].toLowerCase()} ${polMot(Q.piliers[2].t)}, ${DM_IMG[Q.piliers[2].t]}. C'est toi dans le thème : tout le reste se lit par rapport à ce tronc, et non par rapport à ton animal. La branche du jour, <span class="han">${BRANCHES[Q.piliers[2].b]}</span> ${ANIMAUX[Q.piliers[2].b].toLowerCase()}, est traditionnellement le domaine du conjoint.</p>
 
     <h3 class="ssub">Les cinq mouvements</h3>
+    <p class="snote">Ce que tes quatre piliers contiennent, troncs apparents et troncs cachés confondus. Clique une ligne pour voir ce que ce mouvement est <em>pour toi</em> — sa famille se déduit de ton maître du jour — et quels caractères le composent.</p>
     ${barres}
     <p>${LE_WX[fort].charAt(0).toUpperCase()+LE_WX[fort].slice(1)} domine : c'est ${WX_ROLE[fort]} que tu as le plus à disposition. ${
       minP===0
         ? `${AUCUN_WX[faible]} dans tes piliers, troncs cachés compris — c'est un manque franc, pas une faiblesse relative : ${WX_ROLE[faible]} devra venir d'ailleurs que de toi.`
         : `${LE_WX[faible].charAt(0).toUpperCase()+LE_WX[faible].slice(1)} est ton point bas — ${WX_ROLE[faible]}, c'est ce que tu vas chercher chez les autres.`}</p>
-    <h3 class="ssub">Ce que ces mouvements sont pour toi</h3>
-    ${familles}
-    <p class="snote">${[0,1,2,3,4].map(f=>`<b>${FAM_NOM[f]}</b> — ${FAM_TXT[f]}`).join('. ')}. Ces cinq familles sont les dix dieux ramenés à leur relation au maître du jour ; la distinction yin/yang à l'intérieur de chaque famille est volontairement laissée de côté, elle demande une analyse de saison que ce bloc ne fait pas.</p>
+    <p class="snote">Les cinq familles nommées dans ces tiroirs sont les dix dieux ramenés à leur relation au maître du jour. La distinction yin/yang à l'intérieur de chaque famille est laissée de côté : elle demande une analyse de force saisonnière que ce bloc ne fait pas.</p>
 
     <h3 class="ssub">Ce qui se croise dans tes piliers</h3>
     ${relHtml}
