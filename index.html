@@ -643,20 +643,22 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .ame .tk{font-family:var(--data);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--ink-soft);margin:0 0 8px}
   .ame .sub{border-top:1px solid var(--rule);margin-top:22px;padding-top:16px}
-  .ame .gaugewrap{margin:14px 0 0;max-width:420px}
-  /* Zones nommées plutôt qu'un axe continu : les autres gauges de l'app vont
-     de « exigeante » à « fluide », et un chemin de vie posé sur cette
-     grammaire-là se lirait comme une note sur neuf. */
-  .ame .zlab{display:flex;font-family:var(--data);font-size:8px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--ink-soft);margin-top:3px;max-width:420px}
-  .ame .zlab span{text-align:center}
+  /* Dettes karmiques : en prose, avec le calcul visible — c'est le total
+     traversé qui porte l'information, et la réduction l'efface. */
+  .ame .calc{font-family:var(--data);font-size:11px;color:var(--ink-soft);
+    background:rgb(var(--v-rgb) / .05);border-left:2px solid var(--rule);
+    padding:9px 11px;margin:12px 0 0;max-width:60ch}
+  .ame .dette{display:flex;gap:14px;align-items:baseline;margin:14px 0 0;max-width:86ch}
+  .ame .dnum{flex:0 0 auto;font-family:var(--display);font-size:30px;line-height:1;color:var(--minium)}
+  .ame .dsrc{display:block;font-family:var(--data);font-size:9px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-soft)}
+  .ame .dtx{font-size:14.5px;margin:3px 0 0}
+  .ame .rien{font-size:14.5px;margin:12px 0 0;max-width:86ch}
   .ame .arc{width:100%;max-width:520px;height:auto;display:block;margin:12px 0 0}
   .ame .arclab{display:flex;font-family:var(--data);font-size:8px;letter-spacing:.1em;
     text-transform:uppercase;color:var(--ink-soft);margin-top:3px;max-width:520px}
   .ame .arclab span{flex:1;text-align:center}
   .ame .on{color:var(--verdigris)}
-  .ame .tie{border-left:2px solid var(--verdigris);padding:2px 0 2px 14px;margin:22px 0 0;max-width:84ch}
-  .ame .tie p{margin:0;font-size:14.5px}
   .ame .miss{font-size:13.5px;color:var(--ink-soft);margin:10px 0 0;max-width:84ch}
   .ame .miss b{color:var(--ink);font-weight:600}
   .ame .note{font-size:11.5px;color:var(--ink-soft);margin:18px 0 0;max-width:86ch}
@@ -680,7 +682,6 @@ try{var t=localStorage.getItem('astro:theme');if(t==='dark'||t==='light')documen
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   @media(max-width:520px){
     .ame .arclab{font-size:6.6px;letter-spacing:.02em}
-    .ame .zlab{font-size:7px;letter-spacing:.02em}
   }
   .emo{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--glyph);font-size:.95em;line-height:1}
   .loading{font-family:var(--data);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
@@ -1784,7 +1785,12 @@ function renderNumero(){
      rows.map(([k,v])=>`<tr><td class="sg">${k}</td><td>${v}</td><td class="sg">${CYCLE[v]}</td></tr>`).join('')+
      `</table>
      <p class="note">Réduction théosophique du ${D}/${M}/${Y}, nombres maîtres 11, 22 et 33 conservés.
-      Les cycles personnels suivent l'année civile.</p>`;
+      Les cycles personnels suivent l'année civile. Ce même nombre circule sous d'autres noms —
+      « nombre de vies antérieures », « nombre de l'âme » : c'est le chemin de vie relabellé, pas un
+      second calcul. Certains sites additionnent tous les chiffres d'un coup au lieu de réduire le
+      mois, le jour et l'année séparément ; les deux méthodes donnent la même racine, mais la
+      première trouve un nombre maître beaucoup plus rarement, et vous donnera donc parfois 2 là
+      où cette page affiche 11.</p>`;
   return lp;
 }
 
@@ -4333,34 +4339,60 @@ function renderBazi(){
 }
 
 /* ========================================================================
-   5decies. Âge et type d'âme
+   5decies. Type d'âme et mémoire karmique
    ------------------------------------------------------------------------
-   Trois lectures populaires, réunies parce qu'elles parlent du même objet :
-   l'âge (racine du chemin de vie), l'instrument (jour du mois), l'origine
-   (tiers réel du jour ou de la nuit). Comme KBODIES, renderStruct() et
-   renderBazi(), rien d'ici n'entre dans BODIES, dominance(), polarite(),
-   l'équilibre des éléments, la table d'aspects ni l'indice de synastrie, et
-   rien n'atteint buildPrompt() : les chiffres déjà publiés ne bougent pas.
-   Rien n'entre non plus dans encodeProfile() ni chartKey() — les deux
-   nombres se déduisent de la date déjà présente dans le jeton, donc les
-   anciens liens valent toujours et aucune lecture en cache n'est orpheline.
+   Trois lectures : les dettes karmiques (totaux traversés), l'instrument
+   (jour du mois), l'origine (tiers réel du jour ou de la nuit). Comme
+   KBODIES, renderStruct() et renderBazi(), rien d'ici n'entre dans BODIES,
+   dominance(), polarite(), l'équilibre des éléments, la table d'aspects ni
+   l'indice de synastrie, et rien n'atteint buildPrompt() : les chiffres déjà
+   publiés ne bougent pas. Rien n'entre non plus dans encodeProfile() ni
+   chartKey() — tout se déduit de la date déjà présente dans le jeton, donc
+   les anciens liens valent toujours et aucune lecture n'est orpheline.
+
+   Une échelle d'âge de l'âme a occupé cette place et a été RETIRÉE. Elle
+   posait le chemin de vie sur quatre bandes (naissante/jeune/mûre/ancienne)
+   avec une barre, or le chemin de vie décrit la direction de CETTE vie —
+   la leçon à traverser — et aucune école classique n'en fait un compteur
+   d'incarnations. Le cadre le plus construit sur l'âge de l'âme, les Michael
+   Teachings, refuse explicitement tout calcul par date et l'évalue au
+   tempérament. La barre affichait donc un rang là où il n'y a pas d'échelle.
+   Ne pas la réintroduire : aucun calcul par date ne lui donnera de fond.
    ======================================================================== */
 
-/* ---- 1. Âge : racine du chemin de vie, réduite de force ---------------
-   Le chemin de vie garde 11/22/33 (MASTERS) ; l'échelle des âges se lit sur
-   1 à 9, donc elle les réduit. La convention est annoncée dans la note :
-   c'est une réduction déclarée, pas un chiffre concurrent, et #numero reste
-   la seule place où le nombre maître s'affiche. */
-const AGE_BANDS=[
- {min:1,max:1,n:'Âme naissante',
-  tx:'L\'étape est celle du départ : tout est à essayer, rien n\'est encore su. On y avance par élan plutôt que par expérience, et la maladresse fait partie du travail. Ce n\'est pas un retard — c\'est le moment où l\'on décide de sa propre direction pour la première fois.'},
- {min:2,max:3,n:'Âme jeune',
-  tx:'Le lien, la parole et la création sont le terrain de cette étape : on y apprend en se confrontant aux autres plutôt qu\'en se retirant. L\'étape ne dit pas ce que tu vaux, elle dit où le travail se fait — ici, dehors, avec du monde autour.'},
- {min:4,max:6,n:'Âme mûre',
-  tx:'L\'étape demande de tenir : bâtir ce qui dure, réparer ce qui casse, porter ce qu\'on a accepté de porter. Le terrain n\'est plus la découverte mais la responsabilité, et la question qui revient n\'est pas « qu\'est-ce que je veux » mais « qu\'est-ce qui tient sans moi ».'},
- {min:7,max:9,n:'Âme ancienne',
-  tx:'L\'étape travaille le recul : comprendre avant d\'adhérer, terminer les cycles, s\'attacher à plus large que soi. Le revers est connu — on peut confondre la distance avec la sagesse, et rester spectateur d\'une vie qu\'on saurait très bien mener.'}];
-const bandeAge=r=>AGE_BANDS.find(b=>r>=b.min&&r<=b.max);
+/* ---- 1. Dettes karmiques : 13, 14, 16, 19 -----------------------------
+   Elles apparaissent quand un total INTERMÉDIAIRE, avant la réduction
+   finale, vaut 13, 14, 16 ou 19 — c'est le nombre traversé qui compte, pas
+   celui d'arrivée. D'où l'intérêt par rapport à la bande qu'elles
+   remplacent : la réduction détruit cette information, et les dettes sont
+   précisément ce qu'elle détruit. Deux thèmes de chemin de vie 5 diffèrent
+   selon qu'ils soient passés par 14 ou par 23.
+
+   Deux sources se calculent depuis la date seule : le total du chemin de vie
+   et le jour du mois. Les deux autres que cite la tradition (expression,
+   personnalité) demandent le nom de naissance COMPLET, que l'app ne stocke
+   pas — et l'ajouter mettrait un nom de famille dans le jeton partageable,
+   donc dans les liens. Voir Sécurité : c'est exactement ce que le fragment
+   sert à éviter. */
+const DETTES={
+ 13:{nm:'La dette du travail',
+   tx:'La tradition y lit un effort esquivé : on a cherché la voie courte, et la facture arrive sous forme de résistance. Le chantier est la constance — bâtir pierre à pierre ce qui ne peut pas être improvisé, et ne pas lire la lenteur comme un échec.'},
+ 14:{nm:'La dette de la mesure',
+   tx:'La liberté mal employée : excès, dispersion, engagements pris à la légère dont on n\'a pas payé le prix. Le chantier est la structure — s\'en donner une qu\'on n\'a pas reçue, sans la confondre avec une prison.'},
+ 16:{nm:'La dette de l\'orgueil',
+   tx:'La plus rude des quatre. La tradition y voit une loyauté rompue, et ce qui a été bâti sur l\'ego se retrouve démoli pour être rebâti autrement — souvent une fois franchement plutôt que dix fois un peu. Ce qui tombe n\'était pas à toi.'},
+ 19:{nm:'La dette de l\'indépendance',
+   tx:'L\'autonomie prise contre les autres plutôt qu\'avec eux. Le chantier est de demander — coopérer sans se sentir écrasé, et accepter d\'être aidé sans y voir une dette.'}};
+const DETTE_NB=[13,14,16,19];
+/* Le total du chemin de vie est celui de lifePath() AVANT sa réduction
+   finale : mois, jour et année réduits séparément, puis additionnés. */
+const totalChemin=(y,m,d)=>reduceNum(m)+reduceNum(d)+reduceNum(y);
+function dettesDe(y,m,d){
+  const out=[], t=totalChemin(y,m,d);
+  if(DETTE_NB.includes(t))out.push({n:t,src:'sur le chemin de vie'});
+  if(DETTE_NB.includes(d))out.push({n:d,src:'sur le jour de naissance'});
+  return out;
+}
 
 /* ---- 2. Instrument : jour du mois réduit ------------------------------
    Nombre indépendant du chemin de vie (qui prend mois + jour + année), donc
@@ -4458,24 +4490,6 @@ function origineDe(jd,lat,lon){
   return {cle:t<1/3?'mystique':t<2/3?'stellaire':'eveilleuse',ev:e,arc:'nuit',debut,fin};
 }
 
-/* ---- 4. Passerelle : bande d'âge × arc -------------------------------
-   Huit lignes, pas vingt-quatre. Un tableau 6×4 demanderait d'inventer
-   vingt-quatre doctrines à partir de deux sources qui ne se citent pas ;
-   l'axe jour/nuit est le seul croisement que les deux tiennent vraiment. */
-const PASSERELLE={
- 'Âme naissante':{
-  jour:'L\'étape est celle du premier élan, et l\'arc de jour te pousse dehors avec : tu apprendras en public, très tôt, sans le filtre que d\'autres ont le temps de se construire.',
-  nuit:'L\'étape est celle du premier élan, mais l\'arc de nuit le garde à l\'abri : tu essaies d\'abord seul, et tu ne montres que ce qui a déjà tenu une fois.'},
- 'Âme jeune':{
-  jour:'L\'étape demande du contact et de la parole, et l\'arc te pousse dans le même sens : tu apprends en public, vite, quitte à te tromper devant témoins. Rien ne te protège de l\'exposition, et c\'est là que ça avance.',
-  nuit:'L\'étape demande du contact et de la parole ; l\'arc, lui, travaille à l\'abri du regard. Tu apprendras par les autres, mais pas devant eux : les choses se décident chez toi, tard, et se disent le lendemain.'},
- 'Âme mûre':{
-  jour:'L\'étape demande de tenir, et l\'arc de jour te met en charge visible : on te confie des choses, on te voit les porter, et le poids se mesure au regard des autres autant qu\'au tien.',
-  nuit:'L\'étape demande de tenir, et l\'arc de nuit te fait porter sans public : ce que tu répares se voit peu, et personne ne saura le compte exact de ce que tu as tenu.'},
- 'Âme ancienne':{
-  jour:'L\'étape travaille le recul, et l\'arc de jour t\'empêche de t\'y installer : on continue de venir te chercher, et la distance que tu prends t\'est régulièrement reprise.',
-  nuit:'L\'étape travaille le recul et l\'arc de nuit va dans le même sens — c\'est la combinaison la plus confortable de la section, donc la plus facile à laisser filer vers le retrait complet.'}};
-
 /* ---- 4bis. Marqueurs astrologiques d'âme ancienne ---------------------
    Seconde lecture, sur des preuves entièrement différentes : la tradition
    rattache certains placements à l'ancienneté de l'âme. Aucune source
@@ -4540,32 +4554,6 @@ function marqueursDe(natal,karma,hs,kt){
 }
 
 /* ---- 5. Rendu --------------------------------------------------------- */
-/* Barre à quatre zones et non un axe continu : les gauges de l'app vont de
-   « exigeante » à « fluide », gauche = moins. Un chiffre de chemin de vie
-   posé sur cette grammaire-là se lit comme une note, alors que LIFEPATH
-   traite les neuf comme des genres et non des degrés. Les segments sont
-   proportionnels à la taille des bandes — des quarts égaux mentiraient sur
-   le découpage. */
-function barreAge(r){
-  const seg=[[1,1],[2,3],[4,6],[7,9]], tot=9, x0=6, x1=254, g=6;
-  let x=x0, out='', pos=0;
-  const larg=n=>((x1-x0)-3*g)*n/tot;
-  seg.forEach(([a,b],i)=>{
-    const w=larg(b-a+1), on=r>=a&&r<=b;
-    out+=`<line x1="${x.toFixed(1)}" y1="25" x2="${(x+w).toFixed(1)}" y2="25" `+
-         `stroke="${on?'var(--verdigris)':'var(--ink)'}" stroke-width="${on?2.4:1}"/>`;
-    if(on)pos=x+w*((r-a+0.5)/(b-a+1));
-    x+=w+g;
-  });
-  const p=pos.toFixed(1);
-  out+=`<polygon points="${p},19 ${(pos-5.5).toFixed(1)},9 ${(pos+5.5).toFixed(1)},9" fill="var(--verdigris)"/>`;
-  const noms=['Naissante','Jeune','Mûre','Ancienne'];
-  const lab=seg.map(([a,b],i)=>
-    `<span style="flex:0 0 ${(100*(b-a+1)/tot).toFixed(1)}%"${r>=a&&r<=b?' class="on"':''}>${noms[i]}</span>`).join('');
-  return `<div class="gaugewrap"><svg viewBox="0 0 260 34" class="gauge" role="img"
-      aria-label="Âge de l'âme : ${bandeAge(r).n}, racine ${r} sur 9">${out}</svg>
-      <div class="zlab">${lab}</div></div>`;
-}
 /* Bande des six tiers. Les deux barres verticales sont le lever et le
    coucher : c'est ce qui rend lisible le fait que les tiers de nuit et de
    jour n'ont pas la même largeur selon la saison. */
@@ -4613,16 +4601,14 @@ const hLoc=(jd,tz)=>jdToDate(jd).toLocaleTimeString('fr-CA',
 function renderAme(lp){
   const p=CHART.profile;
   const D=+p.date.split('-')[2];
-  const r=reduceFull(lp), b=bandeAge(r);
+  const [Y,M]=p.date.split('-').map(Number);
+  const r=reduceFull(lp);
   const jour=reduceFull(D), ins=INSTRU[jour];
   const o=p.knownTime?origineDe(CHART.jd,p.lat,p.lon):null;
 
-  let h=`<p class="k">Âge et type d'âme</p>
+  let h=`<p class="k">Type d'âme et mémoire karmique</p>
     <p class="intro">Lecture numérologique et solaire, indépendante du thème : rien ici n'entre dans les
-     dominantes, l'équilibre des éléments, les aspects ni la lecture du jour.</p>
-    <div class="nm">${b.n}</div>
-    ${barreAge(r)}
-    <p class="txt">${b.tx}</p>`;
+     dominantes, l'équilibre des éléments, les aspects ni la lecture du jour.</p>`;
 
   h+=`<div class="sub"><p class="k">Origine${o?` · ${ORIGINES[o.cle].n} — arc de ${o.arc}`:''}</p>`;
   if(o){
@@ -4643,20 +4629,44 @@ function renderAme(lp){
   }else{
     h+=`<p class="miss">L'origine se lit à la position réelle du soleil à ta naissance — dans quel tiers
         du jour ou de la nuit tu es arrivé. <b>Il y faut l'heure</b>, que ce thème n'a pas. Ajoute-la
-        dans le formulaire et cette partie apparaîtra, avec la passerelle vers l'âge.</p>
+        dans le formulaire et cette partie apparaîtra.</p>
         <p class="miss" style="margin-top:8px">Elle n'est pas devinée à midi : les six tiers durent de
         2 h 50 à 5 h 15 selon la saison et la latitude, et un thème sans heure tomberait sur
         « Terrestre » par défaut, pour tout le monde.</p>`;
   }
   h+=`</div>`;
 
-  if(o)h+=`<div class="tie"><p><strong>${b.n}, dans l'arc de ${o.arc}.</strong>
-      ${PASSERELLE[b.n][o.arc]}</p></div>`;
-
   h+=`<div class="sub"><p class="k">Ton instrument · né un ${jour}</p>
     <p class="txt">${ins.tx}${jour===r?' '+INSTRU_MEME:''}</p>
     <p class="tk">Ce que tu sais faire</p>
     <ul class="tags">${ins.f.map(t=>`<li class="tc">${t}</li>`).join('')}</ul></div>`;
+
+  /* Dettes karmiques. Rendues en PROSE et non en quatre cases à cocher :
+     une liste ici tomberait juste au-dessus des six marqueurs et referait la
+     superposition de listes que la section évite déjà deux fois. Le calcul
+     est montré, parce que tout l'intérêt est le nombre traversé — invisible
+     une fois réduit. */
+  const dettes=dettesDe(Y,M,D), tot=totalChemin(Y,M,D);
+  h+=`<div class="sub"><p class="k">Dettes karmiques</p>
+    <p class="intro" style="margin-bottom:2px">Une dette apparaît quand un total <i>intermédiaire</i>,
+     avant la réduction finale, vaut 13, 14, 16 ou 19 : c'est le nombre traversé qui compte, pas celui
+     d'arrivée. La tradition y lit un apprentissage laissé inachevé — ce qui reste à faire, jamais
+     depuis combien de temps.</p>
+    <p class="calc">chemin de vie : ${reduceNum(M)} + ${reduceNum(D)} + ${reduceNum(Y)} =
+      <b>${tot}</b>${tot!==lp?` → ${lp}`:''}<br>jour du mois : <b>${D}</b></p>`;
+  if(dettes.length)
+    h+=dettes.map(d=>`<div class="dette"><span class="dnum">${d.n}</span><span>
+        <span class="dsrc">${DETTES[d.n].nm} · ${d.src}</span>
+        <p class="dtx">${DETTES[d.n].tx}</p></span></div>`).join('');
+  else
+    h+=`<p class="rien">Aucune dette karmique : ni le total traversé ni le jour de naissance ne tombe
+        sur 13, 14, 16 ou 19 — c'est le cas de <b>65 %</b> des dates. Cela ne veut pas dire « âme
+        neuve » ni âme quitte de tout ; simplement, ce compte-là ne dit rien de ce thème.</p>`;
+  h+=`<p class="note" style="margin-top:12px">Deux sources se calculent depuis la date : le total du
+      chemin de vie et le jour du mois. Les deux autres que cite la tradition — expression et
+      personnalité — demandent le nom de naissance complet, que cette page ne conserve pas.
+      Fréquences mesurées sur 1900–2100 : 25,4 % des dates portent une dette sur le chemin de vie,
+      13,1 % sur le jour, 34,8 % au moins une.</p></div>`;
 
   /* Marqueurs : une liste, jamais un compte. Les deux lectures de la
      section reposent sur des preuves sans rapport — chiffres de date d'un
@@ -4689,15 +4699,15 @@ function renderAme(lp){
       aucun et trois sur mille en portent quatre — les compter ne ferait donc pas une échelle, d'autant
       qu'ils ne mesurent pas la même chose et ne sont pas indépendants entre eux.</p></div>`;
 
-  h+=`<p class="note">Âge et instrument : réduction du chemin de vie et du jour du mois
-    (${lp}${lp!==r?` → racine ${r}`:''} et ${D}${D!==jour?` → ${jour}`:''}) ; les nombres maîtres,
-    conservés dans le chemin de vie, sont réduits ici — l'échelle des âges se lit de 1 à 9.
+  h+=`<p class="note">Instrument : jour du mois réduit (${D}${D!==jour?` → ${jour}`:''}).
     L'origine découpe le jour et la nuit réels au lieu de naissance en trois, pas des tranches
     d'horloge : les sites qui coupent à 00h, 04h, 08h donnent parfois le même nom, mais par
-    coïncidence. Ces trois lectures viennent de la numérologie populaire contemporaine et non
-    d'une tradition fixée — les versions publiées ne s'accordent ni sur les bornes des bandes
-    ni sur les tranches horaires. À prendre comme des correspondances, pas comme un résultat
-    d'étude.</p>`;
+    coïncidence. Ces lectures viennent de la numérologie et de l'astrologie traditionnelles, où les
+    conventions varient d'une école à l'autre — les versions publiées ne s'accordent ni sur les
+    sources d'une dette ni sur les tranches horaires. À prendre comme des correspondances, pas
+    comme un résultat d'étude. Une échelle d'« âge de l'âme » a occupé cette place : elle a été
+    retirée, le chemin de vie décrivant la direction de cette vie-ci et non un nombre
+    d'incarnations.</p>`;
 
   $('ame').innerHTML=h;
 }
